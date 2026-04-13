@@ -24,6 +24,7 @@ class TicketService {
     clientId?: string;
   }): Promise<{ success: boolean; data?: Ticket; error?: string }> {
     try {
+      console.log('--- DEBUG: Sending Public Ticket ---', data);
       const response = await fetch(`${this.baseUrl}${this.endpoint}/public`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

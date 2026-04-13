@@ -1,15 +1,14 @@
 // Configuración automática de API según el ambiente
 const getBaseURL = (): string => {
-  // Usar variables de ambiente si están disponibles
-  const devURL = import.meta.env.VITE_API_BASE_URL_DEV || 'https://gems-crm-backend.onrender.com/api'
-  const prodURL = import.meta.env.VITE_API_BASE_URL_PROD || 'https://gems-crm-backend.onrender.com/api'
+  // Usar Render como URL por defecto
+  const devURL = 'https://gems-crm-backend.onrender.com/api'
+  const prodURL = 'https://gems-crm-backend.onrender.com/api'
   
-  // En desarrollo (localhost o modo dev)
-  if (import.meta.env.DEV || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+  // Si estamos en localhost (desarrollo), aún podemos usar la URL de Render si el backend ya está desplegado
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
     return devURL
   }
   
-  // En producción (cualquier otro dominio)
   return prodURL
 }
 

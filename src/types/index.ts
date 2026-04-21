@@ -141,7 +141,7 @@ export interface TeamMember {
   _id?: string
   name: string
   email: string
-  role: 'admin' | 'manager' | 'employee' | 'viewer'
+  role: 'admin' | 'manager' | 'employee' | 'support' | 'development' | 'fullstack' | 'viewer'
   department?: string
   position?: string
   phone?: string

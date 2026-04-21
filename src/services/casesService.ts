@@ -24,6 +24,16 @@ export interface CaseMilestone {
   completado: boolean
 }
 
+export interface CaseDailyLog {
+  _id?: string
+  fecha: Date
+  autor: string
+  que_se_hizo: string
+  bloqueos: string
+  siguientes_pasos: string
+  sentimiento: '😊' | '😐' | '😟' | '🔥'
+}
+
 export interface Case {
   _id?: string
   titulo: string
@@ -43,6 +53,9 @@ export interface Case {
   impacto?: 'bajo' | 'medio' | 'alto'
   progreso: number
   hitos: CaseMilestone[]
+  wikiContent?: string
+  metodologia?: string
+  dailyLogs: CaseDailyLog[]
   createdAt: Date
   updatedAt: Date
 }

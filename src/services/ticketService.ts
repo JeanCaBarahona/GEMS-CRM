@@ -107,12 +107,29 @@ class TicketService {
   }
 
   // Add comment
-  async addComment(id: string, text: string, isInternal: boolean = false): Promise<TicketComment> {
+  async addComment(id: string, text: string | FormData, isInternal: boolean = false): Promise<TicketComment> {
     try {
+      const isFormData = text instanceof FormData;
+      const headers: any = {};
+      
+      const token = localStorage.getItem('token');
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      
+      if (!isFormData) {
+        headers['Content-Type'] = 'application/json';
+      }
+
+      let body;
+      if (isFormData) {
+        body = text;
+      } else {
+        body = JSON.stringify({ text, isInternal });
+      }
+
       const response = await fetch(`${this.baseUrl}${this.endpoint}/${id}/comments`, {
         method: 'POST',
-        headers: this.getHeaders(),
-        body: JSON.stringify({ text, isInternal }),
+        headers,
+        body
       });
       const result = await response.json();
       if (!result.success) throw new Error(result.message || 'No se pudo agregar el comentario');

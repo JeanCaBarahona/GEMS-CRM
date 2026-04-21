@@ -123,9 +123,9 @@
 
               <div class="flex items-center justify-between pt-2 border-t border-slate-50 pl-1">
                 <span class="text-[9px] text-slate-400 font-medium">hace {{ formatDateRelative(ticket.createdAt) }}</span>
-                <div v-if="ticket.assignedToUser" class="w-6 h-6 rounded-lg bg-indigo-50 flex items-center justify-center border border-indigo-100 shadow-sm overflow-hidden" :title="ticket.assignedToUser.name">
-                  <img v-if="ticket.assignedToUser.avatar || ticket.assignedToUser.photo" :src="ticket.assignedToUser.avatar || ticket.assignedToUser.photo" class="w-full h-full object-cover">
-                  <span v-else class="text-[9px] font-black text-primary-700">{{ getInitials(ticket.assignedToUser.name) }}</span>
+                <div v-if="ticket.assignedTo" class="w-6 h-6 rounded-lg bg-indigo-50 flex items-center justify-center border border-indigo-100 shadow-sm overflow-hidden" :title="typeof ticket.assignedTo === 'object' ? ticket.assignedTo.name : 'Asignado'">
+                  <img v-if="typeof ticket.assignedTo === 'object' && (ticket.assignedTo.avatar || ticket.assignedTo.photo)" :src="ticket.assignedTo.avatar || ticket.assignedTo.photo" class="w-full h-full object-cover">
+                  <span v-else class="text-[9px] font-black text-primary-700">{{ typeof ticket.assignedTo === 'object' ? getInitials(ticket.assignedTo.name) : 'A' }}</span>
                 </div>
                 <div v-else class="w-6 h-6 rounded-lg bg-orange-50 border border-orange-200 flex items-center justify-center dashed-border" title="Sin asignar">
                    <i class="fas fa-user-slash text-[9px] text-orange-400"></i>
@@ -290,10 +290,10 @@
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-3">
                     <div class="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center overflow-hidden">
-                      <img v-if="selectedTicket.assignedToUser?.avatar" :src="selectedTicket.assignedToUser.avatar" class="w-full h-full object-cover">
-                      <span v-else class="text-xs font-black text-indigo-600">{{ getInitials(selectedTicket.assignedToUser?.name || '?') }}</span>
+                      <img v-if="selectedTicket.assignedTo?.avatar" :src="selectedTicket.assignedTo.avatar" class="w-full h-full object-cover">
+                      <span v-else class="text-xs font-black text-indigo-600">{{ getInitials(selectedTicket.assignedTo?.name || '?') }}</span>
                     </div>
-                    <span class="text-sm font-bold text-slate-700">{{ selectedTicket.assignedToUser?.name || 'Sin asignar' }}</span>
+                    <span class="text-sm font-bold text-slate-700">{{ selectedTicket.assignedTo?.name || 'Sin asignar' }}</span>
                   </div>
                   <button class="text-[10px] font-black text-primary-600 hover:underline uppercase tracking-tighter">Cambiar</button>
                 </div>
@@ -350,13 +350,28 @@
                       <span class="text-[8px] font-bold text-slate-400">{{ formatDateRelative(comment.createdAt) }}</span>
                     </div>
                     <div 
-                      class="p-3 text-xs leading-relaxed font-medium"
+                      class="p-3 text-xs leading-relaxed font-medium shadow-sm"
                       :class="[
                         comment.isInternal ? 'bg-amber-50 border border-amber-100 text-amber-900' : 'border border-slate-100',
-                        comment.author._id === authStore.user?._id ? 'bg-primary-600 text-white rounded-l-2xl rounded-br-2xl border-transparent' : 'bg-slate-50 text-slate-700 rounded-r-2xl rounded-bl-2xl'
+                        comment.author._id === authStore.user?._id ? 'bg-primary-600 text-white rounded-l-2xl rounded-br-2xl border-transparent' : 'bg-white text-slate-700 rounded-r-2xl rounded-bl-2xl'
                       ]"
                     >
                       {{ comment.text }}
+                      
+                      <!-- Comment Attachments -->
+                      <div v-if="comment.attachments?.length" class="flex flex-wrap gap-2 mt-3 pt-3 border-t" :class="comment.author._id === authStore.user?._id ? 'border-primary-500/30' : 'border-slate-100'">
+                        <div v-for="(att, i) in comment.attachments" :key="i"
+                          @click="viewAttachment(att)"
+                          class="w-20 h-20 rounded-lg overflow-hidden cursor-pointer border hover:border-primary-400 transition-all shadow-sm"
+                          :class="comment.author._id === authStore.user?._id ? 'bg-primary-700/50 border-primary-500' : 'bg-slate-50 border-slate-200'"
+                        >
+                          <img v-if="isImgUrl(att)" :src="resolveImageUrl(att)" class="w-full h-full object-cover">
+                          <div v-else class="w-full h-full flex flex-col items-center justify-center gap-1">
+                            <i class="fas fa-file-alt text-[10px]" :class="comment.author._id === authStore.user?._id ? 'text-primary-200' : 'text-slate-300'"></i>
+                            <span class="text-[7px] font-black uppercase" :class="comment.author._id === authStore.user?._id ? 'text-primary-100' : 'text-slate-400'">Doc</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -383,9 +398,13 @@
                     <input type="checkbox" v-model="newCommentIsInternal" class="w-3.5 h-3.5 rounded text-primary-600 border-slate-200 focus:ring-primary-500">
                     <span class="text-[10px] font-black text-slate-400 group-hover:text-amber-600 uppercase tracking-tighter transition-colors">Nota Interna</span>
                   </label>
-                  <button class="p-1.5 text-slate-400 hover:text-slate-600">
+                  <label class="p-1.5 text-slate-400 hover:text-primary-600 cursor-pointer relative transition-colors">
                     <i class="fas fa-paperclip text-sm"></i>
-                  </button>
+                    <input type="file" multiple @change="handleCommentFiles" class="hidden">
+                    <span v-if="commentFiles.length" class="absolute -top-1 -right-1 w-3.5 h-3.5 bg-primary-600 text-[7px] text-white rounded-full flex items-center justify-center font-black">
+                      {{ commentFiles.length }}
+                    </span>
+                  </label>
                 </div>
                 <button 
                   @click="submitComment"
@@ -500,8 +519,14 @@ const creating = ref(false)
 
 // Comment State
 const newCommentText = ref('')
+const commentFiles = ref<File[]>([])
 const newCommentIsInternal = ref(false)
 const sendingComment = ref(false)
+
+const handleCommentFiles = (e: any) => {
+  const files = Array.from(e.target.files) as File[]
+  commentFiles.value = [...commentFiles.value, ...files]
+}
 
 const newTicketData = ref({
   name: '',
@@ -535,7 +560,10 @@ const filteredTickets = computed(() => {
 })
 
 const inboxTickets = computed(() => {
-  return filteredTickets.value.filter(t => t.assignedTo === authStore.user?._id)
+  return filteredTickets.value.filter(t => {
+    const assignedId = typeof t.assignedTo === 'object' ? t.assignedTo?._id : t.assignedTo;
+    return assignedId === authStore.user?._id;
+  })
 })
 
 // Methods
@@ -590,10 +618,16 @@ const submitComment = async () => {
   
   sendingComment.value = true
   try {
+    const formData = new FormData()
+    formData.append('text', newCommentText.value)
+    formData.append('isInternal', String(newCommentIsInternal.value))
+    commentFiles.value.forEach(file => {
+      formData.append('files', file)
+    })
+
     const comment = await ticketService.addComment(
       selectedTicket.value._id, 
-      newCommentText.value, 
-      newCommentIsInternal.value
+      formData
     )
     
     // Add to local UI
@@ -602,6 +636,7 @@ const submitComment = async () => {
     
     // Clear input
     newCommentText.value = ''
+    commentFiles.value = []
     newCommentIsInternal.value = false
     showSuccess('Mensaje enviado')
   } catch (err: any) {
@@ -679,6 +714,22 @@ const formatDateRelative = (dateStr?: string) => {
 const formatDate = (dateStr?: string) => {
   if (!dateStr) return ''
   return format(new Date(dateStr), 'dd MMM', { locale: es })
+}
+
+import { API_CONFIG } from '@/config/api'
+
+// ... (existing code)
+
+const isImgUrl = (url: string) => /\.(jpg|jpeg|png|webp|avif|gif)$/.test(url.toLowerCase())
+
+const resolveImageUrl = (url: string) => {
+  if (url.startsWith('http')) return url
+  const origin = String(API_CONFIG.BASE_URL).replace(/\/?api\/?$/i, '')
+  return `${origin.replace(/\/$/, '')}/${url.replace(/^\//, '')}`
+}
+
+const viewAttachment = (url: string) => {
+  window.open(resolveImageUrl(url), '_blank')
 }
 
 const formatDateLong = (dateStr?: string) => {

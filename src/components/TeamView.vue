@@ -1,22 +1,43 @@
 <template>
   <div class="p-6">
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-      <div>
-        <h1 class="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-          Equipo
-        </h1>
-        <p class="text-gray-600 mt-2">Gestiona los miembros de tu equipo</p>
+    <!-- Header with Tabs -->
+    <div class="mb-6">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div>
+          <h1 class="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            Equipo y Accesos
+          </h1>
+          <p class="text-gray-600 mt-2">Gestiona los miembros de tu equipo y sus permisos</p>
+        </div>
+        <button
+          v-if="activeTab === 'miembros'"
+          @click="openCreateForm"
+          class="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center gap-2"
+        >
+          <i class="fas fa-plus"></i>
+          Agregar Miembro
+        </button>
       </div>
-      <button
-        @click="openCreateForm"
-        class="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center gap-2"
-      >
-        <i class="fas fa-plus"></i>
-        Agregar Miembro
-      </button>
+
+      <!-- Tabs Navigation -->
+      <div class="flex space-x-1 border-b border-gray-700">
+        <button
+          @click="activeTab = 'miembros'"
+          :class="['px-6 py-3 text-sm font-medium transition-colors border-b-2', activeTab === 'miembros' ? 'border-purple-500 text-purple-400' : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500']"
+        >
+          <i class="fas fa-users mr-2"></i> Miembros del Equipo
+        </button>
+        <button
+          @click="activeTab = 'roles'"
+          :class="['px-6 py-3 text-sm font-medium transition-colors border-b-2', activeTab === 'roles' ? 'border-purple-500 text-purple-400' : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500']"
+        >
+          <i class="fas fa-id-badge mr-2"></i> Roles y Perfiles
+        </button>
+      </div>
     </div>
 
+    <!-- Miembros Tab Content -->
+    <div v-if="activeTab === 'miembros'">
     <!-- Filters and Search -->
     <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-lg p-6 mb-6 border border-purple-500/20">
       <div class="flex flex-col sm:flex-row gap-4">
@@ -102,6 +123,11 @@
       </div>
     </div>
 
+    <!-- Roles Tab Content -->
+    <div v-else-if="activeTab === 'roles'">
+      <RolesManager />
+    </div>
+
     <!-- Team Form Modal -->
     <TeamForm 
       v-if="showTeamForm"
@@ -116,11 +142,13 @@
 import { ref, computed, onMounted } from 'vue'
 import { teamService, type TeamMember } from '../services/teamService'
 import TeamForm from './TeamForm.vue'
+import RolesManager from './RolesManager.vue'
 import { useNotifications } from '../composables/useNotifications'
 
 // Composables
 const { showSuccess, showError, confirmDelete: confirmDeleteNotification, showLoading, closeLoading } = useNotifications()
 
+const activeTab = ref<'miembros' | 'roles'>('miembros')
 const members = ref<TeamMember[]>([])
 const loading = ref(false)
 const searchTerm = ref('')

@@ -200,14 +200,45 @@
                </div>
             </div>
 
-            <!-- Timeline / Comments placeholder -->
+            <!-- Activity & Comments Section -->
             <div class="pt-8 border-t border-slate-100">
                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Actividad y Comentarios</p>
-               <div class="space-y-6">
-                 <!-- Aquí irían los comentarios con un diseño limpio -->
-                 <div class="text-center py-10 opacity-40">
-                    <p class="text-xs font-bold text-slate-400">Aún no hay mensajes. Te notificaremos cuando haya novedades.</p>
-                 </div>
+               
+               <div v-if="selectedTicket.comments?.length > 0" class="space-y-6">
+                 <div v-for="comment in selectedTicket.comments" :key="comment._id" 
+                   class="animate-slide-in"
+                   v-show="!comment.isInternal"
+                 >
+                   <div class="flex gap-4">
+                     <div class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400">
+                       {{ comment.author?.name?.charAt(0) || '?' }}
+                     </div>
+                     <div class="flex-1 space-y-1">
+                       <div class="flex items-center justify-between">
+                         <span class="text-[11px] font-black text-slate-800">{{ comment.author?.name || 'Soporte GEMS' }}</span>
+                         <span class="text-[9px] font-bold text-slate-400 uppercase">{{ formatDate(comment.createdAt) }}</span>
+                       </div>
+                        <p class="text-sm text-slate-600 leading-relaxed">{{ comment.text }}</p>
+                        
+                        <!-- Comment Attachments -->
+                        <div v-if="comment.attachments?.length" class="flex flex-wrap gap-2 mt-2">
+                          <div v-for="(att, i) in comment.attachments" :key="i"
+                            @click="viewAttachment(att)"
+                            class="w-16 h-16 bg-slate-50 border border-slate-200 rounded-lg overflow-hidden cursor-pointer hover:border-primary-400 transition-all"
+                          >
+                            <img v-if="isImgUrl(att)" :src="resolveImageUrl(att)" class="w-full h-full object-cover">
+                            <div v-else class="w-full h-full flex items-center justify-center">
+                              <i class="fas fa-file-alt text-slate-300 text-xs"></i>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+               </div>
+
+               <div v-else class="text-center py-10 opacity-40">
+                  <p class="text-xs font-bold text-slate-400">Aún no hay mensajes. Te notificaremos cuando haya novedades.</p>
                </div>
             </div>
          </div>
@@ -216,14 +247,38 @@
          <div class="p-6 bg-slate-50 border-t border-slate-100 shrink-0">
             <div class="relative">
                <input 
+                v-model="commentText"
+                @keyup.enter="sendComment"
                 placeholder="Añadir una respuesta rápida..." 
                 class="w-full pl-5 pr-12 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-medium focus:ring-4 focus:ring-primary-500/5 focus:border-primary-500 transition-all shadow-sm"
                />
-               <button class="absolute right-4 top-1/2 -translate-y-1/2 text-primary-600 hover:text-primary-700">
-                  <i class="fas fa-paper-plane text-sm"></i>
-               </button>
+                <div class="flex items-center justify-between pt-2">
+                  <div class="flex items-center gap-2 pl-2">
+                    <label class="p-2 text-slate-400 hover:text-primary-600 cursor-pointer transition-colors relative">
+                      <i class="fas fa-paperclip text-sm"></i>
+                      <input type="file" multiple @change="handleCommentFiles" class="hidden">
+                      <span v-if="commentFiles.length" class="absolute -top-1 -right-1 w-4 h-4 bg-primary-600 text-[8px] text-white rounded-full flex items-center justify-center font-black animate-bounce">
+                        {{ commentFiles.length }}
+                      </span>
+                    </label>
+                    <div v-if="commentFiles.length" class="text-[9px] font-black text-primary-600 uppercase tracking-tighter">
+                      {{ commentFiles.length }} archivos seleccionados
+                    </div>
+                  </div>
+
+                  <button 
+                    @click="sendComment"
+                    :disabled="sendingComment || (!commentText.trim() && !commentFiles.length)"
+                    class="px-5 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:opacity-30 text-white font-black rounded-xl text-xs flex items-center gap-3 shadow-md transition-all active:scale-95 shadow-primary-200"
+                  >
+                     <span v-if="sendingComment">Enviando...</span>
+                     <span v-else>Enviar Respuesta</span>
+                     <i v-if="sendingComment" class="fas fa-spinner fa-spin text-[10px]"></i>
+                     <i v-else class="fas fa-paper-plane text-[10px]"></i>
+                  </button>
+                </div>
+              </div>
             </div>
-         </div>
        </div>
     </div>
   </div>
@@ -242,6 +297,52 @@ const tickets = ref<any[]>([])
 const loading = ref(false)
 const selectedTicket = ref<any>(null)
 const activeTab = ref<'create' | 'history'>('create')
+
+// Comment Logic
+const commentText = ref('')
+const commentFiles = ref<File[]>([])
+const sendingComment = ref(false)
+
+const handleCommentFiles = (e: any) => {
+  const files = Array.from(e.target.files) as File[]
+  commentFiles.value = [...commentFiles.value, ...files]
+}
+
+const sendComment = async () => {
+  if (!selectedTicket.value || (!commentText.value.trim() && !commentFiles.value.length) || sendingComment.value) return
+  
+  sendingComment.value = true
+  try {
+    const formData = new FormData()
+    formData.append('text', commentText.value)
+    formData.append('isInternal', 'false')
+    commentFiles.value.forEach(file => {
+      formData.append('files', file)
+    })
+
+    const response = await ticketService.addComment(selectedTicket.value._id, formData)
+    
+    if (response) {
+      // Re-fetch ticket to get updated comments with author info
+      const updatedTicket = await ticketService.getById(selectedTicket.value._id)
+      if (updatedTicket) {
+        selectedTicket.value = updatedTicket
+        // Also update in the list
+        const idx = tickets.value.findIndex(t => t._id === selectedTicket.value._id)
+        if (idx !== -1) tickets.value[idx] = updatedTicket
+      } else {
+        // Fallback: just push the comment (might have limited info)
+        selectedTicket.value.comments.push(response)
+      }
+      commentText.value = ''
+      commentFiles.value = []
+    }
+  } catch (err) {
+    console.error('Error sending comment:', err)
+  } finally {
+    sendingComment.value = false
+  }
+}
 
 const loadData = async () => {
     if (!authStore.isAuthenticated) return

@@ -41,14 +41,9 @@
             class="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
           >
             <option value="" class="bg-gray-700">Selecciona un rol</option>
-            <option value="Administrador" class="bg-gray-700">Administrador</option>
-            <option value="Manager" class="bg-gray-700">Manager</option>
-            <option value="Vendedor" class="bg-gray-700">Vendedor</option>
-            <option value="Soporte" class="bg-gray-700">Soporte</option>
-            <option value="Desarrollador" class="bg-gray-700">Desarrollador</option>
-            <option value="Marketing" class="bg-gray-700">Marketing</option>
-            <option value="Contabilidad" class="bg-gray-700">Contabilidad</option>
-            <option value="Recursos Humanos" class="bg-gray-700">Recursos Humanos</option>
+            <option v-for="role in roles" :key="role._id" :value="role.name" class="bg-gray-700">
+              {{ role.name }}
+            </option>
           </select>
         </div>
 
@@ -96,8 +91,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { teamService, type TeamMember } from '../services/teamService'
+import { rolesService, type Role } from '../services/rolesService'
 
 // Props
 interface Props {
@@ -114,6 +110,7 @@ const emit = defineEmits<{
 
 // Reactive state
 const loading = ref(false)
+const roles = ref<Role[]>([])
 const form = ref({
   name: '',
   role: '',
@@ -191,6 +188,15 @@ const handleSubmit = async () => {
     loading.value = false
   }
 }
+
+// Hooks
+onMounted(async () => {
+  try {
+    roles.value = await rolesService.getAll()
+  } catch (error) {
+    console.error('Error loading roles:', error)
+  }
+})
 
 // Watchers
 watch(() => props.member, () => {

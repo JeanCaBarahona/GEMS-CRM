@@ -10,8 +10,8 @@
 
       <!-- Form -->
       <form @submit.prevent="handleSubmit" class="space-y-8">
-        <!-- User Info Row -->
-        <div v-if="!authStore.isAuthenticated" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- User Info Row - Always visible for clarity -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 animate-fade-in">
           <div class="space-y-3">
             <label class="block text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Tu Nombre</label>
             <input 
@@ -187,15 +187,15 @@
          ID: <span class="text-primary-600 font-mono ml-1">#{{ ticketId }}</span>
        </p>
        
-       <p class="text-base text-slate-500 font-medium max-w-sm mx-auto leading-relaxed mb-12">
-         Hemos asignado a un experto. Recibirás actualizaciones en tiempo real via email.
+       <p class="text-base text-slate-500 font-medium max-w-sm mx-auto leading-relaxed mb-8">
+         Hemos asignado a <strong class="text-slate-800">{{ assignedAgentName }}</strong> para atender tu solicitud. Recibirás actualizaciones en tiempo real via email.
        </p>
 
-       <div class="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
+       <div class="flex flex-col sm:flex-row gap-4 w-full max-w-sm pb-8">
          <button @click="resetForm" class="flex-1 px-8 py-4 bg-white text-slate-800 border-2 border-slate-100 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 hover:border-slate-200 transition-all">
            Nuevo Reporte
          </button>
-         <router-link to="/support" class="flex-1 px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all shadow-lg shadow-slate-200">
+         <router-link v-if="authStore.isAuthenticated" to="/support" class="flex-1 px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all shadow-lg shadow-slate-200">
            Ver Mis Tickets
          </router-link>
        </div>
@@ -215,6 +215,7 @@ const authStore = useAuthStore()
 const loading = ref(false)
 const submitted = ref(false)
 const ticketId = ref('')
+const assignedAgentName = ref('un experto')
 const dragOver = ref(false)
 const selectedFiles = ref<File[]>([])
 
@@ -307,6 +308,13 @@ const handleSubmit = async () => {
     const response = await ticketService.createPublic(submissionData)
     if (response.success && response.data) {
       ticketId.value = response.data.ticketNumber
+      
+      if (response.data.assignedTo && typeof response.data.assignedTo === 'object') {
+        assignedAgentName.value = response.data.assignedTo.name || 'un experto'
+      } else {
+        assignedAgentName.value = 'un experto'
+      }
+
       submitted.value = true
       showSuccess('Ticket levantado con éxito')
     } else {

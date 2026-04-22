@@ -277,9 +277,23 @@
                     <span :class="isTimerActive(activity) ? 'text-red-500' : ''">{{ formatTime(activity.timeSpent) }}</span>
                     <span v-if="activity.estimatedTime">/ {{ activity.estimatedTime }}</span>
                     
-                    <button @click.stop="promptAddManualTime(activity)" class="ml-0.5 w-5 h-5 rounded-md flex items-center justify-center bg-slate-100 text-slate-500 hover:bg-primary-100 hover:text-primary-600 transition-all opacity-0 group-hover:opacity-100" title="Añadir minutos (Manual)">
-                      <i class="fas fa-plus text-[10px]"></i>
-                    </button>
+                    <div class="relative">
+                      <button 
+                        @click.stop="activeTimePopover = activeTimePopover === activity._id ? null : activity._id" 
+                        class="ml-0.5 w-5 h-5 rounded-md flex items-center justify-center bg-slate-100 text-slate-500 hover:bg-primary-100 hover:text-primary-600 transition-all opacity-0 group-hover:opacity-100" 
+                        title="Añadir minutos (Manual)"
+                      >
+                        <i class="fas fa-plus text-[10px]"></i>
+                      </button>
+                      
+                      <!-- Popover manual time -->
+                      <div v-if="activeTimePopover === activity._id" class="absolute bottom-full right-0 mb-2 z-50 bg-white/90 backdrop-blur-md border border-slate-200 rounded-xl shadow-xl p-1.5 flex flex-col gap-1 min-w-[80px] animate-fade-in">
+                        <button v-for="m in [15, 30, 60, 120]" :key="m" @click.stop="addManualTime(activity, m)" class="px-2 py-1 hover:bg-primary-50 hover:text-primary-600 rounded-lg text-[10px] font-black transition-colors flex items-center justify-between gap-2">
+                          <span>+{{ m >= 60 ? m/60 + 'h' : m + 'm' }}</span>
+                          <i class="fas fa-plus opacity-30 text-[8px]"></i>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </td>
@@ -1038,9 +1052,22 @@
                   <span class="font-bold" :class="isTimerActive(activity) ? 'text-red-600' : ''">{{ formatTime(activity.timeSpent) }}</span>
                   <span v-if="activity.estimatedTime" class="opacity-60">/ {{ activity.estimatedTime }}</span>
                   
-                  <button @click.stop="promptAddManualTime(activity)" class="ml-0.5 w-4 h-4 rounded-full flex items-center justify-center bg-slate-200 text-slate-500 hover:bg-primary-100 hover:text-primary-600 transition-all opacity-0 group-hover/timer:opacity-100" title="Añadir minutos (Manual)">
-                    <i class="fas fa-plus text-[8px]"></i>
-                  </button>
+                  <div class="relative">
+                    <button 
+                      @click.stop="activeTimePopover = activeTimePopover === activity._id ? null : activity._id" 
+                      class="ml-0.5 w-4 h-4 rounded-full flex items-center justify-center bg-slate-200 text-slate-500 hover:bg-primary-100 hover:text-primary-600 transition-all opacity-0 group-hover/timer:opacity-100" 
+                      title="Añadir minutos (Manual)"
+                    >
+                      <i class="fas fa-plus text-[8px]"></i>
+                    </button>
+                    
+                    <!-- Popover manual time (Kanban) -->
+                    <div v-if="activeTimePopover === activity._id" class="absolute bottom-full right-0 mb-2 z-50 bg-white/90 backdrop-blur-md border border-slate-200 rounded-xl shadow-xl p-1.5 flex flex-col gap-1 min-w-[70px] animate-fade-in">
+                      <button v-for="m in [15, 30, 60, 120]" :key="m" @click.stop="addManualTime(activity, m)" class="px-2 py-1 hover:bg-primary-50 hover:text-primary-600 rounded-lg text-[9px] font-black transition-colors flex items-center justify-between gap-2">
+                        <span>+{{ m >= 60 ? m/60 + 'h' : m + 'm' }}</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2553,21 +2580,19 @@ const toggleTimer = async (activity: any) => {
   }
 }
 
-const promptAddManualTime = async (activity: any) => {
-  const minsStr = prompt('¿Cuántos minutos extra deseas añadir?')
-  if (!minsStr) return
-  const mins = parseInt(minsStr)
-  if (isNaN(mins) || mins <= 0) return
-  
+const activeTimePopover = ref<string | null>(null)
+
+const addManualTime = async (activity: any, mins: number) => {
   try {
     const updated = await activityService.toggleTimer(activity._id, 'add_manual', authStore.user!._id, mins)
     const index = activities.value.findIndex(a => a._id === updated._id)
     if (index !== -1) {
       activities.value[index] = updated
     }
-    showSuccess(`${mins} minutos añadidos exitosamente`)
+    showSuccess(`${mins}m añadidos`)
+    activeTimePopover.value = null
   } catch (error) {
-    showError('Error al añadir tiempo manual')
+    showError('Error al añadir tiempo')
   }
 }
 

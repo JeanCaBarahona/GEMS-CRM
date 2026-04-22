@@ -1,170 +1,200 @@
 <template>
-  <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50" @click="closeOnOutsideClick">
-    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md max-h-[90vh] overflow-y-auto animate-fade-in" @click.stop>
+  <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-in fade-in duration-300" @click="closeOnOutsideClick">
+    <div class="bg-white rounded-[2.5rem] shadow-2xl border border-slate-200/60 w-full max-w-3xl max-h-[95vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-300" @click.stop>
       <!-- Header -->
-      <div class="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50 rounded-t-2xl">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 bg-primary-50 rounded-xl flex items-center justify-center border border-primary-100">
-            <i :class="isEditing ? 'fas fa-edit text-primary-600' : 'fas fa-plus text-primary-600'" class="text-sm"></i>
+      <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-slate-50/30">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-primary-50 rounded-[1rem] flex items-center justify-center border border-primary-100 shadow-sm transition-transform hover:rotate-3">
+            <i :class="isEditing ? 'fas fa-pen-nib text-primary-500' : 'fas fa-rocket text-primary-500'" class="text-xl"></i>
           </div>
-          <h2 class="text-base font-black text-slate-800">
-            {{ isEditing ? 'Editar Actividad' : 'Nueva Actividad' }}
-          </h2>
+          <div>
+            <h2 class="text-2xl font-black text-slate-800 tracking-tight">
+              {{ isEditing ? 'Refinar Tarea' : 'Lanzar Nueva Tarea' }}
+            </h2>
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-primary-400 animate-pulse"></span>
+              Gestión de Productividad Customer Touch
+            </p>
+          </div>
         </div>
         <button
           type="button"
           @click="$emit('close')"
-          class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-lg transition-colors"
+          class="w-12 h-12 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-2xl transition-all border border-transparent hover:border-rose-100"
         >
-          <i class="fas fa-times"></i>
+          <i class="fas fa-times text-xl"></i>
         </button>
       </div>
 
-      <div class="p-5">
-        <form @submit.prevent="handleSubmit" class="space-y-4">
-          <!-- Título -->
-          <div>
-            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-              Título <span class="text-red-500">*</span>
-            </label>
-            <input
-              v-model="form.title"
-              type="text"
-              required
-              class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors text-sm font-medium"
-              placeholder="Título de la actividad"
-            />
-          </div>
+      <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
+        <form @submit.prevent="handleSubmit" class="flex flex-col h-full">
+          <div class="space-y-6 flex-1">
+            
+            <!-- Título -->
+            <div class="space-y-2">
+              <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Título de la Actividad</label>
+              <input
+                v-model="form.title"
+                type="text"
+                required
+                class="w-full px-5 py-3.5 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all text-sm font-bold shadow-sm placeholder-slate-300"
+                placeholder="Ej: Implementar pasarela de pagos..."
+              />
+            </div>
 
-          <!-- Descripción -->
-          <div>
-            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-              Descripción
-            </label>
-            <textarea
-              v-model="form.description"
-              rows="3"
-              class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors resize-none text-sm"
-              placeholder="Descripción de la actividad"
-            ></textarea>
-          </div>
+            <!-- Fila 1: Tipo, Prioridad, Fechas -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div class="space-y-2">
+                <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Tipo</label>
+                <CustomSelect
+                  v-model="form.type"
+                  :options="[
+                    { value: 'task', label: 'Tarea Estándar' },
+                    { value: 'bug', label: 'Bug / Error' },
+                    { value: 'feature', label: 'Mejora / Feature' },
+                    { value: 'user-story', label: 'Historia de Usuario' }
+                  ]"
+                />
+              </div>
+              <div class="space-y-2">
+                <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Prioridad</label>
+                <CustomSelect
+                  v-model="form.priority"
+                  :options="[
+                    { value: 'low', label: 'Baja (Mantenimiento)' },
+                    { value: 'medium', label: 'Media (Normal)' },
+                    { value: 'high', label: 'Alta (Importante)' },
+                    { value: 'urgent', label: 'Crítica (Urgente)' }
+                  ]"
+                />
+              </div>
+              <div class="space-y-2">
+                <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Inicio</label>
+                <div class="relative group">
+                  <i class="fas fa-calendar-alt absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary-400 transition-colors"></i>
+                  <input
+                    v-model="form.date"
+                    type="datetime-local"
+                    class="w-full pl-10 pr-4 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all text-xs font-bold shadow-sm"
+                  />
+                </div>
+              </div>
+              <div class="space-y-2">
+                <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Entrega</label>
+                <div class="relative group">
+                  <i class="fas fa-flag-checkered absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary-400 transition-colors"></i>
+                  <input
+                    v-model="form.dueDate"
+                    type="datetime-local"
+                    class="w-full pl-10 pr-4 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all text-xs font-bold shadow-sm"
+                  />
+                </div>
+              </div>
+            </div>
 
-          <!-- Cliente -->
-          <div>
-            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-              Cliente <span class="text-red-500">*</span>
-            </label>
-            <select
-              v-model="form.clientId"
-              required
-              class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors text-sm font-medium appearance-none"
-            >
-              <option value="">Seleccionar cliente</option>
-              <option v-for="client in clients" :key="client._id" :value="client._id">
-                {{ client.name }} - {{ client.company }}
-              </option>
-            </select>
-          </div>
+            <!-- Fila 2: Cliente/Equipo y Detalles -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+              <!-- Columna Izquierda -->
+              <div class="space-y-4">
+                <div class="space-y-2">
+                  <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Cliente / Proyecto</label>
+                  <CustomSelect
+                    v-model="form.clientId"
+                    :options="[
+                      { value: '', label: 'Interno GEMS' },
+                      ...clients.map(client => ({ value: client._id, label: client.name }))
+                    ]"
+                  />
+                </div>
+                <div class="space-y-2">
+                  <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Equipo Responsable</label>
+                  <div class="bg-slate-50/50 border border-slate-200 rounded-2xl p-3 shadow-inner h-[210px] flex flex-col overflow-hidden">
+                    <AssignedUsersSelector
+                      v-model="form.assignedTo"
+                      :teamMembers="teamMembers"
+                    />
+                  </div>
+                </div>
+              </div>
 
-          <!-- Asignar a -->
-          <div>
-            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-              Asignar a
-            </label>
-            <AssignedUsersSelector
-              v-model="form.assignedTo"
-              :teamMembers="props.teamMembers"
-            />
-          </div>
+              <!-- Columna Derecha: Descripción y Tiempo -->
+              <div class="space-y-4">
+                <div class="space-y-2">
+                  <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Detalles y Notas</label>
+                  <textarea
+                    v-model="form.description"
+                    rows="2"
+                    class="w-full px-5 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 placeholder-slate-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all resize-none text-sm font-medium leading-relaxed shadow-sm custom-scrollbar"
+                    placeholder="Describe los pasos, criterios de aceptación o contexto..."
+                  ></textarea>
+                </div>
 
-          <!-- Prioridad -->
-          <div>
-            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-              Prioridad
-            </label>
-            <div class="grid grid-cols-4 gap-2">
-              <button
-                type="button"
-                v-for="p in [
-                  { value: 'low', label: 'Baja', cls: 'bg-blue-100 text-blue-700 border-blue-300' },
-                  { value: 'medium', label: 'Media', cls: 'bg-amber-100 text-amber-700 border-amber-300' },
-                  { value: 'high', label: 'Alta', cls: 'bg-orange-100 text-orange-700 border-orange-300' },
-                  { value: 'urgent', label: 'Urgente', cls: 'bg-red-100 text-red-700 border-red-300' }
-                ]"
-                :key="p.value"
-                @click="form.priority = p.value as 'low' | 'medium' | 'high' | 'urgent'"
-                class="py-2 px-1 rounded-lg text-xs font-bold transition-all border"
-                :class="form.priority === p.value ? p.cls : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'"
-              >
-                {{ p.label }}
-              </button>
+                <!-- Tiempo Estimado -->
+                <div class="space-y-2 shrink-0">
+                  <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1 flex justify-between">
+                    <span>Tiempo Estimado</span>
+                    <button type="button" @click="form.estimatedTime = ''" class="text-primary-500 hover:text-primary-600">Limpiar</button>
+                  </label>
+                  <div class="grid grid-cols-4 gap-2">
+                    <button
+                      v-for="time in [
+                        { val: '15m', label: '15m' },
+                        { val: '30m', label: '30m' },
+                        { val: '1h', label: '1h' },
+                        { val: '2h', label: '2h' },
+                        { val: '4h', label: '4h' },
+                        { val: '8h', label: '8h' }
+                      ]"
+                      :key="time.val"
+                      type="button"
+                      @click="form.estimatedTime = time.val"
+                      class="px-1 py-2 rounded-xl text-[11px] font-black tracking-wider uppercase transition-all border shadow-sm flex items-center justify-center gap-1"
+                      :class="form.estimatedTime === time.val 
+                        ? 'bg-primary-500 text-white border-primary-600 ring-2 ring-primary-500/20 shadow-primary-500/20' 
+                        : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-700'"
+                    >
+                      <i class="fas fa-clock opacity-70 hidden sm:inline-block"></i>
+                      {{ time.label }}
+                    </button>
+                    
+                    <div class="col-span-2 relative group">
+                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-pen text-[10px] text-slate-400 group-focus-within:text-primary-500 transition-colors"></i>
+                      </div>
+                      <input 
+                        v-model="form.estimatedTime"
+                        type="text"
+                        placeholder="Ej: 3.5h"
+                        class="w-full h-full pl-8 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 text-[11px] font-black focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all shadow-sm placeholder-slate-300"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- Estado -->
-          <div>
-            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-              Estado
-            </label>
-            <select
-              v-model="form.status"
-              class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors text-sm font-medium appearance-none"
-            >
-              <option value="pending">Pendiente</option>
-              <option value="in-progress">En Proceso</option>
-              <option value="completed">Completada</option>
-              <option value="cancelled">Cancelada</option>
-            </select>
-          </div>
-
-          <!-- Fecha de vencimiento -->
-          <div>
-            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-              Fecha de vencimiento
-            </label>
-            <input
-              v-model="form.dueDate"
-              type="datetime-local"
-              class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors text-sm"
-            />
-          </div>
-
-          <!-- Tiempo estimado -->
-          <div>
-            <TimeEstimateInput v-model="form.estimatedTime" />
-          </div>
-
-          <!-- Fecha de la actividad -->
-          <div>
-            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-              Fecha de la actividad <span class="text-red-500">*</span>
-            </label>
-            <input
-              v-model="form.date"
-              type="datetime-local"
-              required
-              class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors text-sm"
-            />
-          </div>
-
-          <!-- Botones -->
-          <div class="flex gap-3 pt-4 border-t border-slate-100">
-            <button
-              type="button"
-              @click="$emit('close')"
-              class="flex-1 px-4 py-2.5 bg-slate-50 text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors font-bold text-sm"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              :disabled="loading"
-              class="flex-1 px-4 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-sm flex items-center justify-center gap-2"
-            >
-              <i v-if="loading" class="fas fa-spinner fa-spin"></i>
-              <i v-else :class="isEditing ? 'fas fa-save' : 'fas fa-plus'"></i>
-              {{ loading ? 'Guardando...' : (isEditing ? 'Actualizar' : 'Crear') }}
-            </button>
+          <!-- Footer Actions -->
+          <div class="flex items-center justify-end pt-6 border-t border-slate-100 mt-6">
+            
+            <div class="flex items-center gap-4">
+              <button
+                type="button"
+                @click="$emit('close')"
+                class="px-8 py-4 bg-white text-slate-500 hover:text-slate-800 border border-slate-200 rounded-2xl transition-all font-black text-[11px] uppercase tracking-widest hover:bg-slate-50 active:scale-95 shadow-sm"
+              >
+                Descartar
+              </button>
+              <button
+                type="submit"
+                :disabled="loading"
+                class="px-12 py-5 bg-primary-500 text-white rounded-[1.5rem] hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-black text-xs uppercase tracking-[0.15em] shadow-xl shadow-primary-200 flex items-center justify-center gap-4 active:scale-95 group"
+              >
+                <div v-if="loading" class="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                <i v-else :class="isEditing ? 'fas fa-save' : 'fas fa-paper-plane'" class="group-hover:translate-x-1 transition-transform"></i>
+                {{ loading ? 'Sincronizando...' : (isEditing ? 'Guardar Cambios' : 'Lanzar Tarea') }}
+              </button>
+            </div>
           </div>
         </form>
       </div>
@@ -175,25 +205,32 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue'
 import AssignedUsersSelector from '../AssignedUsersSelector.vue'
+import CustomSelect from '../ui/CustomSelect.vue'
 import { activityService } from '../../services/activityService'
-import type { ActivityData } from '../../services/activityService'
+import { useBoardsStore } from '../../stores/boards'
+import { useNotifications } from '../../composables/useNotifications'
 import type { TeamMember, Client } from '../../types'
-import TimeEstimateInput from './TimeEstimateInput.vue'
+
+const boardsStore = useBoardsStore()
+const { showSuccess, showError } = useNotifications()
 
 interface Props {
-  activity?: ActivityData | null
+  activity?: any | null
   clients: Client[]
   teamMembers: TeamMember[]
+  initialBoardStatus?: string
+  boardId?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   activity: null,
-  teamMembers: () => []
+  teamMembers: () => [],
+  initialBoardStatus: 'backlog'
 })
 
 const emit = defineEmits<{
   close: []
-  saved: [activity: ActivityData]
+  saved: [activity: any]
 }>()
 
 const loading = ref(false)
@@ -205,72 +242,68 @@ const form = reactive({
   description: '',
   clientId: '',
   assignedTo: [] as string[],
-  priority: 'medium' as 'low' | 'medium' | 'high' | 'urgent',
-  status: 'pending' as 'pending' | 'completed' | 'cancelled' | 'in-progress' | 'overdue',
+  priority: 'medium',
+  status: 'pending',
+  type: 'task',
+  date: '',
   dueDate: '',
-  estimatedTime: '',
-  date: ''
+  estimatedTime: ''
 })
-// ...eliminado: helpers de selección múltiple, ahora en AssignedUsersSelector
 
-// Poblar el formulario si estamos editando
 const populateForm = () => {
   if (props.activity) {
-    form.title = props.activity.title
+    form.title = props.activity.title || ''
     form.description = props.activity.description || ''
-    form.clientId = props.activity.clientId
+    form.clientId = props.activity.clientId?._id || props.activity.clientId || ''
     form.assignedTo = Array.isArray(props.activity.assignedTo)
-      ? props.activity.assignedTo
-      : props.activity.assignedTo ? [props.activity.assignedTo] : []
+      ? props.activity.assignedTo.map((u: any) => typeof u === 'object' ? u._id : u)
+      : []
     form.priority = props.activity.priority || 'medium'
-    form.status = props.activity.status
-    form.dueDate = props.activity.dueDate ? formatDateTimeLocal(props.activity.dueDate) : ''
+    form.status = props.activity.status || 'pending'
+    form.type = props.activity.type || 'task'
     form.estimatedTime = props.activity.estimatedTime || ''
-    form.date = formatDateTimeLocal(props.activity.date)
+    form.date = props.activity.date ? formatDateTimeLocal(props.activity.date) : new Date().toISOString().slice(0, 16)
+    form.dueDate = props.activity.dueDate ? formatDateTimeLocal(props.activity.dueDate) : ''
   } else {
-    // Para nueva actividad, establecer fecha actual
     form.date = new Date().toISOString().slice(0, 16)
   }
 }
 
-const formatDateTimeLocal = (dateString: string) => {
+const formatDateTimeLocal = (dateString: any) => {
+  if (!dateString) return ''
   return new Date(dateString).toISOString().slice(0, 16)
 }
 
 const handleSubmit = async () => {
   loading.value = true
   try {
-    const activityData = {
+    const taskData = {
       title: form.title,
       description: form.description,
-      clientId: form.clientId,
-      assignedTo: (form.assignedTo || []).filter(id => typeof id === 'string' && id),
+      clientId: form.clientId || undefined,
+      assignedTo: form.assignedTo,
       priority: form.priority,
       status: form.status,
-      dueDate: form.dueDate || undefined,
-      estimatedTime: form.estimatedTime || undefined,
-      date: form.date
+      type: form.type,
+      estimatedTime: form.estimatedTime,
+      date: form.date,
+      dueDate: form.dueDate || undefined
     }
 
-    console.log('🔍 Form data before submit:', form)
-    console.log('🔍 Activity data to send:', activityData)
-    console.log('🔍 AssignedTo value:', form.assignedTo)
-
-    let savedActivity: ActivityData
+    let savedData: any
     
     if (isEditing.value && props.activity?._id) {
-      savedActivity = await activityService.update(props.activity._id, activityData)
+      savedData = await activityService.update(props.activity._id, taskData)
+      showSuccess('Actividad actualizada')
     } else {
-      savedActivity = await activityService.create(activityData)
+      savedData = await activityService.create(taskData)
+      showSuccess('Actividad creada con éxito')
     }
     
-    console.log('✅ Saved activity:', savedActivity)
-    
-    emit('saved', savedActivity)
+    emit('saved', savedData)
     emit('close')
   } catch (error) {
-    console.error('Error saving activity:', error)
-    alert('Error al guardar la actividad. Por favor intenta de nuevo.')
+    showError('Error al sincronizar la tarea')
   } finally {
     loading.value = false
   }
@@ -283,9 +316,66 @@ const closeOnOutsideClick = (event: Event) => {
 }
 
 onMounted(() => {
-  console.log('📝 ActivityFormModal mounted')
-  console.log('👥 Team members received:', props.teamMembers)
-  console.log('🔢 Team members count:', props.teamMembers.length)
   populateForm()
 })
 </script>
+
+<style scoped>
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #E2E8F0;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #CBD5E1;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes zoom-in-95 {
+  from { transform: scale(0.95); }
+  to { transform: scale(1); }
+}
+
+@keyframes slide-in-from-top-2 {
+  from { transform: translateY(-0.5rem); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-in {
+  animation-fill-mode: forwards;
+}
+.fade-in {
+  animation-name: fade-in;
+}
+.zoom-in-95 {
+  animation-name: zoom-in-95;
+}
+.slide-in-from-top-2 {
+  animation-name: slide-in-from-top-2;
+}
+
+/* Ocultar flecha nativa en IE/Edge */
+select::-ms-expand {
+  display: none;
+}
+
+/* Personalización básica para inputs de fecha */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+  filter: invert(0.5);
+  transition: opacity 0.2s;
+}
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+</style>

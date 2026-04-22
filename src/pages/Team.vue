@@ -1,12 +1,7 @@
 <template>
   <div class="min-h-screen bg-[#F8FAFC] p-8 font-['Inter',sans-serif]">
-    
-    <!-- Top Bar: Directory Header -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-      <div>
-        <h1 class="text-3xl font-black text-slate-900 tracking-tight">Directorio del Equipo</h1>
-        <p class="text-sm text-slate-500 font-medium">Gestión de capital humano, roles y departamentos.</p>
-      </div>
+    <!-- Top Bar Controls -->
+    <div class="flex flex-col md:flex-row md:items-center justify-end gap-6 mb-10">
       
       <div class="flex items-center gap-4">
         <!-- Stats Mini (Integrated) -->
@@ -24,6 +19,49 @@
             Agregar Miembro
           </button>
         </PermissionGuard>
+      </div>
+    </div>
+
+    <!-- Department Leaders Overview -->
+    <div class="grid grid-cols-3 gap-4 mb-6">
+      <div
+        v-for="dept in ['TI', 'Comercial', 'Marketing']"
+        :key="dept"
+        class="bg-white border border-slate-100 rounded-[2rem] p-5 shadow-sm hover:shadow-md transition-all"
+      >
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center"
+              :class="dept === 'TI' ? 'bg-indigo-50 text-indigo-500' : dept === 'Comercial' ? 'bg-emerald-50 text-emerald-500' : 'bg-orange-50 text-orange-500'"
+            >
+              <i :class="dept === 'TI' ? 'fas fa-laptop-code' : dept === 'Comercial' ? 'fas fa-handshake' : 'fas fa-bullhorn'"></i>
+            </div>
+            <span class="text-xs font-black text-slate-700 uppercase tracking-widest">{{ dept }}</span>
+          </div>
+          <span class="text-[10px] font-black text-slate-400">
+            {{ teamStore.members.filter(m => m.department === dept).length }} miembros
+          </span>
+        </div>
+        <!-- Leaders -->
+        <div class="space-y-2">
+          <div
+            v-for="leader in teamStore.members.filter(m => m.department === dept && m.departmentRole === 'leader')"
+            :key="leader._id"
+            class="flex items-center gap-2 p-2 bg-amber-50 border border-amber-100 rounded-xl"
+          >
+            <div class="w-7 h-7 bg-amber-400 rounded-full flex items-center justify-center text-[9px] font-black text-white">
+              {{ leader.name?.charAt(0) }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-[11px] font-black text-slate-700 truncate">{{ leader.name }}</p>
+            </div>
+            <i class="fas fa-crown text-amber-400 text-[10px]"></i>
+          </div>
+          <p v-if="!teamStore.members.filter(m => m.department === dept && (m as any).departmentRole === 'leader').length"
+            class="text-[10px] text-slate-400 italic text-center py-1">
+            Sin líder asignado
+          </p>
+        </div>
       </div>
     </div>
 
@@ -68,7 +106,11 @@
         <div class="flex items-center gap-6 min-w-[300px]">
            <div class="relative">
               <UserAvatar :name="member.name" :photo="member.photo" size="lg" class="w-14 h-14 rounded-2xl shadow-inner" />
-              <div v-if="member.isActive" class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full"></div>
+            <!-- Indicator Leader -->
+            <div v-if="member.departmentRole === 'leader'" class="absolute -top-1.5 -right-1.5 w-6 h-6 bg-amber-400 border-2 border-white rounded-full flex items-center justify-center shadow-md" title="Líder de Departamento">
+              <i class="fas fa-crown text-white" style="font-size: 7px"></i>
+            </div>
+            <div v-if="member.isActive" class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full"></div>
            </div>
            <div>
               <h3 class="text-sm font-black text-slate-800 tracking-tight group-hover:text-violet-600 transition-colors">{{ member.name }}</h3>
@@ -112,17 +154,49 @@
            >
              <i :class="member.isActive ? 'fas fa-user-slash' : 'fas fa-user-check'" class="text-xs"></i>
            </button>
+           <button 
+             v-if="authStore.user?.role === 'admin'"
+             @click="permanentDeleteMember(member)" 
+             class="w-10 h-10 bg-slate-50 hover:bg-red-600 text-slate-400 hover:text-white rounded-xl flex items-center justify-center transition-all"
+             title="Eliminar Permanentemente"
+           >
+             <i class="fas fa-trash-alt text-xs"></i>
+           </button>
         </div>
       </div>
 
       <!-- Empty State -->
-      <div v-if="!filteredMembers.length" class="py-32 flex flex-col items-center justify-center text-center opacity-30">
-          <div class="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center text-slate-300 mb-6">
-             <i class="fas fa-users-slash text-3xl"></i>
-          </div>
-          <h3 class="text-xl font-black text-slate-900 mb-1">Cero Resultados</h3>
-          <p class="text-sm font-medium text-slate-500">No encontramos miembros que coincidan con tu búsqueda.</p>
-      </div>
+    </div>
+    
+    <!-- Pagination Controls (Premium) -->
+    <div v-if="pagination.pages > 1" class="mt-12 flex items-center justify-center gap-2">
+       <button 
+         @click="changePage(pagination.page - 1)"
+         :disabled="pagination.page === 1"
+         class="w-12 h-12 bg-white border border-slate-100 rounded-2xl flex items-center justify-center text-slate-400 hover:text-violet-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
+       >
+         <i class="fas fa-chevron-left"></i>
+       </button>
+       
+       <div class="flex items-center gap-2 bg-white border border-slate-100 p-1.5 rounded-2xl shadow-sm">
+          <button 
+            v-for="p in pagination.pages" 
+            :key="p"
+            @click="changePage(p)"
+            :class="p === pagination.page ? 'bg-violet-600 text-white' : 'text-slate-400 hover:bg-slate-50'"
+            class="w-9 h-9 rounded-xl text-xs font-black transition-all"
+          >
+            {{ p }}
+          </button>
+       </div>
+
+       <button 
+         @click="changePage(pagination.page + 1)"
+         :disabled="pagination.page === pagination.pages"
+         class="w-12 h-12 bg-white border border-slate-100 rounded-2xl flex items-center justify-center text-slate-400 hover:text-violet-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
+       >
+         <i class="fas fa-chevron-right"></i>
+       </button>
     </div>
 
     <!-- Create/Edit Modal (Premium) -->
@@ -160,18 +234,45 @@
                       <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Rol Operativo</label>
                       <select v-model="formData.role" required class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-violet-500/5">
                         <option value="admin">Administrador</option>
-                        <option value="manager">Gerente</option>
-                        <option value="support">Soporte GEMS</option>
-                        <option value="development">Desarrollo IT</option>
-                        <option value="fullstack">Fullstack Ninja</option>
-                        <option value="employee">Empleado General</option>
-                        <option value="viewer">Solo Lectura</option>
+                        <option value="manager">Gerencia / Dirección</option>
+                        <option value="support">Soporte Técnico</option>
+                        <option value="development">Especialista TI</option>
+                        <option value="fullstack">Ingeniero de Software</option>
+                        <option value="employee">Colaborador</option>
+                        <option value="viewer">Consultor (Lectura)</option>
                       </select>
                    </div>
                    <div class="space-y-2">
-                      <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Departamento</label>
-                      <input v-model="formData.department" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-violet-500/5">
-                   </div>
+                       <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Departamento</label>
+                       <select v-model="formData.department" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-violet-500/5">
+                         <option value="">Sin departamento</option>
+                         <option value="TI">TI</option>
+                         <option value="Comercial">Comercial</option>
+                         <option value="Marketing">Marketing</option>
+                       </select>
+                    </div>
+                    <!-- Rol dentro del departamento -->
+                    <div class="space-y-2">
+                       <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Rol en Departamento</label>
+                       <div class="grid grid-cols-2 gap-3">
+                         <button
+                           type="button"
+                           @click="formData.departmentRole = 'member'"
+                           :class="formData.departmentRole !== 'leader' ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-500 border-slate-200'"
+                           class="p-3 rounded-2xl border text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                         >
+                           <i class="fas fa-user"></i> Miembro
+                         </button>
+                         <button
+                           type="button"
+                           @click="formData.departmentRole = 'leader'"
+                           :class="formData.departmentRole === 'leader' ? 'bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-100' : 'bg-slate-50 text-slate-500 border-slate-200'"
+                           class="p-3 rounded-2xl border text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                         >
+                           <i class="fas fa-crown"></i> Líder
+                         </button>
+                       </div>
+                    </div>
                    <div class="space-y-2">
                       <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Teléfono Corporativo</label>
                       <input v-model="formData.phone" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-violet-500/5">
@@ -195,12 +296,14 @@
 import { ref, computed, onMounted, reactive } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useTeamStore } from '../stores'
+import { useNotifications } from '../composables/useNotifications'
 import PermissionGuard from '../components/PermissionGuard.vue'
 import UserAvatar from '../components/ui/UserAvatar.vue'
 import type { TeamMember } from '../types'
 
 const authStore = useAuthStore()
 const teamStore = useTeamStore()
+const { confirmDelete, showSuccess, showError } = useNotifications()
 
 // State
 const searchQuery = ref('')
@@ -210,6 +313,12 @@ const showCreateModal = ref(false)
 const showEditModal = ref(false)
 const isSubmitting = ref(false)
 const editingMember = ref<TeamMember | null>(null)
+const pagination = reactive({
+  page: 1,
+  limit: 12,
+  total: 0,
+  pages: 0
+})
 
 // Form data
 const formData = reactive({
@@ -219,7 +328,9 @@ const formData = reactive({
   role: '' as TeamMember['role'],
   department: '',
   position: '',
-  phone: ''
+  phone: '',
+  supervisor: '',
+  departmentRole: 'member' as 'member' | 'leader'
 })
 
 // Computed
@@ -259,13 +370,13 @@ const formatDate = (dateString?: string) => {
 
 const getRoleDisplayName = (role: string) => {
   const roleNames: Record<string, string> = {
-    admin: 'Admin',
-    manager: 'Gerente',
-    support: 'Soporte',
-    development: 'Desarrollo',
-    fullstack: 'Fullstack',
-    employee: 'Staff',
-    viewer: 'Viewer'
+    admin: 'Administrador',
+    manager: 'Gerencia',
+    support: 'Soporte Técnico',
+    development: 'Especialista TI',
+    fullstack: 'Ingeniero Soft.',
+    employee: 'Colaborador',
+    viewer: 'Consultor'
   }
   return roleNames[role] || role
 }
@@ -287,7 +398,7 @@ const closeModal = () => {
   showCreateModal.value = false
   showEditModal.value = false
   editingMember.value = null
-  Object.assign(formData, { name: '', email: '', password: '', role: '', department: '', position: '', phone: '' })
+  Object.assign(formData, { name: '', email: '', password: '', role: '', department: '', position: '', phone: '', supervisor: '', departmentRole: 'member' })
 }
 
 const editMember = (member: TeamMember) => {
@@ -299,7 +410,9 @@ const editMember = (member: TeamMember) => {
     role: member.role,
     department: member.department || '',
     position: member.position || '',
-    phone: member.phone || ''
+    phone: member.phone || '',
+    supervisor: member.supervisor || '',
+    departmentRole: member.departmentRole || 'member'
   })
   showEditModal.value = true
 }
@@ -333,9 +446,33 @@ const toggleMemberStatus = async (member: TeamMember) => {
   }
 }
 
+const permanentDeleteMember = async (member: TeamMember) => {
+  const confirmed = await confirmDelete(
+    `¿Estás seguro de eliminar permanentemente a ${member.name}?`,
+    "Esta acción borrará todos sus datos de la base de datos de forma irreversible."
+  )
+  
+  if (confirmed) {
+    try {
+      await teamStore.hardDeleteMember(member._id!)
+      showSuccess("Usuario eliminado permanentemente")
+    } catch (error: any) {
+      showError(error.message || "Error al eliminar usuario")
+    }
+  }
+}
+
+const changePage = (page: number) => {
+  if (page < 1 || page > pagination.pages) return
+  teamStore.fetchTeam(page, pagination.limit).then(res => {
+    if (res) Object.assign(pagination, res)
+  })
+}
+
 onMounted(async () => {
   if (authStore.canViewTeam) {
-    await teamStore.fetchTeam()
+    const res = await teamStore.fetchTeam(pagination.page, pagination.limit)
+    if (res) Object.assign(pagination, res)
   }
 })
 </script>

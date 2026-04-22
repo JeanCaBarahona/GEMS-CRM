@@ -38,20 +38,22 @@ class TicketService {
   }
 
 
-  // Get all tickets (authenticated)
-  async getAll(filters?: { status?: string; priority?: string; category?: string }): Promise<Ticket[]> {
+  // Get all tickets (authenticated) with pagination
+  async getAll(filters?: { status?: string; priority?: string; category?: string; page?: number; limit?: number }): Promise<{ success: boolean; data: Ticket[]; pagination: any }> {
     try {
       const params = new URLSearchParams();
       if (filters?.status) params.append('status', filters.status);
       if (filters?.priority) params.append('priority', filters.priority);
       if (filters?.category) params.append('category', filters.category);
+      if (filters?.page) params.append('page', filters.page.toString());
+      if (filters?.limit) params.append('limit', filters.limit.toString());
 
       const response = await fetch(`${this.baseUrl}${this.endpoint}${params.toString() ? '?' + params.toString() : ''}`, {
         method: 'GET',
         headers: this.getHeaders(),
       });
       const result = await response.json();
-      return result.success ? result.data : [];
+      return result;
     } catch (error) {
       console.error('Error fetching tickets:', error);
       throw new Error('No se pudieron cargar los tickets');
@@ -140,15 +142,15 @@ class TicketService {
     }
   }
 
-  // Get ticket history for client
-  async getClientHistory(): Promise<Ticket[]> {
+  // Get ticket history for client with pagination
+  async getClientHistory(page = 1, limit = 12): Promise<{ success: boolean; data: Ticket[]; pagination: any }> {
     try {
-      const response = await fetch(`${this.baseUrl}${this.endpoint}/client-history`, {
+      const response = await fetch(`${this.baseUrl}${this.endpoint}/client-history?page=${page}&limit=${limit}`, {
         method: 'GET',
         headers: this.getHeaders(),
       });
       const result = await response.json();
-      return result.success ? result.data : [];
+      return result;
     } catch (error) {
       console.error('Error fetching ticket history:', error);
       throw new Error('No se pudo cargar el historial de tickets');

@@ -20,8 +20,18 @@ import BoardView from './pages/BoardView.vue'
 import TasksBoard from './pages/TasksBoard.vue'
 import InternalTickets from './pages/tickets/InternalTickets.vue'
 import ExternalTickets from './pages/tickets/ExternalTickets.vue'
+import DailyScrum from './pages/DailyScrum.vue'
 
 const routes = [
+  {
+    path: '/daily-scrum',
+    name: 'DailyScrum',
+    component: DailyScrum,
+    meta: { 
+      requiresAuth: true,
+      requiredPermissions: ['view-team', 'view-activities'] 
+    }
+  },
   {
     path: '/vincular-wpp',
     name: 'WppVinculacion',

@@ -5,11 +5,11 @@
       <!-- Tabs (Left) -->
       <div class="flex bg-slate-100 p-1 rounded-lg self-start">
         <button
-          :class="[activeTab === 'clientes' ? 'bg-white shadow-sm text-primary-600' : 'text-slate-500 hover:text-slate-700', 'px-6 py-1.5 rounded-md text-sm font-bold transition-all']"
+          :class="[activeTab === 'clientes' ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700', 'px-6 py-1.5 rounded-md text-sm font-bold transition-all']"
           @click="activeTab = 'clientes'"
         >Directorio</button>
         <button
-          :class="[activeTab === 'prospectos' ? 'bg-white shadow-sm text-primary-600' : 'text-slate-500 hover:text-slate-700', 'px-6 py-1.5 rounded-md text-sm font-bold transition-all']"
+          :class="[activeTab === 'prospectos' ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700', 'px-6 py-1.5 rounded-md text-sm font-bold transition-all']"
           @click="activeTab = 'prospectos'"
         >Prospectos IA</button>
       </div>
@@ -37,7 +37,7 @@
         <PermissionGuard :permissions="['create-clients']" :fallback="false">
           <button 
             @click="showModal = true; editingClient = null; resetForm()" 
-            class="px-4 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center justify-center gap-2 text-sm font-bold shadow-sm"
+            class="px-4 py-1.5 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors flex items-center justify-center gap-2 text-sm font-bold shadow-sm"
           >
             <PlusIcon class="w-4 h-4" />
             Nuevo
@@ -91,11 +91,11 @@
               >
                 <td class="px-6 py-2 whitespace-nowrap">
                   <div class="flex items-center">
-                    <div class="w-8 h-8 bg-primary-50 rounded-full flex items-center justify-center text-primary-600 font-bold text-xs ring-1 ring-primary-100">
+                    <div class="w-8 h-8 bg-primary-50 rounded-full flex items-center justify-center text-primary font-bold text-xs ring-1 ring-primary-100">
                       {{ client.name.charAt(0).toUpperCase() }}
                     </div>
                     <div class="ml-3">
-                      <div class="text-slate-800 font-bold text-sm group-hover:text-primary-600 transition-colors">{{ client.name }}</div>
+                      <div class="text-slate-800 font-bold text-sm group-hover:text-primary transition-colors">{{ client.name }}</div>
                     </div>
                   </div>
                 </td>
@@ -197,7 +197,7 @@
           <p class="text-slate-500 text-sm mb-4">
             {{ searchTerm ? 'Intenta con otros términos' : 'Construye tu lista de contactos' }}
           </p>
-          <button @click="showModal = true; editingClient = null; resetForm()" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition flex items-center gap-2 font-bold text-sm shadow-sm">
+          <button @click="showModal = true; editingClient = null; resetForm()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition flex items-center gap-2 font-bold text-sm shadow-sm">
             <PlusIcon class="w-4 h-4" />
             Añadir
           </button>
@@ -288,7 +288,7 @@
             <button
               type="submit"
               :disabled="loading"
-              class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition flex items-center gap-2 shadow-sm text-sm font-bold disabled:opacity-50"
+              class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition flex items-center gap-2 shadow-sm text-sm font-bold disabled:opacity-50"
             >
               <span v-if="loading" class="flex items-center gap-2">
                 <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>

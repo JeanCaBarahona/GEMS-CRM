@@ -13,7 +13,7 @@
         <div class="flex items-center justify-between h-16 px-6 border-b border-slate-100">
           <div class="flex items-center gap-3">
             <img 
-              src="/ct-logo.svg" 
+              src="https://customertouchcr.com/wp-content/uploads/2025/09/logoCT.svg" 
               alt="Customer CRM Logo" 
               class="w-8 h-8"
             />

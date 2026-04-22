@@ -12,7 +12,7 @@
             class="w-10 h-10 mr-3"
           />
           <div class="text-xl font-bold text-slate-800">
-            Customer CRM
+            Customer Touch
           </div>
         </div>
       </div>
@@ -27,11 +27,11 @@
               class="flex items-center px-4 py-3 mb-1 rounded-lg text-sm font-medium transition-colors outline-none"
               :class="[
                 $route.path === item.path 
-                  ? 'bg-primary-50 text-primary-600' 
+                  ? 'bg-primary text-white shadow-lg shadow-primary-500/20' 
                   : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               ]"
             >
-              <component :is="item.icon" class="w-5 h-5 mr-3" :class="$route.path === item.path ? 'text-primary-500' : 'text-slate-400'" />
+              <component :is="item.icon" class="w-5 h-5 mr-3" :class="$route.path === item.path ? 'text-white' : 'text-slate-400'" />
               <span>{{ item.name }}</span>
             </router-link>
           </div>
@@ -52,60 +52,55 @@
       </nav>
       
       <!-- User Profile -->
-      <div class="px-4 py-4 border-t border-slate-200">
-        <div class="flex flex-col items-center gap-2">
-          <div class="flex items-center">
-            <!-- Avatar personalizado o foto personalizada -->
-            <div class="w-8 h-8 rounded-full overflow-hidden shadow-lg flex items-center justify-center bg-gray-700">
-              <!-- Foto personalizada -->
+      <div class="px-4 py-6 border-t border-slate-100 mt-auto">
+        <div class="flex flex-col gap-4">
+          <div class="flex items-center group">
+            <!-- Profile Avatar -->
+            <div class="w-10 h-10 rounded-full overflow-hidden shadow-sm flex items-center justify-center bg-slate-100 border border-slate-200 group-hover:border-primary-300 transition-colors">
+              <!-- Personalized Photo -->
               <img 
                 v-if="user?.photo"
                 :src="resolveImageUrl(user.photo)"
                 alt="Foto de perfil" 
-                class="w-full h-full object-cover"
+                class="w-full h-full object-cover transition-transform group-hover:scale-110"
                 @error="onAvatarError"
               />
-              <!-- Avatar predefinido -->
+              <!-- Predefined Avatar -->
               <img 
                 v-else-if="user?.avatar && getAvatarById(user.avatar)"
                 :src="getAvatarById(user.avatar)?.path"
                 :alt="getAvatarById(user.avatar)?.name" 
-                class="w-full h-full object-cover"
+                class="w-full h-full object-cover transition-transform group-hover:scale-110"
               />
-              <!-- Iniciales como fallback -->
-              <span v-else class="text-xs font-medium text-slate-700">{{ getUserInitials() }}</span>
+              <!-- Fallback Initials -->
+              <span v-else class="text-xs font-black text-slate-500 uppercase">{{ getUserInitials() }}</span>
             </div>
-            <div class="ml-3">
-              <p class="text-sm font-semibold text-slate-900">{{ user?.name || 'Usuario' }}</p>
-              <p class="text-xs text-slate-500">{{ getRoleDisplayName() }}</p>
+            <div class="ml-3 min-w-0">
+              <p class="text-sm font-black text-slate-800 truncate">{{ user?.name || 'Usuario' }}</p>
+              <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate">{{ getRoleDisplayName() }}</p>
             </div>
           </div>
-          <!-- Configuración de perfil -->
-          <router-link
-            to="/profile"
-            class="p-2 rounded-lg hover:bg-dark-800/60 transition-colors mt-4 group"
-            aria-label="Ver perfil"
-            style="position:relative;"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 text-gray-300 hover:text-primary-400">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <span class="absolute left-1/2 top-full mt-2 -translate-x-1/2 px-2 py-1 bg-black/80 text-xs text-white rounded opacity-0 pointer-events-none group-hover:opacity-100 group-focus:opacity-100 transition-opacity duration-200" style="white-space:nowrap;">Configurar Perfil</span>
-          </router-link>
-          
-          <!-- Cerrar sesión -->
-          <button
-            @click="$emit('logout')"
-            class="p-2 rounded-lg hover:bg-dark-800/60 transition-colors mt-2 group"
-            aria-label="Cerrar sesión"
-            style="position:relative;"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 text-gray-300 hover:text-red-400">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
-            </svg>
-            <span class="absolute left-1/2 top-full mt-2 -translate-x-1/2 px-2 py-1 bg-black/80 text-xs text-white rounded opacity-0 pointer-events-none group-hover:opacity-100 group-focus:opacity-100 transition-opacity duration-200" style="white-space:nowrap;">Cerrar sesión</span>
-          </button>
+
+          <div class="flex items-center gap-2">
+            <!-- Profile Config -->
+            <router-link
+              to="/profile"
+              class="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-slate-50 hover:bg-primary-50 text-slate-500 hover:text-primary-600 rounded-xl transition-all border border-slate-100 hover:border-primary-200 group"
+              title="Configurar Perfil"
+            >
+              <i class="fas fa-cog text-sm group-hover:rotate-90 transition-transform duration-500"></i>
+              <span class="text-[11px] font-black uppercase tracking-widest">Ajustes</span>
+            </router-link>
+            
+            <!-- Logout -->
+            <button
+              @click="$emit('logout')"
+              class="w-10 h-10 flex items-center justify-center bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-xl transition-all border border-slate-100 hover:border-rose-200"
+              title="Cerrar sesión"
+            >
+              <i class="fas fa-sign-out-alt"></i>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -181,7 +176,8 @@ import {
   FolderIcon,
   ChatBubbleLeftRightIcon,
   Squares2X2Icon,
-  TicketIcon
+  TicketIcon,
+  PresentationChartLineIcon
 } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
@@ -199,6 +195,7 @@ const navigation = [
   { name: 'Tickets', path: '/tickets', icon: TicketIcon },
   { name: 'Actividades', path: '/activities', icon: ClipboardDocumentListIcon },
   { name: 'Tableros', path: '/boards', icon: Squares2X2Icon },
+  { name: 'Daily Scrum', path: '/daily-scrum', icon: PresentationChartLineIcon },
   { name: 'Actividades por Equipo', path: '/team-activities', icon: UsersIcon },
   { name: 'Contabilidad', path: '/accounting', icon: CurrencyDollarIcon },
   { name: 'Gestión de Casos', path: '/cases', icon: FolderIcon },
@@ -219,9 +216,10 @@ const pageDescription = computed(() => {
     '/activities': 'Gestión de actividades y tareas',
     '/team-activities': 'Actividades asignadas por miembro del equipo',
     '/accounting': 'Gestión financiera unificada',
-    '/cases': 'Documentos, incidencias y seguimientos',
+    '/cases': 'Gestión estratégica y documentación wiki',
     '/team': 'Gestión del equipo de trabajo',
-    '/chat': 'Chat interno del equipo'
+    '/chat': 'Chat interno del equipo',
+    '/tickets': 'Gestión de incidencias y soporte técnico'
   }
   return descriptions[route.path] || ''
 })

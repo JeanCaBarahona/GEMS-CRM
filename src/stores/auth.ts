@@ -71,6 +71,8 @@ export const useAuthStore = defineStore('auth', () => {
   
   // Helper function to safely access permissions
   const getUserPermission = (module: keyof NonNullable<User['permissions']>, action: string) => {
+    if (user.value?.role === 'admin') return true
+    
     const permissions = user.value?.permissions
     if (!permissions) return false
     
@@ -81,6 +83,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
   
   const getUserModulePermission = (module: keyof NonNullable<User['permissions']>) => {
+    if (user.value?.role === 'admin') return true
     return user.value?.permissions?.[module] || false
   }
 

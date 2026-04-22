@@ -2,24 +2,19 @@
   <div class="min-h-screen bg-[#F8FAFC] p-8 font-['Inter',sans-serif]">
     
     <!-- Top Bar: Actions & Global Search -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-      <div>
-        <h1 class="text-3xl font-black text-slate-900 tracking-tight">Centro de Casos</h1>
-        <p class="text-sm text-slate-500 font-medium">Gestión crítica, documentación wiki y seguimiento diario.</p>
-      </div>
-      
+    <div class="flex flex-col md:flex-row md:items-center justify-end gap-6 mb-10">
       <div class="flex items-center gap-4">
         <div class="relative group">
-          <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-violet-500 transition-colors"></i>
+          <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-500 transition-colors"></i>
           <input 
             v-model="searchTerm"
             placeholder="Buscar casos o documentación..."
-            class="pl-11 pr-6 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-medium focus:ring-4 focus:ring-violet-500/5 focus:border-violet-500 transition-all w-64 md:w-80 shadow-sm"
+            class="pl-11 pr-6 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-medium focus:ring-4 focus:ring-primary-500/5 focus:border-primary-500 transition-all w-64 md:w-80 shadow-sm"
           />
         </div>
         <button 
           @click="showCreateModal = true"
-          class="px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl text-sm font-black uppercase tracking-widest shadow-lg shadow-violet-200 transition-all active:scale-95 flex items-center gap-2"
+          class="px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-2xl text-sm font-black uppercase tracking-widest shadow-lg shadow-primary-200 transition-all active:scale-95 flex items-center gap-2"
         >
           <i class="fas fa-plus"></i>
           Nuevo Caso

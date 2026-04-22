@@ -1,50 +1,50 @@
 <template>
   <div class="space-y-6">
     <!-- Header -->
-    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
-      <div class="flex flex-col md:flex-row items-center gap-6">
-        <!-- Avatar de perfil -->
-        <div class="relative">
-          <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-purple-500/50 shadow-2xl">
-            <!-- Foto personalizada de perfil -->
+    <div class="bg-white/70 backdrop-blur-md rounded-3xl p-8 border border-slate-200/60 shadow-sm transition-all duration-300">
+      <div class="flex flex-col md:flex-row items-center gap-8">
+        <!-- Profile Avatar -->
+        <div class="relative group">
+          <div class="w-36 h-36 rounded-full overflow-hidden border-4 border-white shadow-xl ring-4 ring-primary-100/50 relative">
+            <!-- Personalized photo -->
             <img
               v-if="profileData.photo"
               :src="resolvedPhotoUrl"
               :alt="profileData.name"
-              class="w-full h-full object-cover"
+              class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               @error="onPhotoError"
             >
-            <!-- Avatar predefinido -->
+            <!-- Predefined avatar -->
             <img
               v-else-if="selectedAvatarData"
               :src="selectedAvatarData.path"
               :alt="selectedAvatarData.name"
-              class="w-full h-full object-cover"
+              class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             >
-            <!-- Iniciales como fallback -->
+            <!-- Fallback initials -->
             <div
               v-else
-              class="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white text-4xl font-bold"
+              class="w-full h-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white text-4xl font-bold"
             >
               {{ getInitials(profileData?.name || 'U') }}
             </div>
           </div>
 
-          <!-- Botones para gestionar avatar/foto -->
-          <div class="absolute bottom-2 right-2 flex gap-2">
-            <!-- Botón para subir foto personalizada -->
+          <!-- Action buttons for managing avatar/photo -->
+          <div class="absolute -bottom-2 -right-2 flex gap-2">
+            <!-- Button to upload personalized photo -->
             <button
               @click="togglePhotoUploader"
-              class="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-full flex items-center justify-center text-white shadow-lg transition-all duration-200 transform hover:scale-110"
+              class="w-10 h-10 bg-white hover:bg-slate-50 text-primary-600 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 border border-slate-100"
               title="Subir foto personalizada"
             >
               <i class="fas fa-camera text-sm"></i>
             </button>
             
-            <!-- Botón para elegir gema predefinida -->
+            <!-- Button to choose predefined gem -->
             <button
               @click="openAvatarSelector"
-              class="w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-full flex items-center justify-center text-white shadow-lg transition-all duration-200 transform hover:scale-110"
+              class="w-10 h-10 bg-primary-500 hover:bg-primary-600 rounded-full flex items-center justify-center text-white shadow-lg transition-all duration-300 transform hover:scale-110"
               title="Elegir Gema"
             >
               <i class="fas fa-gem text-sm"></i>
@@ -52,251 +52,265 @@
           </div>
         </div>
         
-        <!-- Info básica -->
+        <!-- Basic Info -->
         <div class="text-center md:text-left flex-1">
-          <h1 class="text-3xl font-bold text-white mb-2">{{ profileData?.name || 'Cargando...' }}</h1>
-          <p class="text-purple-300 text-lg mb-2">{{ getRoleDisplayName(profileData?.role || '') }}</p>
-          <p class="text-gray-400 mb-4">{{ profileData?.email || '' }}</p>
+          <div class="flex flex-col md:flex-row md:items-center gap-2 mb-2">
+            <h1 class="text-3xl font-black text-slate-800 tracking-tight">{{ profileData?.name || 'Cargando...' }}</h1>
+            <span class="inline-flex items-center px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-xs font-black uppercase tracking-widest border border-primary-100/50">
+              {{ getRoleDisplayName(profileData?.role || '') }}
+            </span>
+          </div>
+          <p class="text-slate-500 font-medium mb-4">{{ profileData?.email || '' }}</p>
           
-          <div class="flex flex-wrap gap-2 justify-center md:justify-start">
-            <span class="px-3 py-1 bg-green-600/20 text-green-300 rounded-full text-sm">
-              <i class="fas fa-check-circle mr-1"></i>
+          <div class="flex flex-wrap gap-3 justify-center md:justify-start">
+            <span class="inline-flex items-center px-4 py-1.5 bg-emerald-50 text-emerald-700 rounded-2xl text-xs font-bold border border-emerald-100">
+              <i class="fas fa-check-circle mr-2"></i>
               Activo
             </span>
-            <span class="px-3 py-1 bg-blue-600/20 text-blue-300 rounded-full text-sm">
-              <i class="fas fa-calendar mr-1"></i>
-              Desde {{ formatDate(profileData?.createdAt || '') }}
+            <span class="inline-flex items-center px-4 py-1.5 bg-slate-50 text-slate-600 rounded-2xl text-xs font-bold border border-slate-100">
+              <i class="fas fa-calendar-alt mr-2"></i>
+              Miembro desde {{ formatDate(profileData?.createdAt || '') }}
             </span>
           </div>
         </div>
 
-        <!-- Botón de editar -->
+        <!-- Edit Button -->
         <div class="flex gap-3">
           <button
             @click="toggleEditMode"
             :class="[
-              'px-6 py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105',
+              'px-8 py-3.5 rounded-2xl font-black text-sm uppercase tracking-widest transition-all duration-300 shadow-sm',
               isEditing 
-                ? 'bg-red-600 hover:bg-red-700 text-white' 
-                : 'bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white'
+                ? 'bg-rose-50 text-rose-600 border border-rose-100 hover:bg-rose-100' 
+                : 'bg-primary-500 text-white hover:bg-primary-600 shadow-primary-200 shadow-lg hover:-translate-y-0.5'
             ]"
           >
-            <i :class="isEditing ? 'fas fa-times' : 'fas fa-edit'" class="mr-2"></i>
+            <i :class="isEditing ? 'fas fa-times' : 'fas fa-pen-nib'" class="mr-2"></i>
             {{ isEditing ? 'Cancelar' : 'Editar Perfil' }}
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Información Personal -->
-    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
-      <h2 class="text-xl font-bold text-white mb-6 flex items-center">
-        <i class="fas fa-user mr-3 text-purple-400"></i>
-        Información Personal
-      </h2>
-      
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Nombre -->
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">
-            <i class="fas fa-signature mr-2"></i>
-            Nombre Completo
-          </label>
-          <div v-if="isEditing">
-            <input
-              v-model="editForm.name"
-              type="text"
-              class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              placeholder="Tu nombre completo"
-            />
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Personal Information (Left Column) -->
+      <div class="lg:col-span-2 space-y-6">
+        <div class="bg-white/70 backdrop-blur-md rounded-3xl p-8 border border-slate-200/60 shadow-sm h-full">
+          <div class="flex items-center justify-between mb-8">
+            <h2 class="text-xl font-black text-slate-800 flex items-center">
+              <div class="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center mr-4">
+                <i class="fas fa-id-card text-primary-500"></i>
+              </div>
+              Información Personal
+            </h2>
           </div>
-          <div v-else>
-            <p class="text-white bg-gray-700 px-4 py-3 rounded-lg">{{ profileData?.name || 'No especificado' }}</p>
-          </div>
-        </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+            <!-- Name -->
+            <div class="space-y-2">
+              <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                Nombre Completo
+              </label>
+              <div v-if="isEditing" class="relative group">
+                <i class="fas fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-500 transition-colors"></i>
+                <input
+                  v-model="editForm.name"
+                  type="text"
+                  class="w-full pl-12 pr-4 py-3.5 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 font-bold focus:ring-4 focus:ring-primary-100 focus:border-primary-400 transition-all outline-none"
+                  placeholder="Tu nombre completo"
+                />
+              </div>
+              <div v-else class="px-5 py-4 bg-slate-50/50 border border-slate-100 rounded-2xl">
+                <p class="text-slate-700 font-bold">{{ profileData?.name || 'No especificado' }}</p>
+              </div>
+            </div>
 
-        <!-- Email -->
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">
-            <i class="fas fa-envelope mr-2"></i>
-            Correo Electrónico
-          </label>
-          <div v-if="isEditing">
-            <input
-              v-model="editForm.email"
-              type="email"
-              class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              placeholder="tu@email.com"
-            />
-          </div>
-          <div v-else>
-            <p class="text-white bg-gray-700 px-4 py-3 rounded-lg">{{ profileData?.email || 'No especificado' }}</p>
-          </div>
-        </div>
+            <!-- Email -->
+            <div class="space-y-2">
+              <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                Correo Electrónico
+              </label>
+              <div v-if="isEditing" class="relative group">
+                <i class="fas fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-500 transition-colors"></i>
+                <input
+                  v-model="editForm.email"
+                  type="email"
+                  class="w-full pl-12 pr-4 py-3.5 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 font-bold focus:ring-4 focus:ring-primary-100 focus:border-primary-400 transition-all outline-none"
+                  placeholder="tu@email.com"
+                />
+              </div>
+              <div v-else class="px-5 py-4 bg-slate-50/50 border border-slate-100 rounded-2xl">
+                <p class="text-slate-700 font-bold">{{ profileData?.email || 'No especificado' }}</p>
+              </div>
+            </div>
 
-        <!-- Teléfono -->
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">
-            <i class="fas fa-phone mr-2"></i>
-            Teléfono
-          </label>
-          <div v-if="isEditing">
-            <input
-              v-model="editForm.phone"
-              type="tel"
-              class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              placeholder="+57 300 000 0000"
-            />
-          </div>
-          <div v-else>
-            <p class="text-white bg-gray-700 px-4 py-3 rounded-lg">{{ profileData?.phone || 'No especificado' }}</p>
-          </div>
-        </div>
+            <!-- Phone -->
+            <div class="space-y-2">
+              <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                Teléfono
+              </label>
+              <div v-if="isEditing" class="relative group">
+                <i class="fas fa-phone absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-500 transition-colors"></i>
+                <input
+                  v-model="editForm.phone"
+                  type="tel"
+                  class="w-full pl-12 pr-4 py-3.5 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 font-bold focus:ring-4 focus:ring-primary-100 focus:border-primary-400 transition-all outline-none"
+                  placeholder="+57 300 000 0000"
+                />
+              </div>
+              <div v-else class="px-5 py-4 bg-slate-50/50 border border-slate-100 rounded-2xl">
+                <p class="text-slate-700 font-bold">{{ profileData?.phone || 'No especificado' }}</p>
+              </div>
+            </div>
 
-        <!-- Departamento -->
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">
-            <i class="fas fa-building mr-2"></i>
-            Departamento
-          </label>
-          <div v-if="isEditing">
-            <input
-              v-model="editForm.department"
-              type="text"
-              class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              placeholder="Tu departamento"
-            />
-          </div>
-          <div v-else>
-            <p class="text-white bg-gray-700 px-4 py-3 rounded-lg">{{ profileData?.department || 'No especificado' }}</p>
-          </div>
-        </div>
+            <!-- Department -->
+            <div class="space-y-2">
+              <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                Departamento
+              </label>
+              <div v-if="isEditing" class="relative group">
+                <i class="fas fa-building absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-500 transition-colors"></i>
+                <input
+                  v-model="editForm.department"
+                  type="text"
+                  class="w-full pl-12 pr-4 py-3.5 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 font-bold focus:ring-4 focus:ring-primary-100 focus:border-primary-400 transition-all outline-none"
+                  placeholder="Tu departamento"
+                />
+              </div>
+              <div v-else class="px-5 py-4 bg-slate-50/50 border border-slate-100 rounded-2xl">
+                <p class="text-slate-700 font-bold">{{ profileData?.department || 'No especificado' }}</p>
+              </div>
+            </div>
 
-        <!-- Rol (solo lectura) -->
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">
-            <i class="fas fa-user-tag mr-2"></i>
-            Rol
-          </label>
-          <div>
-            <p class="text-white bg-gray-700 px-4 py-3 rounded-lg">{{ getRoleDisplayName(profileData?.role || '') }}</p>
+            <!-- Metadata (Read Only) -->
+            <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100 mt-2">
+              <div class="flex items-center gap-4">
+                <div class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400">
+                  <i class="fas fa-calendar-plus"></i>
+                </div>
+                <div>
+                  <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Registrado el</p>
+                  <p class="text-slate-700 font-bold text-sm">{{ formatDate(profileData?.createdAt || '') }}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <div class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400">
+                  <i class="fas fa-history"></i>
+                </div>
+                <div>
+                  <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Última actualización</p>
+                  <p class="text-slate-700 font-bold text-sm">{{ formatDate(profileData?.updatedAt || '') }}</p>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <!-- Fecha de registro -->
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">
-            <i class="fas fa-calendar-plus mr-2"></i>
-            Fecha de Registro
-          </label>
-          <div>
-            <p class="text-white bg-gray-700 px-4 py-3 rounded-lg">{{ formatDate(profileData?.createdAt || '') }}</p>
-          </div>
-        </div>
-
-        <!-- Última actualización -->
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">
-            <i class="fas fa-clock mr-2"></i>
-            Última Actualización
-          </label>
-          <div>
-            <p class="text-white bg-gray-700 px-4 py-3 rounded-lg">{{ formatDate(profileData?.updatedAt || '') }}</p>
+          <!-- Edit Action Buttons -->
+          <div v-if="isEditing" class="flex gap-4 mt-10 justify-end pt-6 border-t border-slate-100">
+            <button
+              @click="toggleEditMode"
+              class="px-6 py-3 text-slate-500 hover:text-slate-700 font-black text-xs uppercase tracking-widest transition-all"
+            >
+              Cancelar
+            </button>
+            <button
+              @click="updateProfile"
+              :disabled="loading"
+              class="px-8 py-3.5 bg-primary-500 hover:bg-primary-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-primary-200 disabled:opacity-50"
+            >
+              <i class="fas fa-save mr-2"></i>
+              {{ loading ? 'Guardando...' : 'Guardar Cambios' }}
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- Botones de acción para modo edición -->
-      <div v-if="isEditing" class="flex gap-4 mt-6 justify-end">
-        <button
-          @click="toggleEditMode"
-          class="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-medium transition-all duration-300"
-        >
-          <i class="fas fa-times mr-2"></i>
-          Cancelar
-        </button>
-        <button
-          @click="updateProfile"
-          :disabled="loading"
-          class="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-medium transition-all duration-300 disabled:opacity-50"
-        >
-          <i class="fas fa-save mr-2"></i>
-          {{ loading ? 'Guardando...' : 'Guardar Cambios' }}
-        </button>
+      <!-- Security / Password (Right Column) -->
+      <div class="space-y-6">
+        <div class="bg-white/70 backdrop-blur-md rounded-3xl p-8 border border-slate-200/60 shadow-sm">
+          <h2 class="text-xl font-black text-slate-800 mb-8 flex items-center">
+            <div class="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center mr-4">
+              <i class="fas fa-shield-alt text-amber-500"></i>
+            </div>
+            Seguridad
+          </h2>
+          
+          <form @submit.prevent="updatePassword" class="space-y-5">
+            <div class="space-y-2">
+              <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                Contraseña Actual
+              </label>
+              <input
+                v-model="passwordForm.currentPassword"
+                type="password"
+                class="w-full px-4 py-3.5 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 font-bold focus:ring-4 focus:ring-primary-100 focus:border-primary-400 transition-all outline-none"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+            
+            <div class="space-y-2">
+              <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                Nueva Contraseña
+              </label>
+              <input
+                v-model="passwordForm.newPassword"
+                type="password"
+                class="w-full px-4 py-3.5 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 font-bold focus:ring-4 focus:ring-primary-100 focus:border-primary-400 transition-all outline-none"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+            
+            <div class="space-y-2">
+              <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                Confirmar Nueva Contraseña
+              </label>
+              <input
+                v-model="passwordForm.confirmPassword"
+                type="password"
+                class="w-full px-4 py-3.5 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 font-bold focus:ring-4 focus:ring-primary-100 focus:border-primary-400 transition-all outline-none"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+            
+            <button
+              type="submit"
+              :disabled="loading || !passwordForm.currentPassword || !passwordForm.newPassword || passwordForm.newPassword !== passwordForm.confirmPassword"
+              class="w-full mt-4 px-6 py-4 bg-slate-800 hover:bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg disabled:opacity-50"
+            >
+              <i class="fas fa-key mr-2"></i>
+              {{ loading ? 'Actualizando...' : 'Actualizar Contraseña' }}
+            </button>
+          </form>
+        </div>
+
+        <!-- Help Box -->
+        <div class="bg-primary-50 rounded-3xl p-6 border border-primary-100">
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0">
+              <i class="fas fa-lightbulb text-primary-500"></i>
+            </div>
+            <div>
+              <h4 class="font-black text-primary-900 text-sm uppercase tracking-tight mb-1">Dato curioso</h4>
+              <p class="text-primary-700/80 text-xs leading-relaxed font-medium">
+                Tu avatar representa tu identidad en Customer Touch. Puedes cambiarlo en cualquier momento para reflejar tu enfoque de trabajo.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Cambiar Contraseña -->
-    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
-      <h2 class="text-xl font-bold text-white mb-6 flex items-center">
-        <i class="fas fa-lock mr-3 text-purple-400"></i>
-        Cambiar Contraseña
-      </h2>
-      
-      <form @submit.prevent="updatePassword" class="space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">
-              Contraseña Actual
-            </label>
-            <input
-              v-model="passwordForm.currentPassword"
-              type="password"
-              class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              placeholder="••••••••"
-              autocomplete="current-password"
-              required
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">
-              Nueva Contraseña
-            </label>
-            <input
-              v-model="passwordForm.newPassword"
-              type="password"
-              class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              placeholder="••••••••"
-              autocomplete="new-password"
-              required
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">
-              Confirmar Contraseña
-            </label>
-            <input
-              v-model="passwordForm.confirmPassword"
-              type="password"
-              class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              placeholder="••••••••"
-              autocomplete="new-password"
-              required
-            />
-          </div>
-        </div>
-        
-        <div class="flex justify-end">
-          <button
-            type="submit"
-            :disabled="loading || !passwordForm.currentPassword || !passwordForm.newPassword || passwordForm.newPassword !== passwordForm.confirmPassword"
-            class="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl font-medium transition-all duration-300 disabled:opacity-50"
-          >
-            <i class="fas fa-key mr-2"></i>
-            {{ loading ? 'Actualizando...' : 'Cambiar Contraseña' }}
-          </button>
-        </div>
-      </form>
-    </div>
-
-    <!-- Modal Selector de Avatares -->
-    <div v-if="showAvatarSelector" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div class="bg-gray-900 rounded-2xl p-6 max-w-md w-full mx-4">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-xl font-bold text-white">Elige tu Gema</h3>
+    <!-- Avatar Selector Modal -->
+    <div v-if="showAvatarSelector" class="fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl border border-white/50 animate__animated animate__zoomIn animate__faster">
+        <div class="flex justify-between items-center mb-8">
+          <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight">Elige tu Gema</h3>
           <button
             @click="showAvatarSelector = false"
-            class="text-gray-400 hover:text-white transition-colors"
+            class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-rose-500 transition-colors"
           >
             <i class="fas fa-times text-xl"></i>
           </button>
@@ -310,14 +324,14 @@
       </div>
     </div>
     
-    <!-- Modal de Subida de Foto -->
-    <div v-if="showPhotoUploader" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div class="bg-gray-900 rounded-2xl p-6 max-w-md w-full mx-4">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-xl font-bold text-white">Foto de Perfil</h3>
+    <!-- Photo Uploader Modal -->
+    <div v-if="showPhotoUploader" class="fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl border border-white/50 animate__animated animate__zoomIn animate__faster">
+        <div class="flex justify-between items-center mb-8">
+          <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight">Foto de Perfil</h3>
           <button
             @click="showPhotoUploader = false"
-            class="text-gray-400 hover:text-white transition-colors"
+            class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-rose-500 transition-colors"
           >
             <i class="fas fa-times text-xl"></i>
           </button>
@@ -337,13 +351,14 @@ import { ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { userService } from '@/services/userService'
 import { AvatarService } from '@/services/avatarService'
-import { toast } from 'vue3-toastify'
+import { useNotifications } from '@/composables/useNotifications'
 import AvatarSelector from '@/components/AvatarSelector.vue'
 import ProfilePhotoUploader from '@/components/ProfilePhotoUploader.vue'
 import { getAvatarById, getDefaultAvatar } from '@/utils/avatarConfig'
 import { API_CONFIG } from '@/config/api'
 
 const authStore = useAuthStore()
+const { showSuccess, showError } = useNotifications()
 
 // State
 const loading = ref(false)
@@ -359,25 +374,10 @@ const profileData = ref({
   role: '',
   phone: '',
   department: '',
-  avatar: null as string | null, // Permitir null
-  photo: null as string | null, // Foto personalizada
+  avatar: null as string | null,
+  photo: null as string | null,
   createdAt: '',
   updatedAt: ''
-})
-
-// Computed para obtener datos del avatar seleccionado
-const selectedAvatarData = computed(() => {
-  const avatarId = profileData.value?.avatar
-  return avatarId ? getAvatarById(avatarId) : null
-})
-
-// Computed para URL de foto de perfil
-const resolvedPhotoUrl = computed(() => {
-  const url = profileData.value.photo
-  if (!url || photoErrored.value) return ''
-  if (/^https?:\/\//i.test(url)) return url
-  const origin = String(API_CONFIG.BASE_URL).replace(/\/?api\/?$/i, '')
-  return `${origin.replace(/\/$/, '')}/${url.replace(/^\//, '')}`
 })
 
 const editForm = ref({
@@ -393,6 +393,20 @@ const passwordForm = ref({
   confirmPassword: ''
 })
 
+// Computed
+const selectedAvatarData = computed(() => {
+  const avatarId = profileData.value?.avatar
+  return avatarId ? getAvatarById(avatarId) : null
+})
+
+const resolvedPhotoUrl = computed(() => {
+  const url = profileData.value.photo
+  if (!url || photoErrored.value) return ''
+  if (/^https?:\/\//i.test(url)) return url
+  const origin = String(API_CONFIG.BASE_URL).replace(/\/?api\/?$/i, '')
+  return `${origin.replace(/\/$/, '')}/${url.replace(/^\//, '')}`
+})
+
 // Methods
 const getInitials = (name: string) => {
   if (!name) return 'U'
@@ -404,47 +418,39 @@ const getRoleDisplayName = (role: string) => {
     'admin': 'Administrador',
     'manager': 'Gerente',
     'user': 'Usuario',
-    'employee': 'Empleado'
+    'employee': 'Empleado',
+    'support': 'Soporte',
+    'client': 'Cliente'
   }
-  return roles[role] || role || 'Sin rol'
+  return roles[role] || role || 'Miembro'
 }
 
-// Manejo de errores de imagen
 const onPhotoError = () => {
   photoErrored.value = true
-  console.error('Error cargando foto de perfil')
 }
 
-// Funciones para el manejo de foto de perfil
 const togglePhotoUploader = () => {
   showPhotoUploader.value = !showPhotoUploader.value
-  // Cerrar selector de avatares si está abierto
-  if (showPhotoUploader.value) {
-    showAvatarSelector.value = false
-  }
+  if (showPhotoUploader.value) showAvatarSelector.value = false
 }
 
 const handlePhotoUpdate = (data: { photo: string | null, avatar: string | null }) => {
-  // Actualizar datos en el perfil
   profileData.value.photo = data.photo
   profileData.value.avatar = data.avatar
   
-  // Actualizar en el store de auth
   if (authStore.user) {
     authStore.user.photo = data.photo
     authStore.user.avatar = data.avatar
     localStorage.setItem('user', JSON.stringify(authStore.user))
   }
   
-  // Cerrar el modal
   showPhotoUploader.value = false
-  
-  // Resetear error de foto
   photoErrored.value = false
+  showSuccess('Foto actualizada correctamente')
 }
 
 const formatDate = (dateString: string) => {
-  if (!dateString) return 'No disponible'
+  if (!dateString) return '...'
   try {
     return new Date(dateString).toLocaleDateString('es-ES', {
       year: 'numeric',
@@ -452,11 +458,10 @@ const formatDate = (dateString: string) => {
       day: 'numeric'
     })
   } catch {
-    return 'Fecha inválida'
+    return '---'
   }
 }
 
-// Funciones para manejar selección de avatares
 const selectAvatar = (avatarId: string) => {
   tempSelectedAvatar.value = avatarId
 }
@@ -471,16 +476,12 @@ const confirmAvatarSelection = async () => {
 
   try {
     loading.value = true
-
-    // Usar el servicio de avatares específico
     const result = await AvatarService.updateUserAvatar(tempSelectedAvatar.value)
 
     if (result.success) {
-      // Actualizar datos locales
       profileData.value.avatar = tempSelectedAvatar.value
-      profileData.value.photo = null // Al elegir avatar, se elimina la foto
+      profileData.value.photo = null
 
-      // Actualizar el store de auth
       if (authStore.user) {
         (authStore.user as any).avatar = tempSelectedAvatar.value
         (authStore.user as any).photo = null
@@ -489,14 +490,12 @@ const confirmAvatarSelection = async () => {
 
       showAvatarSelector.value = false
       tempSelectedAvatar.value = ''
-      toast.success('Avatar actualizado correctamente')
+      showSuccess('Avatar actualizado correctamente')
     } else {
-      toast.error(result.message || 'Error al actualizar el avatar')
+      showError(result.message || 'Error al actualizar el avatar')
     }
-
   } catch (error) {
-    console.error('Error al actualizar avatar:', error)
-    toast.error('Error al actualizar el avatar')
+    showError('Error al actualizar el avatar')
   } finally {
     loading.value = false
   }
@@ -506,7 +505,6 @@ const toggleEditMode = () => {
   if (!profileData.value) return
   
   if (isEditing.value) {
-    // Cancelar - restaurar datos originales
     editForm.value = {
       name: profileData.value.name || '',
       email: profileData.value.email || '',
@@ -514,7 +512,6 @@ const toggleEditMode = () => {
       department: profileData.value.department || ''
     }
   } else {
-    // Iniciar edición - copiar datos actuales
     editForm.value = {
       name: profileData.value.name || '',
       email: profileData.value.email || '',
@@ -528,22 +525,17 @@ const toggleEditMode = () => {
 const updateProfile = async () => {
   try {
     loading.value = true
-    
     const result = await authStore.updateProfile(editForm.value)
     
     if (result.success) {
-      // Actualizar datos locales
       Object.assign(profileData.value, editForm.value)
-      
       isEditing.value = false
-      toast.success('Perfil actualizado correctamente')
+      showSuccess('Perfil actualizado correctamente')
     } else {
-      toast.error(result.message || 'Error al actualizar el perfil')
+      showError(result.message || 'Error al actualizar el perfil')
     }
-    
   } catch (error) {
-    console.error('Error al actualizar perfil:', error)
-    toast.error('Error al actualizar el perfil')
+    showError('Error al actualizar el perfil')
   } finally {
     loading.value = false
   }
@@ -552,24 +544,19 @@ const updateProfile = async () => {
 const updatePassword = async () => {
   try {
     loading.value = true
-    
     await userService.updatePassword({
       currentPassword: passwordForm.value.currentPassword,
       newPassword: passwordForm.value.newPassword
     })
     
-    // Limpiar formulario
     passwordForm.value = {
       currentPassword: '',
       newPassword: '',
       confirmPassword: ''
     }
-    
-    toast.success('Contraseña actualizada correctamente')
-    
+    showSuccess('Contraseña actualizada correctamente')
   } catch (error) {
-    console.error('Error al cambiar contraseña:', error)
-    toast.error('Error al cambiar la contraseña')
+    showError('Error al cambiar la contraseña')
   } finally {
     loading.value = false
   }
@@ -579,77 +566,43 @@ const loadProfile = async () => {
   try {
     loading.value = true
     
-    console.log('🔄 Iniciando carga de perfil...')
-    console.log('👤 AuthStore user:', authStore.user)
-    
-    // Inicializar inmediatamente con datos del store si están disponibles
     if (authStore.user) {
-      console.log('✅ Datos encontrados en authStore, inicializando...')
       profileData.value = {
         name: authStore.user.name || '',
         email: authStore.user.email || '',
         role: authStore.user.role || '',
         phone: (authStore.user as any).phone || '',
         department: authStore.user.department || '',
-        avatar: (authStore.user as any).avatar || null, // Permitir null
-        photo: (authStore.user as any).photo || null,   // Permitir null
+        avatar: (authStore.user as any).avatar || null,
+        photo: (authStore.user as any).photo || null,
         createdAt: (authStore.user as any).createdAt || '',
         updatedAt: (authStore.user as any).updatedAt || ''
       }
-      console.log('📋 ProfileData inicial:', profileData.value)
-    } else {
-      console.log('❌ No se encontraron datos en authStore')
     }
     
-    // Intentar cargar datos actualizados del servidor
     try {
-      console.log('🌐 Cargando perfil del servidor...')
       const profile = await userService.getProfile()
-      console.log('✅ Perfil cargado del servidor:', profile)
       profileData.value = {
         name: profile.name || '',
         email: profile.email || '',
         role: profile.role || '',
         phone: profile.phone || '',
         department: profile.department || '',
-        avatar: profile.avatar || null, // No forzar valor por defecto
-        photo: profile.photo || null,   // Foto personalizada
+        avatar: profile.avatar || null,
+        photo: profile.photo || null,
         createdAt: profile.createdAt || '',
         updatedAt: profile.updatedAt || ''
       }
-      
-      // Limpiar errores de carga de imagen
       photoErrored.value = false
-      
     } catch (serverError) {
-      console.error('❌ Error al cargar perfil del servidor:', serverError)
-      
-      // Si falla la carga del servidor pero tenemos datos del store, los usamos
-      if (!profileData.value.name && authStore.user) {
-        console.log('🔄 Usando datos de respaldo del authStore...')
-        profileData.value = {
-          name: authStore.user.name || '',
-          email: authStore.user.email || '',
-          role: authStore.user.role || '',
-          phone: (authStore.user as any).phone || '',
-          department: authStore.user.department || '',
-          avatar: (authStore.user as any).avatar || null, // No forzar valor por defecto
-          photo: (authStore.user as any).photo || null,   // Foto personalizada
-          createdAt: (authStore.user as any).createdAt || '',
-          updatedAt: (authStore.user as any).updatedAt || ''
-        }
-      }
+      // Fallback already set from store
     }
     
-    // Intentar cargar información de avatar del usuario
     try {
       const avatarInfo = await AvatarService.getUserAvatar()
       if (avatarInfo) {
-        // Si obtenemos información actualizada, la usamos
         profileData.value.avatar = avatarInfo.avatar
         profileData.value.photo = avatarInfo.photo
-        
-        // Actualizar también en el store
         if (authStore.user) {
           (authStore.user as any).avatar = avatarInfo.avatar
           (authStore.user as any).photo = avatarInfo.photo
@@ -657,23 +610,13 @@ const loadProfile = async () => {
         }
       }
     } catch (avatarError) {
-      console.error('Error al cargar información de avatar:', avatarError)
+      // Silent fail
     }
     
   } catch (error) {
-    console.error('❌ Error general al cargar perfil:', error)
-    toast.error('Error al cargar el perfil: ' + ((error as any)?.message || 'Error desconocido'))
+    showError('Error al cargar el perfil')
   } finally {
     loading.value = false
-    console.log('🏁 Carga de perfil completada')
-    console.log('📋 ProfileData final:', profileData.value)
-    
-    // Debug específico para el avatar y foto
-    console.log('🖼️ DEBUGGING IMÁGENES:')
-    console.log('- Avatar ID:', profileData.value?.avatar)
-    console.log('- Foto Path:', profileData.value?.photo)
-    console.log('- Avatar seleccionado:', selectedAvatarData.value)
-    console.log('- URL foto resuelta:', resolvedPhotoUrl.value)
   }
 }
 
@@ -681,3 +624,9 @@ onMounted(() => {
   loadProfile()
 })
 </script>
+
+<style scoped>
+.animate__faster {
+  --animate-duration: 0.3s;
+}
+</style>

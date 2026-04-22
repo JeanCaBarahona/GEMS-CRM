@@ -551,20 +551,27 @@ export const useTeamStore = defineStore('team', {
   }),
   
   actions: {
-    async fetchTeam() {
+    async fetchTeam(page = 1, limit = 12) {
       this.loading = true
       try {
         console.log('🔄 Fetching team data...')
         console.log('📦 Token:', localStorage.getItem('token') ? 'Present' : 'Missing')
         
         const response = await axios.get(`${API_BASE_URL}/team`, {
+          params: { page, limit },
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
         })
         
         console.log('✅ Team response:', response.data)
-        this.members = response.data.success ? response.data.data : []
+        if (response.data.success) {
+          this.members = response.data.data
+          return response.data.pagination
+        } else {
+          this.members = []
+          return null
+        }
         this.error = null
       } catch (error: any) {
         console.error('❌ Error fetching team:', error.response || error)
@@ -643,6 +650,31 @@ export const useTeamStore = defineStore('team', {
             this.members[index] = { ...this.members[index], isActive: false }
           }
           this.error = null
+        } else {
+          throw new Error(response.data.message || 'Error deleting team member')
+        }
+      } catch (error: any) {
+        this.error = error.response?.data?.message || error.message || 'Error deleting team member'
+        console.error('Error deleting team member:', error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async hardDeleteMember(memberId: string) {
+      this.loading = true
+      try {
+        const response = await axios.delete(`${API_BASE_URL}/team/${memberId}/permanent`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        })
+        
+        if (response.data.success) {
+          this.members = this.members.filter(m => m._id !== memberId)
+          this.error = null
+          return true
         } else {
           throw new Error(response.data.message || 'Error deleting team member')
         }

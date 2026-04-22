@@ -1,81 +1,95 @@
 <template>
   <div class="space-y-6">
     <!-- Header -->
-    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-purple-500/20">
-      <div class="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
+    <div class="bg-white/70 backdrop-blur-md rounded-3xl shadow-sm p-6 border border-slate-100">
+      <div class="flex flex-col lg:flex-row gap-6 lg:items-center lg:justify-between">
         <!-- Selector de Board -->
         <div class="flex items-center gap-4">
-          <select
-            v-model="selectedBoardId"
-            @change="onBoardChange"
-            class="px-4 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-purple-500"
-          >
-            <option value="">Seleccionar Tablero</option>
-            <option 
-              v-for="board in boards" 
-              :key="board._id"
-              :value="board._id"
+          <div class="relative group">
+            <select
+              v-model="selectedBoardId"
+              @change="onBoardChange"
+              class="pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 font-black text-xs uppercase tracking-widest focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all appearance-none cursor-pointer min-w-[220px]"
             >
-              {{ board.name }}
-            </option>
-          </select>
+              <option value="">Seleccionar Tablero</option>
+              <option 
+                v-for="board in boards" 
+                :key="board._id"
+                :value="board._id"
+              >
+                {{ board.name }}
+              </option>
+            </select>
+            <div class="absolute left-4 top-1/2 -translate-y-1/2 text-primary-500">
+              <i class="fas fa-th-large"></i>
+            </div>
+            <div class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none">
+              <i class="fas fa-chevron-down text-[10px]"></i>
+            </div>
+          </div>
 
           <!-- Toggle Vista -->
-          <div class="flex bg-gray-700 rounded-lg p-1">
+          <div class="flex bg-slate-100 rounded-2xl p-1.5 border border-slate-200">
             <button
               @click="currentView = 'kanban'"
               :class="currentView === 'kanban' 
-                ? 'bg-purple-600 text-white' 
-                : 'text-gray-400 hover:text-white'"
-              class="px-3 py-1 rounded-md text-sm font-medium transition-colors"
+                ? 'bg-white text-primary-600 shadow-sm' 
+                : 'text-slate-400 hover:text-slate-600'"
+              class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2"
             >
-              <i class="fas fa-columns mr-2"></i>
+              <i class="fas fa-columns"></i>
               Kanban
             </button>
             <button
               @click="currentView = 'list'"
               :class="currentView === 'list' 
-                ? 'bg-purple-600 text-white' 
-                : 'text-gray-400 hover:text-white'"
-              class="px-3 py-1 rounded-md text-sm font-medium transition-colors"
+                ? 'bg-white text-primary-600 shadow-sm' 
+                : 'text-slate-400 hover:text-slate-600'"
+              class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2"
             >
-              <i class="fas fa-list mr-2"></i>
+              <i class="fas fa-list"></i>
               Lista
             </button>
           </div>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-4">
           <!-- Filtros -->
           <button
             @click="showFilters = !showFilters"
-            class="px-4 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white hover:bg-gray-600/50 transition-colors"
+            class="px-5 py-3 bg-white border border-slate-200 rounded-2xl text-slate-600 hover:bg-slate-50 transition-all font-black text-[10px] uppercase tracking-widest flex items-center gap-3 shadow-sm"
+            :class="{'border-primary-400 ring-4 ring-primary-500/10': showFilters}"
           >
-            <i class="fas fa-filter mr-2"></i>
+            <i class="fas fa-filter text-primary-500"></i>
             Filtros
+            <span v-if="activeFiltersCount > 0" class="w-5 h-5 bg-primary-500 text-white rounded-full flex items-center justify-center text-[8px]">{{ activeFiltersCount }}</span>
           </button>
 
           <!-- Sprint Selector (only Scrum) -->
-          <select
-            v-if="currentBoard?.type === 'scrum'"
-            v-model="selectedSprintId"
-            @change="loadTasks"
-            class="px-4 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-purple-500"
-          >
-            <option :value="null">Backlog</option>
-            <option 
-              v-for="sprint in sprints" 
-              :key="sprint._id"
-              :value="sprint._id"
+          <div v-if="currentBoard?.type === 'scrum'" class="relative">
+            <select
+              v-model="selectedSprintId"
+              @change="loadTasks"
+              class="pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 font-black text-xs uppercase tracking-widest focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all appearance-none cursor-pointer"
             >
-              {{ sprint.name }}
-            </option>
-          </select>
+              <option :value="null">Backlog Activo</option>
+              <option 
+                v-for="sprint in sprints" 
+                :key="sprint._id"
+                :value="sprint._id"
+              >
+                {{ sprint.name }}
+              </option>
+            </select>
+            <div class="absolute left-4 top-1/2 -translate-y-1/2 text-primary-500">
+              <i class="fas fa-running"></i>
+            </div>
+          </div>
 
           <!-- Nueva Tarea -->
           <button
             @click="openTaskModal()"
-            class="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all flex items-center gap-2"
+            class="px-6 py-3.5 bg-primary-500 text-white rounded-[1.25rem] hover:bg-primary-600 transition-all shadow-xl shadow-primary-100 font-black text-[10px] uppercase tracking-widest flex items-center gap-3 active:scale-95"
           >
             <i class="fas fa-plus"></i>
             Nueva Tarea
@@ -85,20 +99,20 @@
           <button
             v-if="currentBoard?.github"
             @click="showGitHubPanel = !showGitHubPanel"
-            class="px-4 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white hover:bg-gray-600/50 transition-colors"
-            title="GitHub Integration"
+            class="w-12 h-12 flex items-center justify-center bg-slate-800 text-white rounded-2xl hover:bg-black transition-all shadow-lg"
+            title="Integración GitHub"
           >
-            <i class="fab fa-github"></i>
+            <i class="fab fa-github text-lg"></i>
           </button>
         </div>
       </div>
 
       <!-- Filtros Panel -->
-      <div v-if="showFilters" class="mt-4 grid grid-cols-4 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-1">Tipo</label>
-          <select v-model="filters.type" @change="loadTasks" class="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white">
-            <option value="">Todos</option>
+      <div v-if="showFilters" class="mt-8 pt-8 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 animate-in slide-in-from-top-4 duration-300">
+        <div class="space-y-2">
+          <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tipo de Tarea</label>
+          <select v-model="filters.type" @change="loadTasks" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700">
+            <option value="">Todos los tipos</option>
             <option value="task">Task</option>
             <option value="bug">Bug</option>
             <option value="feature">Feature</option>
@@ -106,81 +120,83 @@
             <option value="epic">Epic</option>
           </select>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-1">Prioridad</label>
-          <select v-model="filters.priority" @change="loadTasks" class="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white">
-            <option value="">Todas</option>
+        <div class="space-y-2">
+          <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Prioridad</label>
+          <select v-model="filters.priority" @change="loadTasks" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700">
+            <option value="">Cualquier prioridad</option>
             <option value="low">Baja</option>
             <option value="medium">Media</option>
             <option value="high">Alta</option>
             <option value="critical">Crítica</option>
           </select>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-1">Estado</label>
-          <select v-model="filters.status" @change="loadTasks" class="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white">
-            <option value="">Todos</option>
-            <option value="active">Activo</option>
-            <option value="blocked">Bloqueado</option>
-            <option value="completed">Completado</option>
+        <div class="space-y-2">
+          <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Equipo / Depto</label>
+          <select v-model="filters.department" @change="loadTasks" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700">
+            <option value="">Todos los equipos</option>
+            <option v-for="dept in departments" :key="dept" :value="dept">{{ dept }}</option>
           </select>
         </div>
-        <div class="flex items-end">
+        <div class="space-y-2">
+          <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Responsable</label>
+          <select v-model="filters.assignedTo" @change="loadTasks" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700">
+            <option value="">Cualquier persona</option>
+            <option :value="authStore.user?._id">Mis Tareas (Yo)</option>
+            <option v-for="member in teamMembers" :key="member._id" :value="member._id">{{ member.name }}</option>
+          </select>
+        </div>
+        <div class="flex items-end gap-2">
           <button
             @click="clearFilters"
-            class="w-full px-4 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white hover:bg-gray-600/50"
+            class="flex-1 px-4 py-3 bg-slate-100 text-slate-500 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
           >
-            Limpiar
+            Reset
+          </button>
+          <button
+            @click="saveCurrentFilters"
+            class="px-4 py-3 bg-primary-50 text-primary-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary-100 transition-all"
+            title="Guardar filtros por defecto"
+          >
+            <i class="fas fa-save"></i>
           </button>
         </div>
       </div>
     </div>
 
     <!-- Loading -->
-    <div v-if="loading" class="flex justify-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+    <div v-if="loading" class="flex flex-col items-center justify-center py-24 gap-4">
+      <div class="w-16 h-16 border-4 border-primary-100 border-t-primary-500 rounded-full animate-spin"></div>
+      <p class="text-[10px] font-black text-primary-500 uppercase tracking-[0.2em]">Sincronizando Customer Touch...</p>
     </div>
 
     <!-- Kanban View -->
-    <div v-else-if="currentView === 'kanban' && selectedBoardId" class="overflow-x-auto">
-      <div class="flex space-x-4 pb-4 min-w-max">
+    <div v-else-if="currentView === 'kanban' && selectedBoardId" class="overflow-x-auto custom-scrollbar pb-6">
+      <div class="flex space-x-6 min-w-max px-1">
         <div
           v-for="column in columns"
           :key="column.id"
-          class="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700 w-80 flex-shrink-0"
+          class="bg-slate-50/50 backdrop-blur-sm rounded-[2rem] p-5 border border-slate-200/60 w-80 flex-shrink-0 flex flex-col max-h-[calc(100vh-280px)]"
         >
           <!-- Column Header -->
-          <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center gap-2">
-              <div class="w-3 h-3 rounded-full" :class="getColumnColor(column.id)"></div>
-              <h3 class="text-white font-semibold">{{ column.name }}</h3>
-              <span class="bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full text-xs">
+          <div class="flex items-center justify-between mb-6 px-1">
+            <div class="flex items-center gap-3">
+              <div class="w-2.5 h-2.5 rounded-full" :class="getColumnColor(column.id)"></div>
+              <h3 class="text-slate-800 font-black text-xs uppercase tracking-widest">{{ column.name }}</h3>
+              <span class="bg-white border border-slate-200 text-slate-500 px-2.5 py-1 rounded-lg text-[10px] font-black">
                 {{ getColumnTasks(column.id).length }}
-              </span>
-              <span v-if="column.wipLimit" class="text-gray-500 text-xs">
-                / {{ column.wipLimit }}
               </span>
             </div>
             <button
               @click="openTaskModal(column.id)"
-              class="text-gray-400 hover:text-white transition-colors"
+              class="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-primary-500 hover:bg-white rounded-lg transition-all border border-transparent hover:border-slate-100"
             >
-              <i class="fas fa-plus"></i>
+              <i class="fas fa-plus text-xs"></i>
             </button>
           </div>
 
-          <!-- WIP Limit Warning -->
+          <!-- Tasks List -->
           <div 
-            v-if="column.wipLimit && getColumnTasks(column.id).length >= column.wipLimit"
-            class="mb-3 p-2 bg-yellow-500/10 border border-yellow-500/30 rounded text-xs text-yellow-400"
-          >
-            <i class="fas fa-exclamation-triangle mr-1"></i>
-            Límite WIP alcanzado
-          </div>
-
-          <!-- Tasks -->
-          <div 
-            class="space-y-3 min-h-[200px] max-h-[calc(100vh-400px)] overflow-y-auto"
+            class="space-y-4 flex-1 overflow-y-auto custom-scrollbar pr-1 min-h-[150px]"
             @drop="onDrop($event, column.id)"
             @dragover.prevent
             @dragenter.prevent
@@ -192,92 +208,57 @@
               @dragstart="onDragStart($event, task)"
               @dragend="onDragEnd"
               @click="openTaskDetail(task)"
-              class="bg-gray-900/50 rounded-lg p-3 border border-gray-700 hover:border-purple-500/50 transition-all cursor-move group"
+              class="bg-white rounded-[1.5rem] p-4 border border-slate-100 hover:border-primary-200 hover:shadow-xl hover:shadow-primary-500/5 transition-all cursor-move group relative animate-in fade-in duration-500"
             >
               <!-- Task Header -->
-              <div class="flex items-start justify-between mb-2">
-                <div class="flex items-center gap-2 flex-1">
-                  <i :class="getTaskTypeIcon(task.type)" class="text-xs" :style="{ color: getTaskTypeColor(task.type) }"></i>
-                  <h4 class="text-white text-sm font-medium flex-1 line-clamp-2">{{ task.title }}</h4>
+              <div class="flex items-start justify-between gap-3 mb-3">
+                <div class="flex items-start gap-2 flex-1">
+                  <div class="mt-1 w-2 h-2 rounded-full flex-shrink-0" :style="{ backgroundColor: getTaskTypeColor(task.type) }"></div>
+                  <h4 class="text-slate-700 text-[13px] font-bold flex-1 leading-snug group-hover:text-primary-600 transition-colors">{{ task.title }}</h4>
                 </div>
                 <span 
-                  class="px-2 py-0.5 rounded text-[10px] font-medium flex-shrink-0"
+                  class="px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider flex-shrink-0 border"
                   :class="getPriorityClass(task.priority)"
                 >
                   {{ getPriorityLabel(task.priority) }}
                 </span>
               </div>
 
-              <!-- Description -->
-              <p v-if="task.description" class="text-gray-400 text-xs mb-2 line-clamp-2">
-                {{ task.description }}
-              </p>
-
-              <!-- Tags -->
-              <div v-if="task.tags && task.tags.length" class="flex flex-wrap gap-1 mb-2">
-                <span 
-                  v-for="tag in task.tags.slice(0, 3)" 
-                  :key="tag"
-                  class="px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded text-[10px]"
-                >
-                  {{ tag }}
-                </span>
-              </div>
-
-              <!-- GitHub Info -->
-              <div v-if="task.github?.branch" class="flex items-center gap-2 mb-2 text-xs text-gray-400">
-                <i class="fab fa-github"></i>
-                <span class="truncate">{{ task.github.branch }}</span>
-                <span 
-                  v-if="task.github.pullRequest"
-                  class="px-2 py-0.5 rounded text-[10px] font-medium"
-                  :class="getPRStatusClass(task.github.pullRequest.status)"
-                >
-                  PR #{{ task.github.pullRequest.number }}
-                </span>
-              </div>
-
-              <!-- Footer -->
-              <div class="flex items-center justify-between pt-2 border-t border-gray-700/50">
-                <!-- Assignee -->
-                <div v-if="task.assignedTo" class="flex items-center gap-2">
-                  <div class="w-6 h-6 rounded-full bg-purple-600 text-white flex items-center justify-center text-[10px]">
-                    {{ getInitials(task.assignedTo.name) }}
+              <!-- Metadata & Assignee -->
+              <div class="flex items-center justify-between mt-4 pt-4 border-t border-slate-50">
+                <div class="flex -space-x-2">
+                  <div v-if="task.assignedTo" class="group/avatar relative">
+                    <div class="w-8 h-8 rounded-full border-2 border-white bg-primary-100 text-primary-700 flex items-center justify-center text-[10px] font-black shadow-sm overflow-hidden">
+                      <img v-if="task.assignedTo.photo" :src="task.assignedTo.photo" class="w-full h-full object-cover" />
+                      <span v-else>{{ getInitials(task.assignedTo.name) }}</span>
+                    </div>
                   </div>
-                  <span class="text-xs text-gray-400 truncate max-w-[100px]">
-                    {{ task.assignedTo.name }}
-                  </span>
+                  <div v-else class="w-8 h-8 rounded-full border-2 border-white bg-slate-100 text-slate-400 flex items-center justify-center text-[10px] shadow-sm">
+                    <i class="fas fa-user-plus text-[8px]"></i>
+                  </div>
                 </div>
-                <div v-else class="text-xs text-gray-500">Sin asignar</div>
 
-                <!-- Metadata -->
-                <div class="flex items-center gap-2 text-xs text-gray-500">
-                  <div v-if="task.comments?.length" class="flex items-center gap-1">
-                    <i class="fas fa-comment"></i>
-                    <span>{{ task.comments.length }}</span>
+                <div class="flex items-center gap-3 text-slate-400">
+                  <div v-if="task.comments?.length" class="flex items-center gap-1.5">
+                    <i class="far fa-comment text-[10px]"></i>
+                    <span class="text-[10px] font-bold">{{ task.comments.length }}</span>
                   </div>
-                  <div v-if="task.attachments?.length" class="flex items-center gap-1">
-                    <i class="fas fa-paperclip"></i>
-                    <span>{{ task.attachments.length }}</span>
-                  </div>
-                  <div v-if="task.estimatedHours" class="flex items-center gap-1">
-                    <i class="fas fa-clock"></i>
-                    <span>{{ task.estimatedHours }}h</span>
+                  <div class="flex items-center gap-1.5" :class="{'text-emerald-500 font-bold': task.activeSessions?.length}">
+                    <i class="far fa-clock text-[10px]"></i>
+                    <span class="text-[10px] font-black tracking-tighter">{{ Number(task.actualHours || 0).toFixed(1) }}h</span>
                   </div>
                 </div>
               </div>
-
-              <!-- Blocked -->
-              <div v-if="task.status === 'blocked'" class="mt-2 flex items-center gap-1 text-xs text-red-400">
-                <i class="fas fa-ban"></i>
-                <span>Bloqueada</span>
+              
+              <!-- Timer Mini-Indicator -->
+              <div v-if="task.activeSessions?.length" class="absolute -top-1 -right-1 flex gap-1">
+                <span class="w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white animate-pulse"></span>
               </div>
             </div>
 
-            <!-- Empty State -->
-            <div v-if="getColumnTasks(column.id).length === 0" class="text-center py-8 text-gray-500 text-sm">
-              <i class="fas fa-inbox text-2xl mb-2 opacity-50"></i>
-              <p>Sin tareas</p>
+            <!-- Empty Column State (Soft) -->
+            <div v-if="getColumnTasks(column.id).length === 0" class="flex flex-col items-center justify-center py-10 opacity-20 group-hover:opacity-40 transition-opacity">
+              <i class="fas fa-layer-group text-3xl mb-2 text-slate-300"></i>
             </div>
           </div>
         </div>
@@ -285,65 +266,57 @@
     </div>
 
     <!-- List View -->
-    <div v-else-if="currentView === 'list' && selectedBoardId" class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-lg border border-purple-500/20 overflow-hidden">
+    <div v-else-if="currentView === 'list' && selectedBoardId" class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full">
-          <thead class="bg-gray-900/50">
+          <thead class="bg-slate-50">
             <tr>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Tarea</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Tipo</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Estado</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Prioridad</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Asignado</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Tiempo</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">GitHub</th>
+              <th class="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Tarea</th>
+              <th class="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Tipo</th>
+              <th class="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Estado</th>
+              <th class="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Prioridad</th>
+              <th class="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Responsable</th>
+              <th class="px-6 py-4 text-right text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Tiempo</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-700">
+          <tbody class="divide-y divide-slate-100">
             <tr 
               v-for="task in tasks" 
               :key="task._id"
               @click="openTaskDetail(task)"
-              class="hover:bg-gray-700/30 cursor-pointer transition-colors"
+              class="hover:bg-slate-50/80 cursor-pointer transition-colors group"
             >
-              <td class="px-4 py-3">
-                <div>
-                  <div class="text-white font-medium">{{ task.title }}</div>
-                  <div class="text-gray-400 text-xs line-clamp-1">{{ task.description }}</div>
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-2 h-2 rounded-full flex-shrink-0" :style="{ backgroundColor: getTaskTypeColor(task.type) }"></div>
+                  <div class="text-slate-700 font-bold text-sm group-hover:text-primary-600 transition-colors">{{ task.title }}</div>
                 </div>
               </td>
-              <td class="px-4 py-3">
-                <span class="px-2 py-1 rounded text-xs" :style="{ backgroundColor: getTaskTypeColor(task.type) + '20', color: getTaskTypeColor(task.type) }">
-                  {{ getTaskTypeLabel(task.type) }}
-                </span>
+              <td class="px-6 py-4">
+                <span class="text-[10px] font-black uppercase text-slate-400">{{ getTaskTypeLabel(task.type) }}</span>
               </td>
-              <td class="px-4 py-3">
-                <span class="px-2 py-1 rounded text-xs" :class="getBoardStatusClass(task.boardStatus)">
+              <td class="px-6 py-4">
+                <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider" :class="getBoardStatusClass(task.boardStatus)">
                   {{ getBoardStatusLabel(task.boardStatus) }}
                 </span>
               </td>
-              <td class="px-4 py-3">
-                <span class="px-2 py-1 rounded text-xs" :class="getPriorityClass(task.priority)">
+              <td class="px-6 py-4">
+                <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border" :class="getPriorityClass(task.priority)">
                   {{ getPriorityLabel(task.priority) }}
                 </span>
               </td>
-              <td class="px-4 py-3">
+              <td class="px-6 py-4">
                 <div v-if="task.assignedTo" class="flex items-center gap-2">
-                  <div class="w-6 h-6 rounded-full bg-purple-600 text-white flex items-center justify-center text-[10px]">
+                  <div class="w-7 h-7 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-[10px] font-black border border-white shadow-sm">
                     {{ getInitials(task.assignedTo.name) }}
                   </div>
-                  <span class="text-white text-sm">{{ task.assignedTo.name }}</span>
+                  <span class="text-slate-600 text-xs font-bold">{{ task.assignedTo.name }}</span>
                 </div>
-                <span v-else class="text-gray-500 text-sm">Sin asignar</span>
+                <span v-else class="text-slate-300 text-xs italic">Sin asignar</span>
               </td>
-              <td class="px-4 py-3 text-white text-sm">
-                {{ task.estimatedHours || 0 }}h / {{ task.actualHours || 0 }}h
-              </td>
-              <td class="px-4 py-3">
-                <div v-if="task.github?.branch" class="flex items-center gap-2">
-                  <i class="fab fa-github text-gray-400"></i>
-                  <span class="text-gray-400 text-xs">{{ task.github.branch }}</span>
-                </div>
+              <td class="px-6 py-4 text-right">
+                <div class="text-slate-700 font-black text-xs">{{ Number(task.actualHours || 0).toFixed(1) }}<span class="text-[10px] text-slate-400 ml-0.5">h</span></div>
+                <div class="text-[9px] text-slate-400 uppercase tracking-tighter">Est: {{ task.estimatedHours || 0 }}h</div>
               </td>
             </tr>
           </tbody>
@@ -351,11 +324,29 @@
       </div>
     </div>
 
-    <!-- Empty State -->
-    <div v-else class="text-center py-12">
-      <i class="fas fa-clipboard-list text-4xl text-gray-600 mb-4"></i>
-      <p class="text-gray-400">Selecciona un tablero para comenzar</p>
+    <!-- Global Empty State -->
+    <div v-else class="flex flex-col items-center justify-center py-32 text-center">
+      <div class="w-24 h-24 bg-slate-50 rounded-[2.5rem] flex items-center justify-center border border-slate-100 mb-8 animate-bounce duration-[3s]">
+        <i class="fas fa-rocket text-4xl text-primary-200"></i>
+      </div>
+      <h3 class="text-2xl font-black text-slate-800 tracking-tight mb-2">Comienza tu viaje en Customer Touch</h3>
+      <p class="text-slate-400 font-medium text-sm max-w-md">
+        Selecciona un tablero para visualizar el flujo de trabajo y comenzar a gestionar la productividad de tu equipo.
+      </p>
     </div>
+
+    <!-- Task Modal -->
+    <ActivityFormModal
+      v-if="showTaskModal"
+      :activity="selectedTask"
+      :clients="clients"
+      :teamMembers="teamMembers"
+      :sprints="currentBoard?.sprints"
+      :initialBoardStatus="initialColumnId"
+      :boardId="selectedBoardId"
+      @close="closeTaskModal"
+      @saved="onTaskSaved"
+    />
   </div>
 </template>
 
@@ -363,19 +354,35 @@
 import { ref, computed, onMounted } from 'vue'
 import { useBoardsStore } from '@/stores/boards'
 import { useTasksStore, type Task } from '@/stores/tasks'
+import { useAuthStore } from '@/stores/auth'
+import { teamService } from '@/services/teamService'
+import { clientService } from '@/services/clientService'
+import ActivityFormModal from '@/components/forms/ActivityFormModal.vue'
+import { useNotifications } from '@/composables/useNotifications'
 
+const authStore = useAuthStore()
 const boardsStore = useBoardsStore()
 const tasksStore = useTasksStore()
+const { showSuccess, showError } = useNotifications()
 
 const currentView = ref<'kanban' | 'list'>('kanban')
 const selectedBoardId = ref<string>('')
 const selectedSprintId = ref<string | null>(null)
 const showFilters = ref(false)
 const showGitHubPanel = ref(false)
+const showTaskModal = ref(false)
+const selectedTask = ref<Task | null>(null)
+const initialColumnId = ref('backlog')
+const teamMembers = ref<any[]>([])
+const clients = ref([])
+const departments = ref<string[]>(['TI', 'Comercial', 'Marketing'])
+
 const filters = ref({
   type: '',
   priority: '',
-  status: ''
+  status: '',
+  department: '',
+  assignedTo: authStore.user?._id || '' // Por defecto el usuario actual
 })
 
 const boards = computed(() => boardsStore.myBoards)
@@ -383,6 +390,10 @@ const currentBoard = computed(() => boardsStore.currentBoard)
 const sprints = computed(() => boardsStore.currentBoardSprints)
 const tasks = computed(() => tasksStore.tasks)
 const loading = computed(() => boardsStore.loading || tasksStore.loading)
+
+const activeFiltersCount = computed(() => {
+  return Object.values(filters.value).filter(v => v !== '').length
+})
 
 const columns = computed(() => {
   if (!currentBoard.value) return []
@@ -395,44 +406,33 @@ function getColumnTasks(columnId: string): Task[] {
 
 function getColumnColor(columnId: string): string {
   const colors: Record<string, string> = {
-    'backlog': 'bg-gray-500',
-    'todo': 'bg-blue-500',
-    'in-progress': 'bg-yellow-500',
-    'review': 'bg-purple-500',
-    'testing': 'bg-orange-500',
-    'done': 'bg-green-500'
+    'backlog': 'bg-slate-300',
+    'todo': 'bg-primary-400',
+    'in-progress': 'bg-amber-400',
+    'review': 'bg-indigo-400',
+    'testing': 'bg-rose-400',
+    'done': 'bg-emerald-400'
   }
-  return colors[columnId] || 'bg-gray-500'
-}
-
-function getTaskTypeIcon(type: string): string {
-  const icons: Record<string, string> = {
-    'task': 'fas fa-tasks',
-    'bug': 'fas fa-bug',
-    'feature': 'fas fa-star',
-    'user-story': 'fas fa-user',
-    'epic': 'fas fa-mountain'
-  }
-  return icons[type] || 'fas fa-circle'
+  return colors[columnId] || 'bg-slate-300'
 }
 
 function getTaskTypeColor(type: string): string {
   const colors: Record<string, string> = {
-    'task': '#3B82F6',
-    'bug': '#EF4444',
-    'feature': '#A855F7',
+    'task': '#52c2ef',
+    'bug': '#F43F5E',
+    'feature': '#8B5CF6',
     'user-story': '#10B981',
     'epic': '#F59E0B'
   }
-  return colors[type] || '#6B7280'
+  return colors[type] || '#94A3B8'
 }
 
 function getTaskTypeLabel(type: string): string {
   const labels: Record<string, string> = {
-    'task': 'Task',
-    'bug': 'Bug',
+    'task': 'Tarea',
+    'bug': 'Error',
     'feature': 'Feature',
-    'user-story': 'User Story',
+    'user-story': 'Story',
     'epic': 'Epic'
   }
   return labels[type] || type
@@ -440,12 +440,13 @@ function getTaskTypeLabel(type: string): string {
 
 function getPriorityClass(priority: string): string {
   const classes: Record<string, string> = {
-    'low': 'bg-gray-500/20 text-gray-400',
-    'medium': 'bg-yellow-500/20 text-yellow-400',
-    'high': 'bg-orange-500/20 text-orange-400',
-    'critical': 'bg-red-500/20 text-red-400'
+    'low': 'bg-slate-50 text-slate-500 border-slate-100',
+    'medium': 'bg-primary-50 text-primary-600 border-primary-100',
+    'high': 'bg-amber-50 text-amber-600 border-amber-100',
+    'critical': 'bg-rose-50 text-rose-600 border-rose-100',
+    'urgent': 'bg-rose-50 text-rose-600 border-rose-100'
   }
-  return classes[priority] || 'bg-gray-500/20 text-gray-400'
+  return classes[priority] || 'bg-slate-50 text-slate-500 border-slate-100'
 }
 
 function getPriorityLabel(priority: string): string {
@@ -453,45 +454,38 @@ function getPriorityLabel(priority: string): string {
     'low': 'Baja',
     'medium': 'Media',
     'high': 'Alta',
-    'critical': 'Crítica'
+    'critical': 'Crítica',
+    'urgent': 'Crítica'
   }
   return labels[priority] || priority
 }
 
 function getBoardStatusClass(status: string): string {
   const classes: Record<string, string> = {
-    'backlog': 'bg-gray-500/20 text-gray-400',
-    'todo': 'bg-blue-500/20 text-blue-400',
-    'in-progress': 'bg-yellow-500/20 text-yellow-400',
-    'review': 'bg-purple-500/20 text-purple-400',
-    'testing': 'bg-orange-500/20 text-orange-400',
-    'done': 'bg-green-500/20 text-green-400'
+    'backlog': 'bg-slate-100 text-slate-500',
+    'todo': 'bg-primary-50 text-primary-600',
+    'in-progress': 'bg-amber-50 text-amber-600',
+    'review': 'bg-indigo-50 text-indigo-600',
+    'testing': 'bg-rose-50 text-rose-600',
+    'done': 'bg-emerald-50 text-emerald-600'
   }
-  return classes[status] || 'bg-gray-500/20 text-gray-400'
+  return classes[status] || 'bg-slate-100 text-slate-500'
 }
 
 function getBoardStatusLabel(status: string): string {
   const labels: Record<string, string> = {
     'backlog': 'Backlog',
-    'todo': 'Por Hacer',
-    'in-progress': 'En Progreso',
+    'todo': 'Pendiente',
+    'in-progress': 'Ejecución',
     'review': 'Revisión',
-    'testing': 'Pruebas',
-    'done': 'Completado'
+    'testing': 'QA',
+    'done': 'Finalizado'
   }
   return labels[status] || status
 }
 
-function getPRStatusClass(status: string): string {
-  const classes: Record<string, string> = {
-    'open': 'bg-green-500/20 text-green-400',
-    'closed': 'bg-gray-500/20 text-gray-400',
-    'merged': 'bg-purple-500/20 text-purple-400'
-  }
-  return classes[status] || 'bg-gray-500/20 text-gray-400'
-}
-
 function getInitials(name: string): string {
+  if (!name) return '??'
   return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
 }
 
@@ -513,8 +507,9 @@ async function onDrop(event: DragEvent, targetColumnId: string) {
   if (draggedTask && draggedTask.boardStatus !== targetColumnId) {
     try {
       await tasksStore.moveTask(draggedTask._id, targetColumnId)
+      showSuccess('Movimiento sincronizado')
     } catch (error) {
-      console.error('Error moving task:', error)
+      showError('Error al mover la tarea')
     }
   }
 }
@@ -529,14 +524,14 @@ async function onBoardChange() {
 async function loadTasks() {
   if (!selectedBoardId.value) return
   
-  const filterParams = {
+  const filterParams: any = {
     ...filters.value,
     sprint: selectedSprintId.value || undefined
   }
   
   Object.keys(filterParams).forEach(key => {
-    if (!filterParams[key as keyof typeof filterParams]) {
-      delete filterParams[key as keyof typeof filterParams]
+    if (!filterParams[key]) {
+      delete filterParams[key]
     }
   })
   
@@ -544,41 +539,97 @@ async function loadTasks() {
 }
 
 function clearFilters() {
-  filters.value = { type: '', priority: '', status: '' }
+  filters.value = { type: '', priority: '', status: '', department: '', assignedTo: '' }
   loadTasks()
 }
 
-function openTaskModal(_columnId?: string) {
-  // TODO: Implementar modal de creación
-  console.log('Open task modal for column:', _columnId)
+function saveCurrentFilters() {
+  localStorage.setItem('customer_touch_filters', JSON.stringify(filters.value))
+  showSuccess('Filtros guardados como predeterminados')
 }
 
-function openTaskDetail(_task: Task) {
-  // TODO: Implementar modal de detalle
-  console.log('Open task detail:', _task)
+function openTaskModal(columnId?: string) {
+  selectedTask.value = null
+  initialColumnId.value = columnId || 'backlog'
+  showTaskModal.value = true
+}
+
+function openTaskDetail(task: Task) {
+  selectedTask.value = task
+  showTaskModal.value = true
+}
+
+function closeTaskModal() {
+  showTaskModal.value = false
+  selectedTask.value = null
+}
+
+async function onTaskSaved() {
+  await loadTasks()
 }
 
 onMounted(async () => {
+  // Cargar filtros guardados
+  const saved = localStorage.getItem('customer_touch_filters')
+  if (saved) {
+    try {
+      filters.value = JSON.parse(saved)
+    } catch (e) {}
+  }
+
   await boardsStore.fetchBoards()
   if (boards.value.length > 0) {
     selectedBoardId.value = boards.value[0]._id
-    await onBoardChange()
+    await boardsStore.fetchBoardById(selectedBoardId.value)
+    await loadTasks()
+  }
+
+  try {
+    const [team, cls] = await Promise.all([
+      teamService.getActiveMembers(),
+      clientService.getAll()
+    ])
+    teamMembers.value = team
+    clients.value = cls
+  } catch (error) {
+    console.error('Error loading data:', error)
   }
 })
 </script>
 
 <style scoped>
-.line-clamp-1 {
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #e2e8f0;
 }
 
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-in-from-top-4 {
+  from { transform: translateY(-1rem); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-in {
+  animation-fill-mode: forwards;
+}
+.fade-in {
+  animation-name: fade-in;
+}
+.slide-in-from-top-4 {
+  animation-name: slide-in-from-top-4;
 }
 </style>

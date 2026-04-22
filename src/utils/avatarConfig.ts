@@ -1,4 +1,4 @@
-// Lista de avatares disponibles para el sistema GEMS
+// Lista de avatares disponibles para el sistema Customer Touch
 export interface AvatarOption {
   id: string;
   name: string;
@@ -6,7 +6,7 @@ export interface AvatarOption {
   color: string;
 }
 
-export const GEM_AVATARS: AvatarOption[] = [
+export const IDENTITY_AVATARS: AvatarOption[] = [
   {
     id: 'ruby',
     name: 'Rubí',
@@ -47,10 +47,10 @@ export const GEM_AVATARS: AvatarOption[] = [
 
 // Función para obtener avatar por ID
 export const getAvatarById = (id: string): AvatarOption | undefined => {
-  return GEM_AVATARS.find(avatar => avatar.id === id);
+  return IDENTITY_AVATARS.find(avatar => avatar.id === id);
 };
 
 // Función para obtener avatar por defecto
 export const getDefaultAvatar = (): AvatarOption => {
-  return GEM_AVATARS[0]; // Ruby como defecto
+  return IDENTITY_AVATARS[0]; // Ruby como defecto
 };

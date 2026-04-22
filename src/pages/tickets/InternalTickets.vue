@@ -1,11 +1,7 @@
 <template>
   <div class="flex flex-col h-full min-h-0 gap-4">
-    <!-- Header -->
-    <div class="flex-shrink-0 flex items-center justify-between">
-      <div>
-        <h1 class="text-xl font-black text-slate-800 tracking-tight">Gestión de Tickets</h1>
-        <p class="text-xs text-slate-500 font-medium mt-0.5">Soporte técnico y atención al cliente</p>
-      </div>
+    <!-- Header Controls (New Ticket & Refresh) -->
+    <div class="flex-shrink-0 flex items-center justify-end">
       
       <div class="flex items-center gap-3">
         <!-- View Toggle -->
@@ -57,6 +53,15 @@
         />
       </div>
       
+      <select v-model="filterStatus" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 focus:outline-none">
+        <option value="">Todos los estados</option>
+        <option value="new">Nuevos</option>
+        <option value="open">Abiertos</option>
+        <option value="waiting">Pendiente Cliente</option>
+        <option value="resolved">Resueltos</option>
+        <option value="closed">Cerrados</option>
+      </select>
+
       <select v-model="filterCategory" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 focus:outline-none">
         <option value="">Todas las categorías</option>
         <option value="technical">Technical</option>
@@ -220,6 +225,38 @@
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- Pagination Footer (Internal) -->
+        <div v-if="pagination.pages > 1" class="flex-shrink-0 bg-slate-50/50 border-t border-slate-100 p-3 flex items-center justify-between">
+           <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">
+              Página {{ pagination.page }} de {{ pagination.pages }} ({{ pagination.total }} total)
+           </span>
+           <div class="flex items-center gap-1.5 mr-4">
+              <button 
+                @click="changePage(pagination.page - 1)"
+                :disabled="pagination.page === 1"
+                class="w-8 h-8 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-400 hover:text-primary-600 disabled:opacity-30 transition-all shadow-sm"
+              >
+                <i class="fas fa-chevron-left text-[8px]"></i>
+              </button>
+              <button 
+                v-for="p in pagination.pages" 
+                :key="p"
+                @click="changePage(p)"
+                :class="p === pagination.page ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-400 hover:bg-slate-50'"
+                class="w-7 h-7 rounded-lg text-[9px] font-black transition-all"
+              >
+                {{ p }}
+              </button>
+              <button 
+                @click="changePage(pagination.page + 1)"
+                :disabled="pagination.page === pagination.pages"
+                class="w-8 h-8 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-400 hover:text-primary-600 disabled:opacity-30 transition-all shadow-sm"
+              >
+                <i class="fas fa-chevron-right text-[8px]"></i>
+              </button>
+           </div>
         </div>
       </div>
 
@@ -493,7 +530,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, reactive } from 'vue'
 import { ticketService } from '../../services/ticketService'
 import { useAuthStore } from '../../stores/auth'
 import { useNotifications } from '../../composables/useNotifications'
@@ -511,6 +548,13 @@ const loading = ref(false)
 const searchQuery = ref('')
 const filterPriority = ref('')
 const filterCategory = ref('')
+const filterStatus = ref('')
+const pagination = ref({
+  page: 1,
+  limit: 15,
+  total: 0,
+  pages: 1
+})
 
 // Selection & Modal
 const selectedTicket = ref<Ticket | null>(null)
@@ -567,15 +611,31 @@ const inboxTickets = computed(() => {
 })
 
 // Methods
-const loadTickets = async () => {
+const loadTickets = async (page = 1) => {
   loading.value = true
   try {
-    tickets.value = await ticketService.getAll()
+    const response = await ticketService.getAll({
+      status: filterStatus.value, // We should bind status to a ref if we want it filtered in API
+      priority: filterPriority.value,
+      category: filterCategory.value,
+      page,
+      limit: pagination.value.limit
+    })
+    
+    if (response.success) {
+      tickets.value = response.data
+      pagination.value = response.pagination
+    }
   } catch (err: any) {
     showError(err.message)
   } finally {
     loading.value = false
   }
+}
+
+const changePage = (page: number) => {
+  if (page < 1 || page > pagination.value.pages) return
+  loadTickets(page)
 }
 
 const getTicketsByStatus = (status: string) => {
@@ -736,6 +796,10 @@ const formatDateLong = (dateStr?: string) => {
   if (!dateStr) return ''
   return format(new Date(dateStr), "d 'DE' MMMM, yyyy", { locale: es })
 }
+
+watch([filterStatus, filterPriority, filterCategory], () => {
+  loadTickets(1)
+})
 
 onMounted(() => {
   loadTickets()

@@ -82,6 +82,18 @@ export interface Task {
   completedAt?: Date
   createdAt: Date
   updatedAt: Date
+  activeSessions?: Array<{
+    userId: { _id: string, name: string, photo: string }
+    startTime: Date
+  }>
+  timeLogs?: Array<{
+    userId: { _id: string, name: string, photo: string }
+    startTime: Date
+    endTime: Date
+    durationHours: number
+    notes?: string
+  }>
+  completionPercentage?: number
 }
 
 export interface TaskFilters {
@@ -93,6 +105,7 @@ export interface TaskFilters {
   type?: string
   tags?: string[]
   search?: string
+  department?: string
 }
 
 export interface TaskStats {
@@ -156,6 +169,7 @@ export const useTasksStore = defineStore('tasks', () => {
       if (customFilters?.sprint) params.append('sprint', customFilters.sprint)
       if (customFilters?.type) params.append('type', customFilters.type)
       if (customFilters?.search) params.append('search', customFilters.search)
+      if (customFilters?.department) params.append('department', customFilters.department)
       
       const response = await axios.get(`${API_URL}/api/tasks?${params.toString()}`, config.value)
       tasks.value = response.data
@@ -347,6 +361,42 @@ export const useTasksStore = defineStore('tasks', () => {
     }
   }
 
+  async function startTimer(taskId: string) {
+    try {
+      const response = await axios.post(`${API_URL}/api/tasks/${taskId}/timer/start`, {}, config.value)
+      const index = tasks.value.findIndex(t => t._id === taskId)
+      if (index !== -1) {
+        tasks.value[index] = response.data
+      }
+      if (currentTask.value?._id === taskId) {
+        currentTask.value = response.data
+      }
+      return response.data
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Error al iniciar temporizador'
+      console.error('Error starting timer:', err)
+      throw err
+    }
+  }
+
+  async function stopTimer(taskId: string, notes?: string) {
+    try {
+      const response = await axios.post(`${API_URL}/api/tasks/${taskId}/timer/stop`, { notes }, config.value)
+      const index = tasks.value.findIndex(t => t._id === taskId)
+      if (index !== -1) {
+        tasks.value[index] = response.data
+      }
+      if (currentTask.value?._id === taskId) {
+        currentTask.value = response.data
+      }
+      return response.data
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Error al detener temporizador'
+      console.error('Error stopping timer:', err)
+      throw err
+    }
+  }
+
   async function fetchStats(boardId?: string, sprintId?: string) {
     try {
       const params = new URLSearchParams()
@@ -408,6 +458,8 @@ export const useTasksStore = defineStore('tasks', () => {
     addComment,
     uploadAttachment,
     syncWithGitHub,
+    startTimer,
+    stopTimer,
     fetchStats,
     setFilters,
     clearFilters,

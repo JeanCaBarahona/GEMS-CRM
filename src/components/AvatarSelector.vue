@@ -1,83 +1,68 @@
 <template>
-  <div class="avatar-selector">
-    <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
-      <i class="fas fa-gem mr-2 text-purple-400"></i>
-      Elige tu Gema
-    </h3>
-
-    <!-- Preview del avatar seleccionado -->
-    <div v-if="selectedAvatar" class="mb-6 p-4 bg-gray-700/50 rounded-xl border border-gray-600">
-      <div class="flex items-center space-x-4">
-        <div class="text-center">
-          <div class="w-16 h-16 rounded-full overflow-hidden border-4 border-purple-500/50 shadow-lg mx-auto">
-            <img
-              :src="getSelectedAvatarData()?.path"
-              :alt="getSelectedAvatarData()?.name"
-              class="w-full h-full object-cover"
-            />
-          </div>
+  <div class="space-y-6">
+    <!-- Selected Avatar Preview -->
+    <div v-if="selectedAvatar" class="p-5 bg-primary-50 rounded-2xl border border-primary-100 flex items-center gap-4 animate__animated animate__fadeIn">
+      <div class="relative">
+        <div class="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg">
+          <img
+            :src="getSelectedAvatarData()?.path"
+            :alt="getSelectedAvatarData()?.name"
+            class="w-full h-full object-cover"
+          />
         </div>
-        <div class="flex-1">
-          <h4 class="text-white font-medium text-lg">{{ getSelectedAvatarData()?.name }}</h4>
-          <p class="text-gray-300 text-sm">Avatar seleccionado</p>
+        <div class="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+          <i class="fas fa-check text-[10px] text-white"></i>
         </div>
-        <div class="text-green-400">
-          <i class="fas fa-check-circle text-2xl"></i>
-        </div>
+      </div>
+      <div class="flex-1">
+        <p class="text-[10px] font-black text-primary-400 uppercase tracking-widest mb-1">Avatar Seleccionado</p>
+        <h4 class="text-slate-800 font-black text-lg tracking-tight">{{ getSelectedAvatarData()?.name }}</h4>
       </div>
     </div>
 
+    <!-- Avatar Options Grid -->
     <div class="grid grid-cols-3 gap-4">
       <div
-        v-for="avatar in GEM_AVATARS"
+        v-for="avatar in IDENTITY_AVATARS"
         :key="avatar.id"
         @click="$emit('select', avatar.id)"
-        class="avatar-option cursor-pointer transition-all duration-200 transform hover:scale-105 relative"
-        :class="{
-          'ring-4 ring-yellow-400 ring-offset-2 ring-offset-gray-800 bg-yellow-400/10': selectedAvatar === avatar.id,
-          'hover:ring-2 hover:ring-gray-400 hover:ring-offset-1': selectedAvatar !== avatar.id
-        }"
+        class="group cursor-pointer transition-all duration-300 relative p-3 rounded-2xl border-2"
+        :class="[
+          selectedAvatar === avatar.id 
+            ? 'bg-primary-50 border-primary-300 ring-4 ring-primary-50' 
+            : 'bg-slate-50/50 border-transparent hover:bg-white hover:border-slate-200 hover:shadow-md'
+        ]"
       >
-        <!-- Indicador de selección -->
-        <div
-          v-if="selectedAvatar === avatar.id"
-          class="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center z-10"
-        >
-          <i class="fas fa-check text-xs text-gray-900"></i>
-        </div>
-
-        <div class="avatar-container">
+        <div class="relative mx-auto w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-sm group-hover:scale-110 transition-transform duration-300">
           <img
             :src="avatar.path"
             :alt="avatar.name"
-            class="w-16 h-16 rounded-full object-cover border-2 transition-all duration-200"
-            :class="selectedAvatar === avatar.id ? 'border-yellow-400' : 'border-white/20'"
+            class="w-full h-full object-cover"
           />
         </div>
-        <p class="text-xs text-center mt-2 transition-colors duration-200"
-           :class="selectedAvatar === avatar.id ? 'text-yellow-400 font-semibold' : 'text-gray-300'">
+        <p class="text-[10px] font-black text-center mt-3 uppercase tracking-wider transition-colors"
+           :class="selectedAvatar === avatar.id ? 'text-primary-600' : 'text-slate-400 group-hover:text-slate-600'">
           {{ avatar.name }}
         </p>
       </div>
     </div>
 
-    <div class="mt-6 text-center">
+    <!-- Action Button -->
+    <div class="pt-4 border-t border-slate-100 flex justify-center">
       <button
         @click="$emit('confirm')"
         :disabled="!selectedAvatar"
-        class="px-6 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-        :class="selectedAvatar ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white' : 'bg-gray-600 text-gray-400'"
+        class="w-full px-8 py-4 bg-primary-500 hover:bg-primary-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-primary-100 disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-0.5 active:translate-y-0"
       >
-        <i class="fas fa-check mr-2"></i>
-        Confirmar Gema
+        <i class="fas fa-check-circle mr-2"></i>
+        Confirmar Identidad
       </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { GEM_AVATARS, getAvatarById } from '@/utils/avatarConfig'
+import { IDENTITY_AVATARS, getAvatarById } from '@/utils/avatarConfig'
 
 interface Props {
   selectedAvatar?: string
@@ -90,7 +75,6 @@ defineEmits<{
   confirm: []
 }>()
 
-// Función para obtener los datos del avatar seleccionado
 const getSelectedAvatarData = () => {
   if (!props.selectedAvatar) return null
   return getAvatarById(props.selectedAvatar)
@@ -98,29 +82,7 @@ const getSelectedAvatarData = () => {
 </script>
 
 <style scoped>
-.avatar-selector {
-  background: rgba(31, 41, 55, 0.5);
-  backdrop-filter: blur(8px);
-  border-radius: 1rem;
-  padding: 1.5rem;
-  border: 1px solid rgba(75, 85, 99, 0.5);
-}
-
-.avatar-option {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0.75rem;
-  border-radius: 0.75rem;
-  background: rgba(55, 65, 81, 0.3);
-}
-
-.avatar-container {
-  position: relative;
-}
-
-.avatar-option:hover {
-  background: rgba(55, 65, 81, 0.5);
+.animate__fadeIn {
+  animation-duration: 0.5s;
 }
 </style>

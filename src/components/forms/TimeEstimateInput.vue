@@ -1,7 +1,7 @@
 <template>
-  <div class="space-y-3">
-    <label class="block text-sm font-medium text-gray-300">
-      <i class="fas fa-clock text-blue-400 mr-1"></i>
+  <div class="space-y-4">
+    <label class="block text-[11px] font-black text-slate-400 uppercase tracking-widest">
+      <i class="fas fa-clock text-primary-500 mr-2"></i>
       Tiempo Estimado
     </label>
     
@@ -12,94 +12,81 @@
         v-for="preset in timePresets"
         :key="preset.value"
         @click="selectPreset(preset.value)"
-        class="py-2 px-3 text-xs font-medium rounded-lg transition-all duration-200"
+        class="py-2.5 px-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all duration-200 border"
         :class="modelValue === preset.value 
-          ? 'bg-purple-600 text-white shadow-lg' 
-          : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'"
+          ? 'bg-primary-600 text-white border-primary-600 shadow-lg shadow-primary-200 scale-105' 
+          : 'bg-white text-slate-500 border-slate-100 hover:bg-slate-50 hover:border-slate-200'"
       >
-        <i :class="preset.icon" class="mr-1"></i>
+        <i :class="preset.icon" class="mr-1.5 opacity-70"></i>
         {{ preset.label }}
       </button>
     </div>
     
     <!-- Divisor -->
-    <div class="flex items-center gap-3">
-      <div class="flex-1 h-px bg-gray-600"></div>
-      <span class="text-xs text-gray-400">o personalizado</span>
-      <div class="flex-1 h-px bg-gray-600"></div>
+    <div class="flex items-center gap-4">
+      <div class="flex-1 h-px bg-slate-100"></div>
+      <span class="text-[10px] font-bold text-slate-300 uppercase tracking-tighter italic">Personalizado</span>
+      <div class="flex-1 h-px bg-slate-100"></div>
     </div>
     
     <!-- Entrada personalizada -->
-    <div class="flex gap-3">
+    <div class="flex gap-4">
       <!-- Horas -->
       <div class="flex-1">
-        <label class="block text-xs text-gray-400 mb-1">Horas</label>
-        <div class="relative">
+        <label class="block text-[10px] font-black text-slate-400 mb-1.5 uppercase">Horas</label>
+        <div class="relative group">
           <input
             v-model.number="customHours"
             @input="updateCustomTime"
             type="number"
             min="0"
             max="100"
-            class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent pr-8"
+            class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-bold text-sm"
             placeholder="0"
           />
-          <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">h</span>
+          <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300 uppercase">h</span>
         </div>
       </div>
       
       <!-- Minutos -->
       <div class="flex-1">
-        <label class="block text-xs text-gray-400 mb-1">Minutos</label>
-        <div class="relative">
+        <label class="block text-[10px] font-black text-slate-400 mb-1.5 uppercase">Minutos</label>
+        <div class="relative group">
           <select
             v-model.number="customMinutes"
             @change="updateCustomTime"
-            class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent pr-8"
+            class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-bold text-sm appearance-none cursor-pointer"
           >
             <option value="0">0</option>
             <option value="15">15</option>
             <option value="30">30</option>
             <option value="45">45</option>
           </select>
-          <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">m</span>
+          <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300 uppercase pointer-events-none">m</span>
         </div>
       </div>
     </div>
     
     <!-- Vista previa del tiempo seleccionado -->
-    <div v-if="modelValue" class="bg-gray-700/50 rounded-lg p-3 border border-gray-600">
+    <div v-if="modelValue" class="bg-primary-50/50 rounded-2xl p-4 border border-primary-100 animate-fade-in shadow-sm">
       <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <i class="fas fa-stopwatch text-green-400"></i>
-          <span class="text-sm text-gray-300">Tiempo estimado:</span>
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center border border-primary-100 shadow-sm">
+            <i class="fas fa-stopwatch text-primary-500"></i>
+          </div>
+          <div>
+            <span class="text-[10px] font-black text-primary-400 uppercase tracking-widest block">Seleccionado</span>
+            <span class="text-sm text-primary-900 font-black">{{ modelValue }}</span>
+          </div>
         </div>
-        <div class="flex items-center gap-2">
-          <span class="text-white font-medium">{{ modelValue }}</span>
-          <button
-            type="button"
-            @click="clear"
-            class="text-gray-400 hover:text-red-400 transition-colors"
-            title="Limpiar"
-          >
-            <i class="fas fa-times text-xs"></i>
-          </button>
-        </div>
-      </div>
-      
-      <!-- Barra de progreso visual (decorativa) -->
-      <div class="mt-2">
-        <div class="flex text-xs text-gray-500 mb-1">
-          <span>Rápido</span>
-          <span class="ml-auto">Largo</span>
-        </div>
-        <div class="w-full bg-gray-600 rounded-full h-1.5">
-          <div 
-            class="h-1.5 rounded-full transition-all duration-500"
-            :class="getProgressBarClass()"
-            :style="{ width: getProgressWidth() }"
-          ></div>
-        </div>
+        <button
+          type="button"
+          @click="clear"
+          class="w-8 h-8 flex items-center justify-center bg-white text-slate-400 hover:text-red-500 rounded-lg transition-all border border-slate-100 hover:border-red-100 shadow-sm"
+          title="Limpiar"
+        >
+          <i class="fas fa-times text-xs"></i>
+        </button>
       </div>
     </div>
   </div>

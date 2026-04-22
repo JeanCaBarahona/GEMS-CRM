@@ -30,7 +30,7 @@
         <div class="flex items-center gap-3">
           <i class="fas fa-comments text-white text-xl"></i>
           <div>
-            <h3 class="text-white font-semibold">Chat GEMS</h3>
+            <h3 class="text-white font-semibold">Customer Touch Chat</h3>
             <p class="text-purple-100 text-xs">
               Sistema de mensajería interno
             </p>
@@ -128,7 +128,7 @@
             <!-- Mensaje del sistema -->
             <div class="flex justify-center">
               <div class="bg-gray-700/50 text-gray-300 px-3 py-1 rounded-full text-xs">
-                Sistema de chat GEMS iniciado
+                Sistema de chat Customer Touch iniciado
               </div>
             </div>
 
@@ -137,7 +137,7 @@
               <div class="max-w-[70%] group">
                 <div class="bg-gray-700 text-gray-100 px-4 py-2 rounded-2xl rounded-bl-lg">
                   <p class="text-xs font-medium mb-1 text-purple-300">Admin</p>
-                  <p class="text-sm">¡Bienvenidos al nuevo sistema de chat interno de GEMS! 🎉</p>
+                  <p class="text-sm">¡Bienvenidos al nuevo sistema de chat interno de Customer Touch! 🎉</p>
                   <div class="text-xs mt-1 opacity-70 text-gray-400">
                     10:30 AM
                   </div>

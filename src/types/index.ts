@@ -143,6 +143,8 @@ export interface TeamMember {
   email: string
   role: 'admin' | 'manager' | 'employee' | 'support' | 'development' | 'fullstack' | 'viewer'
   department?: string
+  departmentRole?: 'member' | 'leader'
+  supervisor?: string
   position?: string
   phone?: string
   photo?: string

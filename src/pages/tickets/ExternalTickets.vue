@@ -119,6 +119,37 @@
                 </tbody>
               </table>
             </div>
+
+            <!-- Pagination (External) -->
+            <div v-if="pagination.pages > 1" class="px-6 py-4 bg-slate-50/20 border-t border-slate-50 flex items-center justify-center gap-2">
+               <button 
+                 @click="changePage(pagination.page - 1)"
+                 :disabled="pagination.page === 1"
+                 class="w-9 h-9 bg-white border border-slate-100 rounded-xl flex items-center justify-center text-slate-400 hover:text-primary-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+               >
+                 <i class="fas fa-chevron-left text-[10px]"></i>
+               </button>
+               
+               <div class="flex items-center gap-1.5">
+                  <button 
+                    v-for="p in pagination.pages" 
+                    :key="p"
+                    @click="changePage(p)"
+                    :class="p === pagination.page ? 'bg-primary-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-50'"
+                    class="w-8 h-8 rounded-lg text-[10px] font-black transition-all"
+                  >
+                    {{ p }}
+                  </button>
+               </div>
+
+               <button 
+                 @click="changePage(pagination.page + 1)"
+                 :disabled="pagination.page === pagination.pages"
+                 class="w-9 h-9 bg-white border border-slate-100 rounded-xl flex items-center justify-center text-slate-400 hover:text-primary-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+               >
+                 <i class="fas fa-chevron-right text-[10px]"></i>
+               </button>
+            </div>
           </div>
         </div>
       </div>
@@ -215,7 +246,7 @@
                      </div>
                      <div class="flex-1 space-y-1">
                        <div class="flex items-center justify-between">
-                         <span class="text-[11px] font-black text-slate-800">{{ comment.author?.name || 'Soporte GEMS' }}</span>
+                         <span class="text-[11px] font-black text-slate-800">{{ comment.author?.name || 'Soporte Técnico' }}</span>
                          <span class="text-[9px] font-bold text-slate-400 uppercase">{{ formatDate(comment.createdAt) }}</span>
                        </div>
                         <p class="text-sm text-slate-600 leading-relaxed">{{ comment.text }}</p>
@@ -297,6 +328,12 @@ const tickets = ref<any[]>([])
 const loading = ref(false)
 const selectedTicket = ref<any>(null)
 const activeTab = ref<'create' | 'history'>('create')
+const pagination = ref({
+  page: 1,
+  limit: 10,
+  total: 0,
+  pages: 1
+})
 
 // Comment Logic
 const commentText = ref('')
@@ -344,17 +381,25 @@ const sendComment = async () => {
   }
 }
 
-const loadData = async () => {
+const loadData = async (page = 1) => {
     if (!authStore.isAuthenticated) return
     loading.value = true
     try {
-        const data = await ticketService.getClientHistory()
-        tickets.value = data
+        const result = await ticketService.getClientHistory(page, pagination.value.limit)
+        if (result.success) {
+          tickets.value = result.data
+          pagination.value = result.pagination
+        }
     } catch (err) {
         console.error(err)
     } finally {
         loading.value = false
     }
+}
+
+const changePage = (page: number) => {
+  if (page < 1 || page > pagination.value.pages) return
+  loadData(page)
 }
 
 onMounted(() => {

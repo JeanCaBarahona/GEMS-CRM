@@ -22,15 +22,15 @@
             :class="currentView === 'tasks' 
               ? 'bg-white text-primary-600 shadow-sm font-bold border-slate-200' 
               : 'text-slate-500 hover:text-slate-800'"
-            class="px-3 py-1.5 rounded-md text-sm font-medium transition-all"
+            class="px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center"
           >
-            <i class="fas fa-tasks mr-2"></i>
-            Tasks
+            <i class="fas fa-list mr-2"></i>
+            Lista
           </button>
           <button
             @click="currentView = 'calendar'"
             :class="currentView === 'calendar' 
-              ? 'bg-white text-primary-600 shadow-sm font-bold border-slate-200' 
+              ? 'bg-white text-primary shadow-sm font-bold border-slate-200' 
               : 'text-slate-500 hover:text-slate-800'"
             class="px-3 py-1.5 rounded-md text-sm font-medium transition-all"
           >
@@ -43,7 +43,7 @@
         <PermissionGuard :permissions="['create-activities']" :fallback="false">
           <button
             @click="showCreateModal = true"
-            class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-bold flex items-center gap-2 shadow-sm text-sm"
+            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors font-bold flex items-center gap-2 shadow-sm text-sm"
           >
             <i class="fas fa-plus"></i>
             Nueva Actividad
@@ -123,53 +123,102 @@
     <!-- Filtros (solo en Kanban y Calendario) -->
     <div 
       v-if="currentView !== 'tasks'"
-      class="bg-white rounded-xl p-3 sm:p-4 border border-slate-200 shadow-sm"
+      class="bg-white rounded-xl border shadow-sm transition-all"
+      :class="filtersLocked ? 'border-primary-200 ring-2 ring-primary-100' : 'border-slate-200'"
     >
-      <div class="flex flex-wrap gap-3 sm:gap-4 items-center">
-        <!-- Filtro por miembro del equipo -->
-        <div class="flex-1 min-w-[200px]">
-          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-            Miembro del equipo
-          </label>
-          <select
-            v-model="selectedTeamMember"
-            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="">Todos los miembros</option>
-            <option value="unassigned">Sin asignar</option>
-            <option v-for="member in teamMembers" :key="member._id" :value="member._id">
-              {{ member.name }} - {{ member.role }}
-            </option>
-          </select>
+      <!-- Filter Header -->
+      <div class="flex items-center justify-between px-4 pt-3 pb-2 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <i class="fas fa-filter text-xs text-slate-400"></i>
+          <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Filtros Activos</span>
+          <span v-if="hasActiveFilters" class="w-4 h-4 bg-primary-500 text-white text-[8px] font-black rounded-full flex items-center justify-center">
+            {{ [selectedDepartment, selectedTeamMember, selectedStatus].filter(Boolean).length }}
+          </span>
         </div>
-
-        <!-- Filtro por estado -->
-        <div class="flex-1 min-w-[200px]">
-          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-            Estado
-          </label>
-          <select
-            v-model="selectedStatus"
-            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+        <div class="flex items-center gap-2">
+          <!-- Indicador de filtro guardado -->
+          <span v-if="filtersLocked" class="text-[10px] text-primary-600 font-bold flex items-center gap-1">
+            <i class="fas fa-lock text-[9px]"></i> Guardado
+          </span>
+          <!-- Botón candado -->
+          <button
+            @click="toggleLockFilters"
+            :title="filtersLocked ? 'Filtro guardado como predeterminado. Click para desbloquear' : 'Guardar filtro actual como predeterminado'"
+            :class="filtersLocked 
+              ? 'bg-primary-500 text-white shadow-md shadow-primary-100' 
+              : 'bg-slate-100 text-slate-400 hover:text-primary-500 hover:bg-primary-50'"
+            class="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
           >
-            <option value="">Todos los estados</option>
-            <option value="pending">Pendiente</option>
-            <option value="completed">Completada</option>
-          </select>
-        </div>
-
-        <!-- Botón para limpiar filtros -->
-        <div class="flex items-end self-end h-full">
+            <i :class="filtersLocked ? 'fas fa-lock' : 'fas fa-lock-open'" class="text-xs"></i>
+          </button>
+          <!-- Mis Tareas shortcut -->
+          <button
+            @click="setMyTasksFilter"
+            :class="selectedTeamMember === authStore.user?._id ? 'bg-primary-500 text-white' : 'bg-slate-100 text-slate-500 hover:bg-primary-50 hover:text-primary-600'"
+            class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5"
+          >
+            <i class="fas fa-user text-[9px]"></i> Mis Tareas
+          </button>
           <button
             @click="clearFilters"
-            class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors font-bold text-sm"
+            class="px-3 py-1.5 bg-slate-100 text-slate-500 hover:bg-slate-200 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"
           >
-            <i class="fas fa-filter-circle-xmark mr-1"></i>
-            Limpiar
+            <i class="fas fa-times mr-1"></i> Limpiar
           </button>
         </div>
       </div>
+
+      <!-- Filter Selects -->
+      <div class="flex flex-wrap gap-3 sm:gap-4 items-center p-3 sm:p-4">
+        <!-- Filtro por departamento -->
+        <div class="flex-1 min-w-[140px]">
+          <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1 ml-1">
+            Departamento
+          </label>
+          <CustomSelect
+            v-model="selectedDepartment"
+            :options="[
+              { value: '', label: 'Todos los depto.' },
+              { value: 'TI', label: 'TI' },
+              { value: 'Comercial', label: 'Comercial' },
+              { value: 'Marketing', label: 'Marketing' }
+            ]"
+          />
+        </div>
+
+        <!-- Filtro por miembro del equipo -->
+        <div class="flex-1 min-w-[180px]">
+          <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1 ml-1">
+            Miembro del equipo
+          </label>
+          <CustomSelect
+            v-model="selectedTeamMember"
+            :options="[
+              { value: '', label: 'Todos los miembros' },
+              { value: 'unassigned', label: 'Sin asignar' },
+              ...(authStore.user?._id ? [{ value: authStore.user._id, label: '⭐ Mis Tareas', specialClass: 'font-bold text-primary-600' }] : []),
+              ...filteredMembersByDept.filter(m => m._id !== authStore.user?._id).map(m => ({ value: m._id!, label: m.name }))
+            ]"
+          />
+        </div>
+
+        <!-- Filtro por estado -->
+        <div class="flex-1 min-w-[160px]">
+          <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1 ml-1">
+            Estado
+          </label>
+          <CustomSelect
+            v-model="selectedStatus"
+            :options="[
+              { value: '', label: 'Todos los estados' },
+              { value: 'pending', label: 'Pendiente' },
+              { value: 'completed', label: 'Completada' }
+            ]"
+          />
+        </div>
+      </div>
     </div>
+
 
     <!-- Vista de Calendario -->
     <div v-if="currentView === 'calendar'">
@@ -182,299 +231,97 @@
       />
     </div>
 
-    <!-- Vista de Tasks (Azure DevOps Style) - Lista y Panel -->
-    <div v-else-if="currentView === 'tasks'" class="flex gap-4 h-full">
-      <!-- Panel Principal - Lista de Tareas -->
-      <div class="flex-1 space-y-4 overflow-hidden flex flex-col">
-        <!-- Toolbar Superior -->
-        <div class="bg-white rounded-xl p-3 border border-slate-200 shadow-sm flex-shrink-0">
-          <div class="flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3 flex-1 flex-wrap">
-              <!-- Board Selector -->
-              <select
-                v-model="selectedBoardId"
-                @change="handleBoardChange"
-                class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 font-medium"
-              >
-                <option value="">Seleccionar tablero...</option>
-                <option v-for="board in boardsStore.myBoards" :key="board._id" :value="board._id">
-                  {{ board.name }}
-                </option>
-              </select>
-
-              <!-- Botón Nuevo Tablero -->
-              <button
-                @click="showCreateBoardModal = true"
-                class="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 hover:text-slate-900 border border-slate-200 text-sm font-bold flex items-center gap-2 transition-colors"
-                title="Crear nuevo tablero"
-              >
-                <i class="fas fa-plus text-xs"></i>
-                <span class="hidden sm:inline">Nuevo Tablero</span>
-              </button>
-
-              <!-- Botón Eliminar Tablero -->
-              <button
-                v-if="selectedBoardId && boardsStore.myBoards.length > 1"
-                @click="confirmDeleteBoard"
-                class="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 text-sm font-bold flex items-center gap-2 transition-colors border border-red-100"
-                title="Eliminar tablero actual"
-              >
-                <i class="fas fa-trash text-xs"></i>
-                <span class="hidden sm:inline">Eliminar</span>
-              </button>
-
-              <!-- Sprint Selector -->
-              <select
-                v-if="selectedBoard && selectedBoard.type === 'scrum'"
-                v-model="selectedSprintId"
-                @change="filterBySprint"
-                class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-              >
-                <option value="">Todos los sprints</option>
-                <option value="backlog">Backlog</option>
-                <option v-for="sprint in selectedBoard.sprints" :key="sprint._id" :value="sprint._id">
-                  {{ sprint.name }} ({{ sprint.status }})
-                </option>
-              </select>
-
-              <!-- Botón Gestionar Sprints -->
-              <button
-                v-if="selectedBoard && selectedBoard.type === 'scrum'"
-                @click="showSprintsModal = true"
-                class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 text-sm font-bold flex items-center gap-2 border border-blue-100"
-                title="Gestionar sprints"
-              >
-                <i class="fas fa-running text-xs"></i>
-                <span class="hidden sm:inline">Sprints</span>
-              </button>
-
-              <!-- Filtros -->
-              <div class="relative z-50">
-                <button 
-                  @click="toggleTaskFilters"
-                  ref="filterButton"
-                  class="px-3 py-1.5 text-sm font-bold rounded-lg border transition-colors flex items-center"
-                  :class="showTaskFilters || hasActiveTaskFilters ? 'bg-primary-50 text-primary-600 border-primary-200' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'"
+    <!-- Vista de Lista -->
+    <div v-else-if="currentView === 'tasks'" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mt-6">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-50 border-b border-slate-200 text-[10px] uppercase font-black text-slate-500 tracking-wider">
+              <th class="p-4 pl-6">Actividad</th>
+              <th class="p-4 hidden md:table-cell">Cliente</th>
+              <th class="p-4">Asignado</th>
+              <th class="p-4">Estado</th>
+              <th class="p-4 hidden sm:table-cell">Prioridad</th>
+              <th class="p-4 pr-6 text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr v-for="activity in filteredActivities" :key="activity._id" class="hover:bg-slate-50 transition-colors group">
+              <td class="p-4 pl-6">
+                <div class="font-bold text-slate-800 text-sm">{{ activity.title }}</div>
+                <div class="text-xs text-slate-500 line-clamp-1 mt-0.5 max-w-md">{{ activity.description || 'Sin descripción' }}</div>
+              </td>
+              <td class="p-4 hidden md:table-cell text-xs font-bold text-slate-600">
+                {{ getClientName(activity.clientId) }}
+              </td>
+              <td class="p-4">
+                <div class="flex items-center gap-2">
+                  <template v-if="Array.isArray(activity.assignedTo) && activity.assignedTo.length">
+                    <div class="flex -space-x-2">
+                      <AvatarInline
+                        v-for="(user, i) in activity.assignedTo.slice(0, 3)"
+                        :key="user._id || user"
+                        :name="getUserInfo(user).name"
+                        :photo="getUserInfo(user).photo"
+                        :avatar="getUserInfo(user).avatar"
+                        class="ring-2 ring-white relative"
+                        :style="{ zIndex: 10 - i }"
+                      />
+                      <span v-if="activity.assignedTo.length > 3" class="text-[10px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-full ring-2 ring-white relative z-0 flex items-center justify-center">
+                        +{{ activity.assignedTo.length - 3 }}
+                      </span>
+                    </div>
+                  </template>
+                  <template v-else>
+                    <AvatarInline
+                      :name="getSmartAssignedName(activity)"
+                      :photo="(activity.assignedTo && typeof activity.assignedTo === 'object') ? activity.assignedTo.photo : ''"
+                      :avatar="(activity.assignedTo && typeof activity.assignedTo === 'object') ? activity.assignedTo.avatar : ''"
+                    />
+                  </template>
+                </div>
+              </td>
+              <td class="p-4">
+                <span :class="getStatusBadgeClass(activity.status)" class="text-[10px] font-black px-2.5 py-1 rounded-lg border inline-block whitespace-nowrap shadow-sm">
+                  {{ getStatusLabel(activity.status) }}
+                </span>
+              </td>
+              <td class="p-4 hidden sm:table-cell">
+                <span 
+                  v-if="activity.priority"
+                  class="px-2.5 py-1 rounded-lg text-[10px] font-black border inline-flex items-center gap-1.5 shadow-sm"
+                  :class="getPriorityClass(activity.priority)"
                 >
-                  <i class="fas fa-filter mr-2 text-xs"></i>
-                  Filtros
-                  <span v-if="hasActiveTaskFilters" class="ml-1 text-[10px] bg-primary-600 text-white rounded-full px-1.5 py-0.5">
-                    {{ activeFiltersCount }}
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Botones de Acción -->
-            <div class="flex items-center gap-2">
-              <button
-                v-if="selectedBoardId"
-                @click="openCreateTaskModal()"
-                class="px-4 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm font-bold flex items-center gap-2 shadow-sm transition-colors"
-              >
-                <i class="fas fa-plus text-xs"></i>
-                <span>Nueva Tarea</span>
-              </button>
-              <button
-                v-if="selectedBoardId"
-                @click="refreshTasks"
-                class="px-3 py-1.5 bg-white border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
-              >
-                <i class="fas fa-sync-alt text-xs"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Lista de Tareas -->
-        <div v-if="selectedBoardId" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex-1 flex flex-col min-h-0">
-          <!-- Body scrolleable -->
-          <div class="p-4 overflow-y-auto h-full bg-slate-50/50">
-            <!-- Vista Jerárquica Minimalista: Épica → Feature → User Story → Task -->
-            <div v-for="epic in getEpics()" :key="epic._id" class="mb-3">
-              <!-- Épica -->
-              <div class="group hover:bg-white rounded-lg transition-colors shadow-sm hover:shadow-md border border-transparent hover:border-purple-100">
-                <div class="flex items-center gap-2 py-2 px-3 border-l-4 border-purple-500 rounded-l-md">
-                  <button @click="toggleEpic(epic._id)" class="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors">
-                    <i :class="isEpicCollapsed(epic._id) ? 'fas fa-chevron-right' : 'fas fa-chevron-down'" class="text-[10px]"></i>
+                  <i :class="getPriorityIcon(activity.priority)"></i>
+                  {{ getPriorityLabel(activity.priority) }}
+                </span>
+              </td>
+              <td class="p-4 pr-6 text-right">
+                <div class="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button @click="markAsCompleted(activity._id!)" class="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all" title="Completar">
+                    <i class="fas fa-check text-xs"></i>
                   </button>
-                  <i class="fas fa-mountain text-purple-600 text-xs"></i>
-                  <span class="text-[10px] font-mono font-bold text-slate-400">{{ epic._id.slice(-4).toUpperCase() }}</span>
-                  <div class="flex-1 min-w-0">
-                    <span class="text-sm font-bold text-slate-800">{{ epic.title }}</span>
-                  </div>
-                  <div class="flex items-center gap-3 text-xs font-bold text-slate-400">
-                    <span>{{ getEpicFeatures(epic._id).length }} features</span>
-                    <span>{{ getEpicTasks(epic._id).length }} tasks</span>
-                  </div>
-                  <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button @click="selectTask(epic)" class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded" title="Ver">
-                      <i class="fas fa-eye text-xs"></i>
-                    </button>
-                    <button @click="editTaskFromCard(epic)" class="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded" title="Editar">
+                  <PermissionGuard :permissions="['edit-activities']" :fallback="false">
+                    <button @click="editActivity(activity)" class="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all" title="Editar">
                       <i class="fas fa-edit text-xs"></i>
                     </button>
-                    <button @click="deleteTask(epic._id)" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded" title="Eliminar">
+                  </PermissionGuard>
+                  <PermissionGuard :permissions="['delete-activities']" :fallback="false">
+                    <button @click="deleteActivity(activity._id!)" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Eliminar">
                       <i class="fas fa-trash text-xs"></i>
                     </button>
-                    <button @click="openCreateFeatureModal(epic._id)" class="p-1.5 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded" title="Nueva Feature">
-                      <i class="fas fa-plus text-xs"></i>
-                    </button>
-                  </div>
+                  </PermissionGuard>
                 </div>
-              </div>
-
-              <!-- Features de la épica -->
-              <div v-if="!isEpicCollapsed(epic._id)" class="ml-6 mt-1 border-l border-slate-200 pl-2">
-                <div v-for="feature in getEpicFeatures(epic._id)" :key="feature._id" class="mb-2">
-                  <div class="group hover:bg-white rounded transition-colors border border-transparent hover:border-blue-100 hover:shadow-sm">
-                    <div class="flex items-center gap-2 py-1.5 px-2 border-l-2 border-blue-500">
-                      <button @click="toggleFeature(feature._id)" class="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600">
-                        <i :class="isFeatureCollapsed(feature._id) ? 'fas fa-chevron-right' : 'fas fa-chevron-down'" class="text-[10px]"></i>
-                      </button>
-                      <i class="fas fa-layer-group text-blue-500 text-xs"></i>
-                      <span class="text-[10px] font-mono font-bold text-slate-400">{{ feature._id.slice(-4).toUpperCase() }}</span>
-                      <div class="flex-1 min-w-0">
-                        <span class="text-sm font-medium text-slate-700">{{ feature.title }}</span>
-                      </div>
-                      <div class="flex items-center gap-2 text-xs font-bold text-slate-400">
-                        <span>{{ getFeatureUserStories(feature._id).length }} stories</span>
-                      </div>
-                      <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100">
-                        <button @click="selectTask(feature)" class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded" title="Ver">
-                          <i class="fas fa-eye text-xs"></i>
-                        </button>
-                        <button @click="editTaskFromCard(feature)" class="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded" title="Editar">
-                          <i class="fas fa-edit text-xs"></i>
-                        </button>
-                        <button @click="deleteTask(feature._id)" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded" title="Eliminar">
-                          <i class="fas fa-trash text-xs"></i>
-                        </button>
-                        <button @click="openCreateUserStoryModal(feature._id)" class="p-1.5 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded" title="Nueva User Story">
-                          <i class="fas fa-plus text-xs"></i>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- User Stories de la feature -->
-                  <div v-if="!isFeatureCollapsed(feature._id)" class="ml-6 mt-1 border-l border-slate-200 pl-2">
-                    <div v-for="story in getFeatureUserStories(feature._id)" :key="story._id" class="mb-1.5">
-                      <div class="group hover:bg-white rounded transition-colors border border-transparent hover:border-emerald-100 hover:shadow-sm">
-                        <div class="flex items-center gap-2 py-1.5 px-2 border-l-2 border-emerald-500">
-                          <button @click="toggleStory(story._id)" class="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600">
-                            <i :class="isStoryCollapsed(story._id) ? 'fas fa-chevron-right' : 'fas fa-chevron-down'" class="text-[10px]"></i>
-                          </button>
-                          <i class="fas fa-book-open text-emerald-500 text-xs"></i>
-                          <span class="text-[10px] font-mono font-bold text-slate-400">{{ story._id.slice(-4).toUpperCase() }}</span>
-                          <div class="flex-1 min-w-0">
-                            <span class="text-sm text-slate-700">{{ story.title }}</span>
-                          </div>
-                          <div class="flex items-center gap-2 text-xs font-bold text-slate-400">
-                            <span>{{ getUserStoryTasks(story._id).length }} tasks</span>
-                          </div>
-                          <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100">
-                            <button @click="selectTask(story)" class="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded">
-                              <i class="fas fa-eye text-xs"></i>
-                            </button>
-                            <button @click="editTaskFromCard(story)" class="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded">
-                              <i class="fas fa-edit text-xs"></i>
-                            </button>
-                            <button @click="deleteTask(story._id)" class="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded">
-                              <i class="fas fa-trash text-xs"></i>
-                            </button>
-                            <button @click="openCreateTaskModal(story._id)" class="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded">
-                              <i class="fas fa-plus text-xs"></i>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      <!-- Tasks de la user story -->
-                      <div v-if="!isStoryCollapsed(story._id)" class="ml-6 mt-1 border-l border-slate-100 pl-2">
-                        <div v-for="task in getUserStoryTasks(story._id)" :key="task._id" class="mb-1">
-                          <div class="group hover:bg-white rounded transition-colors border border-transparent hover:border-slate-300">
-                            <div class="flex items-center gap-2 py-1 px-2 border-l border-slate-300">
-                              <i class="fas fa-tasks text-slate-400 text-xs"></i>
-                              <span class="text-[10px] font-mono font-bold text-slate-400">{{ task._id.slice(-4).toUpperCase() }}</span>
-                              <div class="flex-1 min-w-0">
-                                <span class="text-xs text-slate-600">{{ task.title }}</span>
-                              </div>
-                              <span :class="getStatusBadgeClass(task.boardStatus)" class="text-[9px] font-bold px-1.5 py-0.5 rounded border">
-                                {{ getStatusLabel(task.boardStatus) }}
-                              </span>
-                              <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100">
-                                <button @click="selectTask(task)" class="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded">
-                                  <i class="fas fa-eye text-xs"></i>
-                                </button>
-                                <button @click="editTaskFromCard(task)" class="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded">
-                                  <i class="fas fa-edit text-xs"></i>
-                                </button>
-                                <button @click="deleteTask(task._id)" class="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded">
-                                  <i class="fas fa-trash text-xs"></i>
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Tareas sin jerarquía (independientes) -->
-            <div v-if="getIndependentTasks().length > 0" class="mb-4 mt-6 border-t border-slate-200 pt-4">
-              <div class="flex items-center gap-2 mb-3 px-2">
-                <i class="fas fa-tasks text-slate-400 text-sm"></i>
-                <h3 class="text-sm font-bold text-slate-700">Tareas Independientes</h3>
-                <span class="text-xs font-bold text-slate-400 bg-slate-200 px-1.5 rounded">{{ getIndependentTasks().length }}</span>
-              </div>
-              <div class="space-y-1">
-                <div v-for="task in getIndependentTasks()" :key="task._id" class="group hover:bg-white rounded transition-colors border border-transparent hover:border-slate-300">
-                  <div class="flex items-center gap-2 py-1.5 px-3 border-l-2 border-slate-300">
-                    <i class="fas fa-tasks text-slate-400 text-xs"></i>
-                    <span class="text-[10px] font-mono font-bold text-slate-400">{{ task._id.slice(-4).toUpperCase() }}</span>
-                    <div class="flex-1 min-w-0">
-                      <span class="text-xs text-slate-700 font-medium">{{ task.title }}</span>
-                    </div>
-                    <span :class="getStatusBadgeClass(task.boardStatus)" class="text-[9px] font-bold px-1.5 py-0.5 rounded border">
-                      {{ getStatusLabel(task.boardStatus) }}
-                    </span>
-                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100">
-                      <button @click="selectTask(task)" class="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded">
-                        <i class="fas fa-eye text-xs"></i>
-                      </button>
-                      <button @click="editTaskFromCard(task)" class="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded">
-                        <i class="fas fa-edit text-xs"></i>
-                      </button>
-                      <button @click="deleteTask(task._id)" class="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded">
-                        <i class="fas fa-trash text-xs"></i>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Empty State -->
-        <div v-else class="bg-slate-50 rounded-xl p-12 border border-slate-200 border-dashed text-center flex-1 flex flex-col items-center justify-center">
-          <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm border border-slate-100">
-            <i class="fas fa-tasks text-slate-300 text-3xl"></i>
-          </div>
-          <h3 class="text-lg font-black text-slate-800 mb-2">Aún no hay tablero configurado</h3>
-          <p class="text-slate-500 text-sm mb-6 font-medium">Selecciona un proyecto existente o crea tu primer tablero personal</p>
-          <button
-            @click="showCreateBoardModal = true"
-            class="px-5 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 shadow-sm font-bold flex items-center gap-2 transition-colors text-sm"
-          >
-            <i class="fas fa-plus"></i>
-            Crear Tablero
-          </button>
-        </div>
+              </td>
+            </tr>
+            <tr v-if="filteredActivities.length === 0">
+              <td colspan="6" class="p-12 text-center text-slate-500 text-sm font-medium">
+                <i class="fas fa-list text-4xl text-slate-200 mb-4 block"></i>
+                No hay actividades para mostrar en la lista
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -1438,28 +1285,7 @@
       </div>
     </div>
 
-    <!-- Estado vacío general -->
-    <div v-if="!loading && !error && activities.length === 0" class="text-center py-16">
-      <div class="bg-slate-50 rounded-2xl p-8 border border-slate-200 border-dashed max-w-lg mx-auto shadow-sm">
-        <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-200">
-          <i class="fas fa-tasks text-3xl text-slate-400"></i>
-        </div>
-        <h3 class="text-xl font-black text-slate-800 mb-2">No hay actividades</h3>
-        <p class="text-slate-500 font-medium mb-6">
-          {{ props.searchTerm ? 'No se encontraron actividades que coincidan con tu búsqueda' : 'Comienza agregando tu primera actividad para gestionar tus tareas' }}
-        </p>
-        <PermissionGuard :permissions="['create-activities']" :fallback="false">
-          <button
-            @click="showCreateModal = true"
-            class="px-6 py-3 bg-primary-600 text-white font-bold rounded-lg hover:bg-primary-700 transition-all duration-200 shadow-sm"
-          >
-            <i class="fas fa-plus mr-2"></i>
-            Crear Primera Actividad
-          </button>
-        </PermissionGuard>
-      </div>
-    </div>
-
+    <!-- Estado vacío general (Removido por solicitud) -->
     <!-- Modales -->
     <!-- Modal de crear/editar actividad -->
     <ActivityFormModal
@@ -2428,10 +2254,11 @@ import { useBoardsStore } from '../../stores/boards'
 import { useTasksStore } from '../../stores/tasks'
 import { useGitHubStore } from '../../stores/github'
 import { API_CONFIG } from '../../config/api'
-import type { TeamMember } from '../../types'
+import type { Client, TeamMember } from '../../types'
 import PermissionGuard from '../PermissionGuard.vue'
 import ActivityFormModal from '../forms/ActivityFormModal.vue'
 import AssignActivityModal from '../modals/AssignActivityModal.vue'
+import CustomSelect from '../ui/CustomSelect.vue'
 import MonthlyCalendar from '../calendar/MonthlyCalendar.vue'
 import QuickTaskModal from '../modals/QuickTaskModal.vue'
 import AvatarInline from '../AvatarInline.vue'
@@ -2472,7 +2299,7 @@ const draggedActivity = ref<ActivityData | null>(null)
 const isDragging = ref(false)
 
 // Vista y UI
-const currentView = ref<'kanban' | 'tasks' | 'calendar'>('tasks')
+const currentView = ref<'kanban' | 'tasks' | 'calendar'>('kanban')
 const quickTaskTitle = ref('')
 const showQuickSettings = ref(false)
 const showQuickTaskHints = ref(false)
@@ -2493,6 +2320,7 @@ const quickTaskSettings = ref({
 // Filtros
 const selectedTeamMember = ref('')
 const selectedStatus = ref('')
+const selectedDepartment = ref('')
 
 // Filtros de Tareas (Boards)
 const showTaskFilters = ref(false)
@@ -2551,6 +2379,11 @@ const showActivityDetailModal = ref(false)
 const selectedActivity = ref<ActivityData | null>(null)
 
 // Computed
+const filteredMembersByDept = computed(() => {
+  if (!selectedDepartment.value) return teamMembers.value
+  return teamMembers.value.filter((m: any) => m.department === selectedDepartment.value)
+})
+
 const filteredActivities = computed(() => {
   let filtered = activities.value
 
@@ -2562,6 +2395,21 @@ const filteredActivities = computed(() => {
       activity.description?.toLowerCase().includes(search) ||
       getClientName(activity.clientId).toLowerCase().includes(search)
     )
+  }
+
+  // Filtrar por departamento (basado en el dpto del miembro asignado)
+  if (selectedDepartment.value) {
+    const memberIdsInDept = filteredMembersByDept.value.map((m: any) => m._id)
+    filtered = filtered.filter(activity => {
+      if (!activity.assignedTo || activity.assignedTo.length === 0) return false
+      if (Array.isArray(activity.assignedTo) && typeof activity.assignedTo[0] === 'object') {
+        return activity.assignedTo.some((user: any) => memberIdsInDept.includes(user._id))
+      }
+      if (Array.isArray(activity.assignedTo)) {
+        return activity.assignedTo.some((id: any) => memberIdsInDept.includes(String(id)))
+      }
+      return false
+    })
   }
 
   // Filtrar por miembro del equipo asignado
@@ -2877,6 +2725,57 @@ const closeModals = () => {
   showCreateModal.value = false
   showEditModal.value = false
   editingActivity.value = null
+}
+
+const FILTER_STORAGE_KEY = computed(() => `ct_activity_filters_${authStore.user?._id}`)
+const filtersLocked = ref(false)
+
+const hasActiveFilters = computed(() => 
+  !!(selectedDepartment.value || selectedTeamMember.value || selectedStatus.value)
+)
+
+const clearFilters = () => {
+  selectedTeamMember.value = ''
+  selectedStatus.value = ''
+  selectedDepartment.value = ''
+}
+
+const setMyTasksFilter = () => {
+  selectedTeamMember.value = authStore.user?._id || ''
+  selectedDepartment.value = ''
+  selectedStatus.value = ''
+}
+
+const toggleLockFilters = () => {
+  if (filtersLocked.value) {
+    // Desbloquear: borrar filtro guardado
+    filtersLocked.value = false
+    localStorage.removeItem(FILTER_STORAGE_KEY.value)
+  } else {
+    // Guardar filtro actual
+    filtersLocked.value = true
+    localStorage.setItem(FILTER_STORAGE_KEY.value, JSON.stringify({
+      department: selectedDepartment.value,
+      teamMember: selectedTeamMember.value,
+      status: selectedStatus.value
+    }))
+  }
+}
+
+const loadSavedFilters = () => {
+  const saved = localStorage.getItem(FILTER_STORAGE_KEY.value)
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved)
+      selectedDepartment.value = parsed.department || ''
+      selectedTeamMember.value = parsed.teamMember || ''
+      selectedStatus.value = parsed.status || ''
+      filtersLocked.value = true
+    } catch {}
+  } else {
+    // Default: mostrar mis tareas
+    selectedTeamMember.value = authStore.user?._id || ''
+  }
 }
 
 const onActivitySaved = (activity: ActivityData) => {
@@ -3505,12 +3404,6 @@ const getPriorityLabel = (priority: string) => {
     urgent: 'Urgente'
   }
   return labels[priority as keyof typeof labels] || 'Media'
-}
-
-const clearFilters = () => {
-  selectedTeamMember.value = ''
-  selectedStatus.value = ''
-  loadActivities()
 }
 
 // Task Filters Functions
@@ -4697,10 +4590,10 @@ const viewTask = (task: any) => {
 
 const getPriorityClass = (priority: string) => {
   const classes = {
-    low: 'bg-gray-600/50 text-gray-300',
-    medium: 'bg-blue-600/50 text-blue-300',
-    high: 'bg-orange-600/50 text-orange-300',
-    urgent: 'bg-red-600/50 text-red-300'
+    low: 'bg-slate-500 text-white border-slate-400/30',
+    medium: 'bg-indigo-500 text-white border-indigo-400/30',
+    high: 'bg-amber-500 text-white border-amber-400/30',
+    urgent: 'bg-rose-500 text-white border-rose-400/30 shadow-sm shadow-rose-500/20'
   }
   return classes[priority as keyof typeof classes] || classes.medium
 }
@@ -4920,6 +4813,13 @@ watch(() => newTask.value.type, (newType, oldType) => {
 watch(() => props.searchTerm, () => {
   // La búsqueda se maneja en el computed filteredActivities
 })
+
+// Cargar filtros guardados cuando el usuario esté disponible
+watch(() => authStore.user?._id, (userId) => {
+  if (userId) {
+    loadSavedFilters()
+  }
+}, { immediate: true })
 
 // Expose methods for parent component
 defineExpose({

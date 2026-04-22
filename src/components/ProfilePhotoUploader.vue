@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="space-y-6">
     <input 
       type="file"
       ref="fileInput"
@@ -8,11 +8,11 @@
       @change="handleFileChange"
     />
     
-    <!-- Previsualización de imagen y controles -->
-    <div class="space-y-4">
-      <!-- Previsualización de la imagen -->
-      <div v-if="previewUrl" class="relative mx-auto">
-        <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-purple-500/50 mx-auto">
+    <!-- Image Preview and Controls -->
+    <div class="space-y-6">
+      <!-- Preview -->
+      <div v-if="previewUrl" class="relative mx-auto w-32 h-32 animate__animated animate__zoomIn">
+        <div class="w-full h-full rounded-full overflow-hidden border-4 border-white shadow-xl ring-4 ring-primary-50">
           <img
             :src="previewUrl"
             alt="Vista previa"
@@ -20,60 +20,63 @@
           />
         </div>
         
-        <!-- Botón para cancelar -->
+        <!-- Cancel Button -->
         <button
           @click="cancelUpload"
-          class="absolute top-0 right-0 bg-red-600 rounded-full w-8 h-8 flex items-center justify-center text-white shadow-lg"
+          class="absolute -top-1 -right-1 bg-white hover:bg-rose-50 text-rose-500 rounded-full w-8 h-8 flex items-center justify-center shadow-lg border border-rose-100 transition-colors"
           title="Cancelar"
         >
-          <i class="fas fa-times"></i>
+          <i class="fas fa-times text-xs"></i>
         </button>
       </div>
       
-      <!-- Mensaje de carga -->
-      <div v-if="uploading" class="text-center text-sm text-blue-400">
-        <i class="fas fa-spinner fa-spin mr-2"></i>
-        Subiendo imagen...
+      <!-- Uploading Status -->
+      <div v-if="uploading" class="flex flex-col items-center justify-center py-4 text-primary-500">
+        <i class="fas fa-circle-notch fa-spin text-3xl mb-3"></i>
+        <p class="text-[11px] font-black uppercase tracking-widest">Subiendo imagen...</p>
       </div>
 
-      <!-- Botones de acción -->
-      <div class="flex flex-wrap gap-2 justify-center">
+      <!-- Action Buttons -->
+      <div class="flex flex-col gap-3">
         <button
           v-if="!previewUrl && !uploading"
           @click="triggerFileInput"
-          class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg flex items-center gap-2"
+          class="w-full px-6 py-4 bg-primary-50 hover:bg-primary-100 text-primary-700 rounded-2xl flex items-center justify-center gap-3 font-black text-xs uppercase tracking-widest transition-all border border-primary-100"
         >
-          <i class="fas fa-camera"></i>
+          <i class="fas fa-camera text-lg"></i>
           Seleccionar Imagen
         </button>
         
         <button
           v-if="previewUrl && !uploading"
           @click="uploadPhoto"
-          class="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg flex items-center gap-2"
+          class="w-full px-6 py-4 bg-primary-500 hover:bg-primary-600 text-white rounded-2xl flex items-center justify-center gap-3 font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-primary-200"
         >
-          <i class="fas fa-cloud-upload-alt"></i>
-          Subir Imagen
+          <i class="fas fa-cloud-upload-alt text-lg"></i>
+          Confirmar y Subir
         </button>
         
         <button
           v-if="currentPhoto && !uploading && !previewUrl"
           @click="removePhoto"
-          class="px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white rounded-lg flex items-center gap-2"
+          class="w-full px-6 py-4 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center gap-3 font-black text-xs uppercase tracking-widest transition-all border border-rose-100"
         >
-          <i class="fas fa-trash-alt"></i>
+          <i class="fas fa-trash-alt text-lg"></i>
           Eliminar Foto Actual
         </button>
       </div>
       
-      <!-- Mensajes de ayuda -->
-      <div class="text-center text-xs text-gray-400 mt-2" v-if="!previewUrl && !uploading">
-        <p>Sube una foto de perfil personalizada</p>
-        <p>Tamaño máximo: 2MB</p>
+      <!-- Helper Messages -->
+      <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 text-center" v-if="!previewUrl && !uploading">
+        <p class="text-slate-500 text-[11px] font-bold leading-relaxed">
+          <i class="fas fa-info-circle mr-1"></i>
+          Sube una foto cuadrada para mejores resultados.<br>
+          Formato JPG, PNG o WebP (Máx. 2MB).
+        </p>
       </div>
       
-      <!-- Errores -->
-      <div v-if="errorMessage" class="text-center text-sm text-red-400">
+      <!-- Errors -->
+      <div v-if="errorMessage" class="p-3 bg-rose-50 border border-rose-100 rounded-xl text-center text-rose-600 text-xs font-bold animate__animated animate__shakeX">
         <i class="fas fa-exclamation-triangle mr-2"></i>
         {{ errorMessage }}
       </div>
@@ -84,7 +87,7 @@
 <script setup lang="ts">
 import { ref, defineEmits, defineProps } from 'vue'
 import { AvatarService } from '@/services/avatarService'
-import { toast } from 'vue3-toastify'
+import { useNotifications } from '@/composables/useNotifications'
 
 const props = defineProps<{
   currentPhoto?: string | null
@@ -94,13 +97,15 @@ const emit = defineEmits<{
   (e: 'update', data: { photo: string | null, avatar: string | null }): void
 }>()
 
+const { showSuccess, showError } = useNotifications()
+
 const fileInput = ref<HTMLInputElement | null>(null)
 const previewUrl = ref('')
 const selectedFile = ref<File | null>(null)
 const uploading = ref(false)
 const errorMessage = ref('')
 
-// Métodos
+// Methods
 const triggerFileInput = () => {
   fileInput.value?.click()
 }
@@ -112,22 +117,17 @@ const handleFileChange = (event: Event) => {
   if (files && files.length > 0) {
     const file = files[0]
     
-    // Validar tipo de archivo
     if (!file.type.match('image.*')) {
       errorMessage.value = 'Por favor selecciona una imagen válida'
       return
     }
     
-    // Validar tamaño (2MB máximo)
     if (file.size > 2 * 1024 * 1024) {
       errorMessage.value = 'La imagen debe ser menor a 2MB'
       return
     }
     
-    // Limpiar error previo
     errorMessage.value = ''
-    
-    // Crear URL para previsualización
     previewUrl.value = URL.createObjectURL(file)
     selectedFile.value = file
   }
@@ -143,22 +143,19 @@ const uploadPhoto = async () => {
     const response = await AvatarService.uploadProfilePhoto(selectedFile.value)
     
     if (response.success) {
-      toast.success('Foto de perfil actualizada correctamente')
-      
-      // Emitir evento con los nuevos datos
+      showSuccess('Foto de perfil actualizada correctamente')
       emit('update', {
         photo: response.data?.photo || null,
-        avatar: null // Al subir foto se elimina el avatar predefinido
+        avatar: null
       })
-      
-      // Limpiar previsualización
       cleanup()
     } else {
       errorMessage.value = response.message || 'Error al subir la imagen'
+      showError(errorMessage.value)
     }
   } catch (error: any) {
     errorMessage.value = error.message || 'Error al subir la imagen'
-    console.error('Error uploading photo:', error)
+    showError(errorMessage.value)
   } finally {
     uploading.value = false
   }
@@ -172,19 +169,18 @@ const removePhoto = async () => {
     const response = await AvatarService.removeProfilePhoto()
     
     if (response.success) {
-      toast.success('Foto de perfil eliminada correctamente')
-      
-      // Emitir evento con los nuevos datos
+      showSuccess('Foto de perfil eliminada correctamente')
       emit('update', {
         photo: null,
         avatar: null
       })
     } else {
       errorMessage.value = response.message || 'Error al eliminar la imagen'
+      showError(errorMessage.value)
     }
   } catch (error: any) {
     errorMessage.value = error.message || 'Error al eliminar la imagen'
-    console.error('Error removing photo:', error)
+    showError(errorMessage.value)
   } finally {
     uploading.value = false
   }

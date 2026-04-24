@@ -110,7 +110,12 @@ export const useAuthStore = defineStore('auth', () => {
   })
   
   // Equipo: Admin, Manager y Empleado pueden ver  
-  const canViewTeam = computed(() => getUserPermission('team', 'view') || ['admin', 'manager', 'employee', 'support'].includes(user.value?.role || ''))
+  const canViewTeam = computed(() => {
+    if (!user.value) return false
+    const role = user.value.role?.toLowerCase() || ''
+    return getUserPermission('team', 'view') || 
+           ['admin', 'manager', 'employee', 'support', 'ti', 'soporte'].includes(role)
+  })
   
   // Create/Edit permissions with fallbacks
   // Clientes: Solo Admin y Manager pueden crear/editar
@@ -118,10 +123,30 @@ export const useAuthStore = defineStore('auth', () => {
   const canEditClients = computed(() => getUserPermission('clients', 'edit') || ['admin', 'manager'].includes(user.value?.role || ''))
   const canDeleteClients = computed(() => getUserPermission('clients', 'delete') || ['admin'].includes(user.value?.role || ''))
   
-  // Actividades: Admin, Manager y Empleado pueden hacer todo
-  const canCreateActivities = computed(() => getUserPermission('activities', 'create') || ['admin', 'manager', 'employee'].includes(user.value?.role || ''))
-  const canEditActivities = computed(() => getUserPermission('activities', 'edit') || ['admin', 'manager', 'employee'].includes(user.value?.role || ''))
-  const canDeleteActivities = computed(() => getUserPermission('activities', 'delete') || ['admin', 'manager', 'employee'].includes(user.value?.role || ''))
+  // Actividades: Todos los roles internos pueden hacer todo (cualquiera que no sea cliente)
+  const canCreateActivities = computed(() => {
+    if (!user.value) return false
+    return user.value.role?.toLowerCase() !== 'client'
+  })
+  const canEditActivities = computed(() => {
+    if (!user.value) return false
+    return user.value.role?.toLowerCase() !== 'client'
+  })
+  const canDeleteActivities = computed(() => {
+    if (!user.value) return false
+    return user.value.role?.toLowerCase() !== 'client'
+  })
+  
+  const canViewTeamActivities = computed(() => {
+    if (!user.value) return false
+    return user.value.role?.toLowerCase() !== 'client'
+  })
+
+  // Leader check: En este CRM, cualquier miembro interno puede ver el resumen de equipo (política sin límites)
+  const isLeader = computed(() => {
+    if (!user.value) return false
+    return user.value.role?.toLowerCase() !== 'client'
+  })
   
   // Casos: Solo Admin y Manager pueden crear/editar, Empleado solo ve
   const canCreateCases = computed(() => getUserPermission('cases', 'create') || ['admin', 'manager'].includes(user.value?.role || ''))
@@ -261,6 +286,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  
   const getAvailableModules = computed(() => {
     if (!user.value) return []
     
@@ -282,9 +308,10 @@ export const useAuthStore = defineStore('auth', () => {
     if (canViewActivities.value) {
       modules.push({ id: 'activities', name: 'Actividades', icon: 'fas fa-tasks', path: '/activities', canAccess: true })
     }
+
     
     if (canViewReports.value) {
-      modules.push({ id: 'reports', name: 'Reportes', icon: 'fas fa-chart-bar', path: '/reports', canAccess: true })
+      modules.push({ id: 'reports', name: 'Reportes & Analytics', icon: 'fas fa-chart-bar', path: '/reports', canAccess: true })
     }
     
     if (canViewTickets.value) {

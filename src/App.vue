@@ -10,18 +10,12 @@
            :class="{ '-translate-x-full': !sidebarOpen && !isDesktop }">
         
         <!-- Logo -->
-        <div class="flex items-center justify-between h-16 px-6 border-b border-slate-100">
-          <div class="flex items-center gap-3">
-            <img 
-              src="https://customertouchcr.com/wp-content/uploads/2025/09/logoCT.svg" 
-              alt="Customer CRM Logo" 
-              class="w-8 h-8"
-            />
-            <h1 class="text-xl leading-none flex flex-col justify-center">
-              <span class="font-black text-slate-800 tracking-tight leading-tight">Customer</span>
-              <span class="font-black text-slate-800 tracking-tight leading-tight">CRM</span>
-            </h1>
-          </div>
+        <div class="flex items-center justify-center h-20 px-6 border-b border-slate-100">
+          <img 
+            :src="logoCT" 
+            alt="Customer CRM Logo" 
+            class="h-12 w-auto"
+          />
         </div>
 
         <!-- User Info -->
@@ -63,12 +57,15 @@
         </nav>
 
         <!-- Logout Button -->
-        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-100 bg-white flex justify-center">
+        <div class="absolute bottom-0 left-0 right-0 px-6 py-4 border-t border-slate-100 bg-white">
           <button
             @click="handleLogout"
-            class="w-full py-2 flex items-center justify-center text-slate-500 hover:bg-red-50 hover:text-red-500 font-bold rounded-xl transition-all duration-200 border border-transparent hover:border-red-100"
+            class="flex items-center text-slate-400 hover:text-rose-500 transition-all duration-200 group"
           >
-            <i class="fas fa-sign-out-alt mr-2"></i> Cerrar Sesión
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-rose-50 transition-colors mr-2">
+              <i class="fas fa-power-off text-sm"></i>
+            </div>
+            <span class="text-[10px] font-black uppercase tracking-[0.15em] opacity-60 group-hover:opacity-100">Cerrar Sesión</span>
           </button>
         </div>
       </div>
@@ -98,7 +95,8 @@
             <!-- Header Actions -->
             <div class="flex items-center space-x-4">
               <!-- Chat icon in header -->
-              <div class="relative">
+              <!-- Chat module hidden by user request -->
+              <!-- <div class="relative">
                 <router-link
                   to="/chat"
                   class="relative inline-flex items-center justify-center w-10 h-10 rounded-full text-slate-400 hover:text-primary-500 hover:bg-primary-50 transition-colors"
@@ -112,7 +110,7 @@
                     {{ chatStore.getUnreadCount > 99 ? '99+' : chatStore.getUnreadCount }}
                   </span>
                 </router-link>
-              </div>
+              </div> -->
               <!-- User Menu -->
               <div class="relative">
                 <button
@@ -180,8 +178,8 @@
   <!-- Mobile backdrop -->
   <div v-if="sidebarOpen" class="lg:hidden fixed inset-0 z-40 bg-black/50" @click="sidebarOpen = false"></div>
 
-  <!-- Global toast for nuevos mensajes -->
-  <NewMessageToast />
+  <!-- Global toast for nuevos mensajes (Hidden by user request) -->
+  <!-- <NewMessageToast /> -->
     </div>
   </div>
 </template>
@@ -193,6 +191,7 @@ import { useAuthStore } from './stores/auth'
 import { useChatStore } from './stores/chatStore'
 import UserAvatar from './components/ui/UserAvatar.vue'
 import NewMessageToast from './components/NewMessageToast.vue'
+import logoCT from '@/assets/logo.png'
 
 const route = useRoute()
 const router = useRouter()
@@ -223,7 +222,7 @@ const getCurrentModuleDescription = () => {
     dashboard: 'Resumen general del CRM',
     clients: 'Gestión de clientes y contactos',
     activities: 'Actividades y tareas del equipo',
-    reports: 'Estadísticas y análisis de rendimiento',
+    reports: 'Análisis de rendimiento y métricas de productividad',
     accounting: 'Transacciones, pagos y gastos fijos',
     tickets: 'Gestión de incidencias y soporte técnico',
     cases: 'Documentos, incidencias y seguimientos',
@@ -280,10 +279,10 @@ onMounted(async () => {
   window.addEventListener('resize', handleResize)
   document.addEventListener('click', handleClickOutside)
 
-  // Initialize chat in background for unread badge
-  if (authStore.isAuthenticated) {
+  // Initialize chat in background for unread badge (Disabled by user request)
+  /* if (authStore.isAuthenticated) {
     try { await chatStore.initializeChat() } catch {}
-  }
+  } */
 })
 
 // Removed navbar popup listener; NewMessageToast handles notifications globally

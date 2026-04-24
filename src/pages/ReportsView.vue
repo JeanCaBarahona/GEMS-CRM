@@ -2,11 +2,7 @@
   <div class="flex flex-col gap-5 h-full min-h-0">
 
     <!-- Header -->
-    <div class="flex-shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
-      <div>
-        <h1 class="text-xl font-black text-slate-800 tracking-tight">Reportes & Analytics</h1>
-        <p class="text-xs text-slate-500 font-medium mt-0.5">Análisis de rendimiento y métricas de productividad</p>
-      </div>
+    <div class="flex-shrink-0 flex flex-col md:flex-row md:items-center justify-end gap-4">
       <div class="flex flex-wrap items-center gap-3">
         <!-- Filtros Rápidos -->
         <div class="flex flex-wrap items-center gap-2">

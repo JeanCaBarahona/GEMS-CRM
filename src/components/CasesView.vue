@@ -281,124 +281,107 @@
 
       <!-- Wiki Detail Mode -->
       <template v-else>
-        <div v-if="selectedWiki" class="max-w-4xl mx-auto px-6 md:px-12 py-10 animate-fade-in">
-          <!-- Page Cover -->
-          <div class="h-40 md:h-52 w-full rounded-2xl mb-8 overflow-hidden relative group">
-            <div :class="getWikiCoverGradient(selectedWiki.categoria)" class="absolute inset-0 opacity-80"></div>
-            <div class="absolute inset-0 flex items-center justify-center">
-              <i :class="getWikiIcon(selectedWiki.categoria)" class="text-white/20 text-7xl md:text-9xl"></i>
-            </div>
-            <!-- Actions Overlay -->
-            <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all flex gap-2">
-              <button @click="exportToPDF" class="px-3 py-1.5 bg-white/90 hover:bg-white text-slate-900 rounded-lg text-[10px] font-bold shadow-sm backdrop-blur-md">
-                <i class="fas fa-file-pdf mr-1"></i> Exportar
-              </button>
-              <button @click="isEditingWikiItem = true" class="px-3 py-1.5 bg-white/90 hover:bg-white text-slate-900 rounded-lg text-[10px] font-bold shadow-sm">Editar Wiki</button>
-              <button @click="deleteWikiItem" class="px-3 py-1.5 bg-rose-500/90 hover:bg-rose-500 text-white rounded-lg text-[10px] font-bold shadow-sm">Eliminar</button>
-            </div>
-          </div>
+        <div v-if="selectedWiki" class="max-w-4xl mx-auto px-6 md:px-12 py-10 animate-fade-in no-print">
+          
+          <!-- Page Header (Minimalist Notion Style) -->
+          <div class="group relative mb-12">
+            <!-- Icon/Emoji Placeholder -->
+            <div class="text-6xl mb-6 select-none cursor-default">📖</div>
+            
+            <template v-if="isEditingWikiItem">
+              <input 
+                v-model="selectedWiki.titulo" 
+                class="w-full text-4xl font-black text-slate-900 border-none outline-none focus:ring-0 placeholder-slate-200 bg-transparent mb-4" 
+                placeholder="Sin título"
+              />
+              <textarea 
+                v-model="selectedWiki.descripcion" 
+                rows="2" 
+                class="w-full text-lg text-slate-400 border-none outline-none focus:ring-0 placeholder-slate-200 bg-transparent resize-none font-medium mb-8" 
+                placeholder="Añade una descripción..."
+              ></textarea>
+            </template>
+            <template v-else>
+              <h1 class="text-4xl font-black text-slate-900 tracking-tight leading-tight mb-4">{{ selectedWiki.titulo || 'Sin título' }}</h1>
+              <p class="text-lg text-slate-400 font-medium leading-relaxed">{{ selectedWiki.descripcion || 'Sin descripción' }}</p>
+            </template>
 
-          <div v-if="isEditingWikiItem" class="space-y-6">
-            <div class="space-y-4">
-              <input v-model="selectedWiki.titulo" class="w-full text-3xl font-black text-slate-900 border-none outline-none focus:ring-0 placeholder-slate-200" placeholder="Título del artículo...">
-              <div class="flex items-center gap-4 py-2 border-y border-slate-100">
-                <div class="flex items-center gap-2">
-                  <span class="text-[10px] font-black text-slate-400 uppercase">Categoría:</span>
-                  <select v-model="selectedWiki.categoria" class="bg-slate-50 border-none text-[10px] font-bold rounded px-2 py-1 outline-none">
+            <!-- Metadata Grid Wiki (Clean) -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 py-8 border-y border-slate-100 my-8">
+              <div class="space-y-1">
+                <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Categoría</p>
+                <div v-if="isEditingWikiItem">
+                  <select v-model="selectedWiki.categoria" class="bg-slate-50 border-none text-xs font-bold rounded px-2 py-1 outline-none text-slate-600">
                     <option value="proceso">Proceso</option>
                     <option value="codigo">Código</option>
                     <option value="manual">Manual</option>
                   </select>
                 </div>
+                <span v-else :class="getWikiCatClass(selectedWiki.categoria)" class="px-2 py-0.5 rounded-md text-[10px] font-bold inline-block uppercase">
+                  {{ selectedWiki.categoria }}
+                </span>
+              </div>
+              <div class="space-y-1">
+                <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Lectura</p>
+                <div class="flex items-center gap-1.5 text-slate-500 font-bold text-xs">
+                  <i class="fas fa-eye text-slate-200"></i>
+                  {{ selectedWiki.vistas || 0 }} vistas
+                </div>
+              </div>
+              <div class="space-y-1">
+                <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Autor</p>
                 <div class="flex items-center gap-2">
-                  <span class="text-[10px] font-black text-slate-400 uppercase">Tags:</span>
-                  <input v-model="wikiTagsRaw" placeholder="separados por coma" class="bg-transparent border-none text-[10px] font-bold outline-none w-32">
-                </div>
-              </div>
-              <textarea v-model="selectedWiki.descripcion" rows="2" class="w-full text-sm text-slate-500 bg-transparent border-none outline-none focus:ring-0 resize-none font-medium" placeholder="Descripción corta..."></textarea>
-              
-              <div class="bg-[#1E1E1E] rounded-2xl overflow-hidden">
-                <div class="px-4 py-2 bg-slate-800 flex items-center justify-between">
-                  <span class="text-[10px] font-bold text-slate-400 uppercase">Editor Técnico</span>
-                  <div class="flex gap-2">
-                    <button @click="copyToClipboard(selectedWiki.contenido || '')" class="text-slate-500 hover:text-white text-xs"><i class="fas fa-copy"></i></button>
+                  <div class="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[8px] font-bold text-slate-400 uppercase">
+                    {{ selectedWiki.autor?.name?.charAt(0) || 'S' }}
                   </div>
+                  <span class="text-xs font-semibold text-slate-600">{{ selectedWiki.autor?.name || 'Sistema' }}</span>
                 </div>
-                <textarea v-model="selectedWiki.contenido" rows="20" class="w-full p-6 bg-transparent text-emerald-400 font-mono text-xs border-none outline-none focus:ring-0 leading-relaxed"></textarea>
               </div>
-
-              <div class="flex justify-end gap-3 pt-4">
-                <button @click="isEditingWikiItem = false" class="px-6 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-lg">Cancelar</button>
-                <button @click="handleUpdateWiki" class="px-8 py-2 bg-slate-900 text-white text-xs font-bold rounded-lg shadow-lg hover:bg-slate-800 transition-all">Actualizar Artículo</button>
+              <div class="space-y-1 text-right">
+                <div class="flex gap-2 justify-end">
+                  <button v-if="!isEditingWikiItem" @click="isEditingWikiItem = true" class="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-all" title="Editar"><i class="fas fa-edit text-xs"></i></button>
+                  <button v-if="!isEditingWikiItem" @click="exportToPDF" class="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-all" title="Exportar PDF"><i class="fas fa-file-pdf text-xs"></i></button>
+                  <button v-if="!isEditingWikiItem" @click="deleteWikiItem" class="p-2 hover:bg-rose-50 text-rose-300 rounded-lg transition-all" title="Eliminar"><i class="fas fa-trash text-xs"></i></button>
+                </div>
               </div>
             </div>
           </div>
 
-          <div v-else class="animate-content-in">
-            <!-- Title & Info -->
-            <div class="mb-10 relative">
-              <div class="absolute -top-16 left-0 text-6xl drop-shadow-sm">📖</div>
-              <h1 class="text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-tight mb-2">
-                {{ selectedWiki.titulo }}
-              </h1>
-              <p class="text-sm text-slate-500 font-medium leading-relaxed mb-6">{{ selectedWiki.descripcion }}</p>
+          <!-- Content Section -->
+          <div class="prose prose-slate max-w-none min-h-[400px]">
+            <template v-if="isEditingWikiItem">
+              <div class="bg-slate-50/50 rounded-2xl p-6 border border-slate-100">
+                <div class="flex gap-4 mb-4 pb-4 border-b border-slate-100">
+                  <button @click="insertText('**negrita**')" class="text-xs font-bold text-slate-400 hover:text-slate-900">Negrita</button>
+                  <button @click="insertText('*cursiva*')" class="text-xs font-bold text-slate-400 hover:text-slate-900">Cursiva</button>
+                  <button @click="insertText('# ')" class="text-xs font-bold text-slate-400 hover:text-slate-900">Título</button>
+                  <button @click="insertText('```\n\n```')" class="text-xs font-bold text-slate-400 hover:text-slate-900">Bloque Código</button>
+                </div>
+                <textarea 
+                  v-model="selectedWiki.contenido" 
+                  rows="20" 
+                  class="w-full bg-transparent border-none outline-none focus:ring-0 text-sm leading-relaxed text-slate-700 font-medium resize-none"
+                  placeholder="Comienza a escribir tu documentación..."
+                ></textarea>
+                <div class="flex justify-end gap-3 mt-6 pt-6 border-t border-slate-100">
+                  <button @click="isEditingWikiItem = false" class="px-4 py-2 text-xs font-bold text-slate-400 hover:text-slate-900">Cancelar</button>
+                  <button @click="handleUpdateWiki" class="px-6 py-2 bg-slate-900 text-white text-xs font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all">Guardar página</button>
+                </div>
+              </div>
+            </template>
+            <template v-else>
+              <div v-if="selectedWiki.categoria === 'codigo'" class="relative">
+                <div class="bg-[#F8F9FA] rounded-2xl p-8 border border-slate-100 overflow-x-auto">
+                  <pre class="font-mono text-xs leading-relaxed text-slate-700 m-0">{{ selectedWiki.contenido }}</pre>
+                </div>
+              </div>
+              <div v-else class="text-sm text-slate-700 leading-loose font-medium document-content" v-html="formatWikiContent(selectedWiki.contenido)"></div>
               
-              <!-- Metadata Grid Wiki -->
-              <div class="grid grid-cols-2 md:grid-cols-4 gap-6 border-y border-slate-100 py-6 mb-8 no-print">
-                <div class="space-y-1">
-                  <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Categoría</p>
-                  <span :class="getWikiCatClass(selectedWiki.categoria)" class="px-2 py-0.5 rounded-md text-[10px] font-bold inline-block uppercase">
-                    {{ selectedWiki.categoria }}
-                  </span>
-                </div>
-                <div class="space-y-1">
-                  <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Vistas</p>
-                  <div class="flex items-center gap-1.5 text-slate-700 font-bold text-xs">
-                    <i class="fas fa-eye text-slate-400"></i>
-                    {{ selectedWiki.vistas || 0 }}
-                  </div>
-                </div>
-                <div class="space-y-1">
-                  <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Autor</p>
-                  <div class="flex items-center gap-1.5">
-                    <div class="w-4 h-4 rounded bg-slate-100 flex items-center justify-center text-[8px] font-bold text-slate-500 uppercase">
-                      {{ selectedWiki.autor?.name?.charAt(0) || 'S' }}
-                    </div>
-                    <span class="text-xs font-medium text-slate-700">{{ selectedWiki.autor?.name || 'Sistema' }}</span>
-                  </div>
-                </div>
-                <div class="space-y-1">
-                  <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Actualizado</p>
-                  <span class="text-xs font-medium text-slate-500">{{ formatDateRelative(selectedWiki.updatedAt) }}</span>
-                </div>
+              <!-- Placeholder for empty content -->
+              <div v-if="!selectedWiki.contenido" @click="isEditingWikiItem = true" class="py-20 border-2 border-dashed border-slate-50 rounded-3xl flex flex-col items-center justify-center text-slate-200 hover:border-slate-100 hover:text-slate-300 transition-all cursor-pointer">
+                <p class="text-xs font-bold uppercase tracking-widest">Esta página está vacía. Pulsa para editar.</p>
               </div>
-            </div>
-
-            <!-- Content Rendering -->
-            <div class="prose prose-slate max-w-none">
-              <!-- Code Blocks -->
-              <div v-if="selectedWiki.categoria === 'codigo'" class="relative group">
-                <div class="absolute right-4 top-4 opacity-0 group-hover:opacity-100 transition-all flex gap-2">
-                  <button @click="copyToClipboard(selectedWiki.contenido)" class="bg-white/10 hover:bg-white/20 text-white p-2 rounded-lg text-xs backdrop-blur-md border border-white/10 shadow-xl"><i class="fas fa-copy"></i></button>
-                </div>
-                <div class="bg-[#0F172A] rounded-2xl overflow-hidden border border-slate-800 shadow-2xl">
-                  <div class="px-4 py-2 bg-slate-900/50 border-b border-white/5 flex items-center justify-between">
-                    <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Source Code</span>
-                    <div class="flex gap-1.5">
-                      <div class="w-2 h-2 rounded-full bg-rose-500/50"></div>
-                      <div class="w-2 h-2 rounded-full bg-amber-500/50"></div>
-                      <div class="w-2 h-2 rounded-full bg-emerald-500/50"></div>
-                    </div>
-                  </div>
-                  <pre class="p-8 overflow-x-auto custom-scrollbar font-mono text-xs leading-relaxed text-emerald-400 m-0">{{ selectedWiki.contenido }}</pre>
-                </div>
-              </div>
-
-              <!-- Standard Process -->
-              <div v-else class="text-sm text-slate-700 leading-loose font-medium">
-                <div v-html="formatWikiContent(selectedWiki.contenido)" class="document-content"></div>
-              </div>
-            </div>
+            </template>
           </div>
         </div>
 

@@ -253,15 +253,23 @@
             </div>
 
             <!-- Files -->
-            <div v-if="activeViewTab === 'files'" class="animate-content-in">
+            <div v-if="activeViewTab === 'files'" class="animate-content-in space-y-6">
+               <div class="flex items-center justify-between">
+                 <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest m-0">Documentos Adjuntos</h3>
+                 <label class="cursor-pointer px-4 py-1.5 bg-slate-900 text-white text-[10px] font-bold rounded-lg shadow-md hover:shadow-lg transition-all flex items-center gap-2">
+                   <i class="fas fa-plus"></i>
+                   Subir Archivo
+                   <input type="file" multiple class="hidden" @change="uploadFilesToCase">
+                 </label>
+               </div>
                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div v-for="(file, idx) in selectedCase.archivos" :key="idx" class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center gap-3 hover:bg-white hover:shadow-md transition-all cursor-pointer">
-                    <div class="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center">
-                      <i :class="getFileIcon(file.nombre)" class="text-lg"></i>
+                  <div v-for="(file, idx) in selectedCase.archivos" :key="idx" class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center gap-3 hover:bg-white hover:shadow-md transition-all cursor-pointer group">
+                    <div class="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:border-primary-200">
+                      <i :class="getFileIcon(file.nombre)" class="text-lg text-slate-400 group-hover:text-primary-500"></i>
                     </div>
                     <div class="min-w-0 flex-1">
                       <p class="text-xs font-bold text-slate-800 truncate m-0">{{ file.nombre }}</p>
-                      <p class="text-[9px] text-slate-400 font-medium m-0">Adjunto</p>
+                      <a :href="file.url" target="_blank" download class="text-[9px] text-slate-400 font-medium m-0 no-underline hover:text-primary-600 uppercase tracking-tighter">Descargar</a>
                     </div>
                   </div>
                </div>
@@ -484,7 +492,17 @@
 
                   <div class="space-y-1">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Adjuntos (Opcional)</label>
-                    <input type="file" multiple @change="(e: any) => newCase.archivos = Array.from(e.target.files)" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl text-xs font-medium outline-none">
+                    <div class="flex items-center gap-3">
+                      <label class="flex-1 cursor-pointer p-4 bg-slate-50 border border-slate-100 border-dashed rounded-xl hover:bg-white hover:border-primary-300 transition-all group">
+                        <div class="flex flex-col items-center justify-center gap-1">
+                          <i class="fas fa-cloud-upload-alt text-slate-300 group-hover:text-primary-400"></i>
+                          <span class="text-[10px] font-bold text-slate-400 group-hover:text-slate-600">
+                            {{ newCase.archivos?.length ? `${newCase.archivos.length} seleccionados` : 'Click para subir archivos' }}
+                          </span>
+                        </div>
+                        <input type="file" multiple class="hidden" @change="(e: any) => newCase.archivos = Array.from(e.target.files)">
+                      </label>
+                    </div>
                   </div>
                 </div>
              </template>
@@ -518,7 +536,13 @@
 
                   <div class="space-y-1">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Adjuntos (Opcional)</label>
-                    <input type="file" multiple @change="(e: any) => newWiki.archivos = Array.from(e.target.files)" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl text-xs font-medium outline-none">
+                    <label class="cursor-pointer p-4 bg-slate-50 border border-slate-100 border-dashed rounded-xl hover:bg-white hover:border-primary-300 transition-all group flex flex-col items-center justify-center gap-1">
+                      <i class="fas fa-cloud-upload-alt text-slate-300 group-hover:text-primary-400"></i>
+                      <span class="text-[10px] font-bold text-slate-400 group-hover:text-slate-600">
+                        {{ newWiki.archivos?.length ? `${newWiki.archivos.length} seleccionados` : 'Subir documentos' }}
+                      </span>
+                      <input type="file" multiple class="hidden" @change="(e: any) => newWiki.archivos = Array.from(e.target.files)">
+                    </label>
                   </div>
 
                   <div class="space-y-1">
@@ -801,6 +825,20 @@ const deleteCurrentCase = async () => {
   }
 }
 
+const uploadFilesToCase = async (e: any) => {
+  if (!selectedCase.value?._id) return
+  const files = Array.from(e.target.files)
+  if (!files.length) return
+  
+  showLoading('Subiendo archivos...')
+  try {
+    const updated = await casesService.updateCase(selectedCase.value._id, { archivos: files } as any)
+    const idx = cases.value.findIndex(c => c._id === updated._id)
+    if (idx !== -1) cases.value[idx] = updated
+    selectedCase.value = updated
+    showSuccess('Éxito', 'Archivos añadidos correctamente.')
+  } catch (err: any) { showError('Error', err.message) } finally { closeLoading() }
+}
 onMounted(() => loadData())
 watch(viewMode, () => { searchTerm.value = ''; expandedGroups.value = [] })
 </script>

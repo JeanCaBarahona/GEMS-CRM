@@ -127,6 +127,9 @@
             </div>
             <!-- Actions Overlay -->
             <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all flex gap-2">
+              <button @click="exportToPDF" class="px-3 py-1.5 bg-white/90 hover:bg-white text-slate-900 rounded-lg text-[10px] font-bold shadow-sm backdrop-blur-md">
+                <i class="fas fa-file-pdf mr-1"></i> Exportar
+              </button>
               <button @click="openEditCase" class="px-3 py-1.5 bg-white/90 hover:bg-white text-slate-900 rounded-lg text-[10px] font-bold shadow-sm backdrop-blur-md">Editar</button>
               <button @click="deleteCurrentCase" class="px-3 py-1.5 bg-rose-500/90 hover:bg-rose-500 text-white rounded-lg text-[10px] font-bold shadow-sm backdrop-blur-md">Eliminar</button>
             </div>
@@ -287,6 +290,9 @@
             </div>
             <!-- Actions Overlay -->
             <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all flex gap-2">
+              <button @click="exportToPDF" class="px-3 py-1.5 bg-white/90 hover:bg-white text-slate-900 rounded-lg text-[10px] font-bold shadow-sm backdrop-blur-md">
+                <i class="fas fa-file-pdf mr-1"></i> Exportar
+              </button>
               <button @click="isEditingWikiItem = true" class="px-3 py-1.5 bg-white/90 hover:bg-white text-slate-900 rounded-lg text-[10px] font-bold shadow-sm">Editar Wiki</button>
               <button @click="deleteWikiItem" class="px-3 py-1.5 bg-rose-500/90 hover:bg-rose-500 text-white rounded-lg text-[10px] font-bold shadow-sm">Eliminar</button>
             </div>
@@ -620,6 +626,19 @@ const toggleGroup = (name: string) => {
   else expandedGroups.value.splice(idx, 1)
 }
 
+const openCreateModal = () => {
+  showCreateModal.value = true
+}
+
+const openCreateWiki = () => {
+  viewMode.value = 'wiki'
+  showCreateModal.value = true
+}
+
+const exportToPDF = () => {
+  window.print()
+}
+
 const selectCase = (c: Case) => {
   selectedCase.value = c
   activeViewTab.value = 'wiki'
@@ -751,4 +770,21 @@ watch(viewMode, () => { searchTerm.value = ''; expandedGroups.value = [] })
   letter-spacing: -0.01em;
 }
 .prose-xs { font-size: 0.75rem; line-height: 1.6; }
+
+@media print {
+  aside, .no-print, button, .actions-overlay {
+    display: none !important;
+  }
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+  .max-w-4xl {
+    max-width: 100% !important;
+  }
+  .rounded-2xl {
+    border-radius: 0 !important;
+  }
+}
 </style>

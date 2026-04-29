@@ -279,9 +279,10 @@
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { userService } from '@/services/api'
-import { toast } from 'vue3-toastify'
+import { useNotifications } from '@/composables/useNotifications'
 
 const authStore = useAuthStore()
+const { toast } = useNotifications()
 
 // State
 const loading = ref(false)
@@ -379,11 +380,11 @@ const updateProfile = async () => {
     }
     
     isEditing.value = false
-    toast.success('Perfil actualizado correctamente')
+    toast('Perfil actualizado correctamente', 'success')
     
   } catch (error) {
     console.error('Error al actualizar perfil:', error)
-    toast.error('Error al actualizar el perfil')
+    toast('Error al actualizar el perfil', 'error')
   } finally {
     loading.value = false
   }
@@ -405,11 +406,11 @@ const updatePassword = async () => {
       confirmPassword: ''
     }
     
-    toast.success('Contraseña actualizada correctamente')
+    toast('Contraseña actualizada correctamente', 'success')
     
   } catch (error) {
     console.error('Error al cambiar contraseña:', error)
-    toast.error('Error al cambiar la contraseña')
+    toast('Error al cambiar la contraseña', 'error')
   } finally {
     loading.value = false
   }
@@ -440,11 +441,11 @@ const handleFileSelect = async (event: Event) => {
       authStore.user.photo = response.photo
     }
     
-    toast.success('Foto actualizada correctamente')
+    toast('Foto actualizada correctamente', 'success')
     
   } catch (error) {
     console.error('Error al subir foto:', error)
-    toast.error('Error al subir la foto')
+    toast('Error al subir la foto', 'error')
   } finally {
     loading.value = false
     // Limpiar input

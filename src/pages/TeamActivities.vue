@@ -3,10 +3,11 @@
     <div class="flex-1 min-h-0 overflow-y-auto">
       
       <!-- Header -->
-      <div class="mb-6">
-        <div class="flex items-center justify-between">
+      <div class="mb-6 space-y-4">
+        <!-- Top Row: View Mode & Export Button -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div class="flex items-center gap-4">
-            <!-- Vista seleccionada -->
+            <h1 class="text-xl font-black text-slate-800 mr-2">Actividades del Equipo</h1>
             <div class="flex bg-slate-100 rounded-lg p-1 border border-slate-200">
               <button
                 @click="viewMode = 'cards'"
@@ -27,6 +28,54 @@
                 <i class="fas fa-table mr-2"></i>Tabla
               </button>
             </div>
+          </div>
+
+          <button 
+            @click="copySummary"
+            class="flex items-center justify-center gap-3 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all font-black text-sm shadow-lg shadow-emerald-200/50 group"
+          >
+            <i class="fas fa-file-export group-hover:translate-x-1 transition-transform"></i>
+            COPIAR RESUMEN PARA WHATSAPP
+          </button>
+        </div>
+
+        <!-- Bottom Row: Filters -->
+        <div class="flex flex-wrap items-center gap-3 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+          <div class="flex items-center gap-2">
+            <i class="fas fa-filter text-slate-400 text-xs ml-1"></i>
+            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Filtros:</span>
+          </div>
+
+          <!-- Filtro de Cliente -->
+          <div class="min-w-[200px]">
+            <CustomSelect
+              v-model="selectedClient"
+              :options="[
+                { value: '', label: 'Todos los clientes' },
+                ...clients.map(c => ({ value: c._id || '', label: c.name }))
+              ]"
+            />
+          </div>
+
+          <!-- Filtros de fecha -->
+          <div class="flex items-center gap-2 bg-white rounded-lg p-1 border border-slate-200 shadow-sm">
+            <div class="flex items-center gap-1.5 px-2">
+              <span class="text-[10px] font-black text-slate-400 uppercase">Desde</span>
+              <input type="date" v-model="startDate" class="text-xs border-none focus:ring-0 p-0 text-slate-600 font-bold bg-transparent" />
+            </div>
+            <div class="w-px h-4 bg-slate-200"></div>
+            <div class="flex items-center gap-1.5 px-2">
+              <span class="text-[10px] font-black text-slate-400 uppercase">Hasta</span>
+              <input type="date" v-model="endDate" class="text-xs border-none focus:ring-0 p-0 text-slate-600 font-bold bg-transparent" />
+            </div>
+            <button 
+              v-if="startDate || endDate || selectedClient" 
+              @click="startDate = ''; endDate = ''; selectedClient = ''"
+              class="p-1 text-slate-400 hover:text-red-500 transition-colors"
+              title="Limpiar filtros"
+            >
+              <i class="fas fa-times-circle"></i>
+            </button>
           </div>
         </div>
       </div>
@@ -207,6 +256,7 @@ import { useNotifications } from '../composables/useNotifications'
 import type { TeamMember } from '../types'
 import AssignActivityModal from '../components/modals/AssignActivityModal.vue'
 import ActivityFormModal from '../components/forms/ActivityFormModal.vue'
+import CustomSelect from '../components/ui/CustomSelect.vue'
 
 // Reactive data
 const loading = ref(true)
@@ -214,6 +264,11 @@ const viewMode = ref<'cards' | 'table'>('cards')
 const activities = ref<ActivityData[]>([])
 const teamMembers = ref<TeamMember[]>([])
 const clients = ref<ClientData[]>([])
+
+// Filtros
+const startDate = ref('')
+const endDate = ref('')
+const selectedClient = ref('')
 
 // Modales
 const showAssignModal = ref(false)
@@ -224,15 +279,45 @@ const selectedActivity = ref<ActivityData | null>(null)
 const { showSuccess, showError, toast } = useNotifications()
 
 // Computed
+const filteredActivities = computed(() => {
+  let filtered = activities.value
+  
+  if (startDate.value) {
+    const start = new Date(startDate.value + 'T00:00:00')
+    filtered = filtered.filter(a => new Date(a.date) >= start)
+  }
+  
+  if (endDate.value) {
+    const end = new Date(endDate.value + 'T23:59:59')
+    filtered = filtered.filter(a => new Date(a.date) <= end)
+  }
+
+  if (selectedClient.value) {
+    filtered = filtered.filter(a => {
+      const id = (typeof a.clientId === 'object' && a.clientId !== null) ? (a.clientId as any)._id : a.clientId
+      return id === selectedClient.value
+    })
+  }
+  
+  return filtered
+})
+
 const teamMembersWithActivities = computed(() => {
   return teamMembers.value.map(member => ({
     ...member,
-    activities: activities.value.filter(activity => activity.assignedTo === member._id)
+    activities: filteredActivities.value.filter(activity => {
+      const assigned = activity.assignedTo
+      if (Array.isArray(assigned)) {
+        return assigned.some(a => (typeof a === 'object' && a !== null ? (a as any)._id : a) === member._id)
+      }
+      const assignedId = typeof assigned === 'object' && assigned !== null ? (assigned as any)._id : assigned
+      return assignedId === member._id
+    })
   }))
 })
 
 const allActivities = computed(() => {
-  return activities.value.filter(activity => activity.assignedTo)
+  return filteredActivities.value.filter(activity => activity.assignedTo)
 })
 
 // Methods
@@ -245,7 +330,14 @@ const loadData = async () => {
       clientService.getAll()
     ])
     
-    activities.value = activitiesData
+    // Filtrar actividades asignadas a clientes (por si acaso existen en DB)
+    const filteredActivities = activitiesData.filter(activity => {
+      const assignedUser = typeof activity.assignedToUser === 'object' ? activity.assignedToUser : null
+      const role = assignedUser?.role?.toLowerCase() || ''
+      return !role.includes('client') && !role.includes('cliente')
+    })
+
+    activities.value = filteredActivities
     teamMembers.value = teamData
     clients.value = clientsData
   } catch (error) {
@@ -322,11 +414,23 @@ const formatDate = (dateString: string): string => {
 const getAssignedToName = (assignedUser?: any): string => {
   if (!assignedUser) return 'Sin asignar'
   
-  if (typeof assignedUser === 'object' && assignedUser.name) {
-    return assignedUser.name
+  const extractName = (user: any): string => {
+    if (!user) return ''
+    if (typeof user === 'object' && user.name) return user.name
+    if (typeof user === 'string') {
+      const member = teamMembers.value.find(m => m._id === user)
+      return member?.name || ''
+    }
+    return ''
   }
-  
-  return 'Sin asignar'
+
+  if (Array.isArray(assignedUser)) {
+    const names = assignedUser.map(extractName).filter(Boolean)
+    return names.length > 0 ? names.join(', ') : 'Sin asignar'
+  }
+
+  const name = extractName(assignedUser)
+  return name || 'Sin asignar'
 }
 
 const viewMemberActivities = (member: TeamMember & { activities: ActivityData[] }) => {
@@ -387,6 +491,55 @@ const onActivitySaved = (activity: ActivityData) => {
   }
   toast('Actividad actualizada correctamente', 'success')
   closeEditModal()
+}
+
+const copySummary = () => {
+  if (teamMembersWithActivities.value.every(m => m.activities.length === 0)) {
+    toast('No hay actividades para exportar en este período', 'info')
+    return
+  }
+
+  let summary = `📊 *RESUMEN DE ACTIVIDADES*\n`
+  if (startDate.value || endDate.value) {
+    const startStr = startDate.value ? formatDate(startDate.value) : 'Inicio'
+    const endStr = endDate.value ? formatDate(endDate.value) : 'Hoy'
+    summary += `📅 Período: ${startStr} al ${endStr}\n`
+  }
+  if (selectedClient.value) {
+    const client = clients.value.find(c => c._id === selectedClient.value)
+    if (client) summary += `🏢 Cliente: ${client.name}\n`
+  }
+  summary += `----------------------------------\n\n`
+
+  teamMembersWithActivities.value.forEach(member => {
+    if (member.activities.length === 0) return
+
+    summary += `👤 *${member.name}*\n`
+    member.activities.forEach(activity => {
+      const statusIcon = activity.status === 'completed' ? '✅' : activity.status === 'in-progress' ? '🔄' : '⏳'
+      const percentage = activity.completionPercentage || 0
+      const dateStr = formatDate(activity.date)
+      const dueDateStr = activity.dueDate ? formatDate(activity.dueDate) : 'Sin fecha'
+      
+      summary += `${statusIcon} *${activity.title}*\n`
+      summary += `📈 Progreso: ${percentage}%\n`
+      summary += `🗓️ Fecha: ${dateStr} - ${dueDateStr}\n`
+    })
+    summary += `\n`
+  })
+
+  // Copiar al portapapeles
+  const textArea = document.createElement("textarea")
+  textArea.value = summary
+  document.body.appendChild(textArea)
+  textArea.select()
+  try {
+    document.execCommand('copy')
+    toast('Resumen copiado al portapapeles', 'success')
+  } catch (err) {
+    toast('Error al copiar', 'error')
+  }
+  document.body.removeChild(textArea)
 }
 
 // Lifecycle

@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-3 flex flex-col h-full">
     <!-- Selected Users Chips -->
-    <div v-if="selectedUsers.length > 0" class="flex flex-wrap gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100 min-h-[46px] shrink-0">
+    <div v-if="selectedUsers.length > 0" class="flex flex-wrap gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100 min-h-[46px] max-h-[120px] overflow-y-auto shrink-0 custom-scrollbar shadow-inner">
       <span v-for="user in selectedUsers" :key="user?._id"
         class="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg shadow-sm group transition-all hover:border-primary-300"
       >
@@ -154,3 +154,19 @@ const toggleAssigned = (id: string) => {
 }
 const selectedUsers = computed(() => props.modelValue.map(id => props.teamMembers.find(u => u._id === id)).filter(Boolean))
 </script>
+
+<style scoped>
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #E2E8F0;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #CBD5E1;
+}
+</style>

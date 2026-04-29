@@ -6,10 +6,11 @@
     <div class="w-full max-w-md p-10 bg-white border border-slate-200 rounded-[2.5rem] shadow-2xl relative z-10 animate-fade-in">
       
       <!-- Header -->
-      <div class="flex flex-col items-center mb-10 text-center">
-        <img src="/ct-logo.svg" alt="Customer CRM Logo" class="w-16 h-16 mb-4" />
-        <h1 class="text-2xl font-black text-[#1a3764] tracking-tight">Customer CRM</h1>
-        <p class="text-sm font-medium text-slate-500 mt-2">Acceso a la plataforma centralizada</p>
+      <div class="flex items-center justify-center mb-10">
+        <img :src="logoCT" alt="Customer Logo" class="h-24 w-auto" />
+      </div>
+      <div class="text-center mb-8">
+        <p class="text-sm font-medium text-slate-500">Acceso a la plataforma centralizada</p>
       </div>
 
       <!-- Error message -->
@@ -151,6 +152,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import logoCT from '@/assets/logo.png'
 
 const router = useRouter()
 const authStore = useAuthStore()

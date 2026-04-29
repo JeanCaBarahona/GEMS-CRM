@@ -1,4 +1,4 @@
-import api from './api';
+import api from './authService';
 
 export interface RolePermissions {
   dashboard: boolean;

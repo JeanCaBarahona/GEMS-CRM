@@ -18,22 +18,32 @@ body {
   color: #0f172a; /* slate-900 */
 }
 
-/* Custom scrollbar styles */
+/* Premium Minimal Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(226, 232, 240, 0.5); /* slate-200 */
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(82, 194, 239, 0.6); /* Customer Touch Primary */
-  border-radius: 3px;
+  background: #E2E8F0; /* slate-200 */
+  border-radius: 20px;
+  border: 1px solid transparent;
+  background-clip: content-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(82, 194, 239, 0.9);
+  background: #CBD5E1; /* slate-300 */
+  background-clip: content-box;
+}
+
+/* Firefox Support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #E2E8F0 transparent;
 }
 
 /* Custom animations */

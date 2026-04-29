@@ -54,11 +54,9 @@
           class="px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
         >
           <option value="" class="bg-gray-700">Todos los roles</option>
-          <option value="Administrador" class="bg-gray-700">Administrador</option>
-          <option value="Manager" class="bg-gray-700">Manager</option>
-          <option value="Vendedor" class="bg-gray-700">Vendedor</option>
-          <option value="Soporte" class="bg-gray-700">Soporte</option>
-          <option value="Desarrollador" class="bg-gray-700">Desarrollador</option>
+          <option v-for="role in allAvailableRoles" :key="role._id || role.name" :value="role.name" class="bg-gray-700">
+            {{ role.name }}
+          </option>
         </select>
       </div>
     </div>
@@ -143,6 +141,7 @@ import { ref, computed, onMounted } from 'vue'
 import { teamService, type TeamMember } from '../services/teamService'
 import TeamForm from './TeamForm.vue'
 import RolesManager from './RolesManager.vue'
+import { rolesService, type Role } from '../services/rolesService'
 import { useNotifications } from '../composables/useNotifications'
 
 // Composables
@@ -150,6 +149,23 @@ const { showSuccess, showError, confirmDelete: confirmDeleteNotification, showLo
 
 const activeTab = ref<'miembros' | 'roles'>('miembros')
 const members = ref<TeamMember[]>([])
+const roles = ref<Role[]>([])
+const baseRolesNames = ['admin', 'manager', 'support', 'development', 'fullstack', 'employee', 'viewer', 'client']
+
+const allAvailableRoles = computed(() => {
+  const combined = [...roles.value]
+  baseRolesNames.forEach(name => {
+    if (!combined.some(r => r.name.toLowerCase() === name.toLowerCase())) {
+      combined.push({
+        name: name,
+        isSystem: true,
+        permissions: {} as any
+      })
+    }
+  })
+  return combined
+})
+
 const loading = ref(false)
 const searchTerm = ref('')
 const roleFilter = ref('')
@@ -241,8 +257,13 @@ const formatDate = (dateString?: string): string => {
   })
 }
 
-onMounted(() => {
+onMounted(async () => {
   loadMembers()
+  try {
+    roles.value = await rolesService.getAll()
+  } catch (error) {
+    console.error('Error loading roles:', error)
+  }
 })
 
 defineExpose({

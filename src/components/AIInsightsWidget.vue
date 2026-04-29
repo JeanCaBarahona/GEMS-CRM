@@ -118,6 +118,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useAuthStore } from '../stores/auth'
 import {
   useClientsStore,
   useActivitiesStore,
@@ -158,11 +159,12 @@ const defaultInsights: InsightsData = {
 }
 
 // API Key desde variables de entorno
-const API_KEY = import.meta.env.VITE_OPENAI_API_KEY
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY
+const authStore = useAuthStore()
 
 // Cache key for localStorage
 const CACHE_KEY = 'crm_ai_insights_cache'
-const CACHE_DURATION = 4 * 60 * 60 * 1000 // 4 hours in milliseconds
+const CACHE_DURATION = 2 * 60 * 60 * 1000 // 2 hours (more fresh for Gemini)
 
 // Cache functions
 const getCachedInsights = (): InsightsData | null => {
@@ -203,203 +205,143 @@ const generateInsights = async (background = false) => {
   
   // Verificar API key
   if (!API_KEY) {
-    error.value = 'API key de OpenAI no configurada'
-    console.error('OpenAI API key not found in environment variables')
-    if (!background) {
-      loading.value = false
-    }
+    error.value = 'Gemini API Key no configurada'
+    if (!background) loading.value = false
     return
   }
   
-  // Check cache first
-  const cached = getCachedInsights()
-  if (cached) {
-    insights.value = cached
-    if (!background) {
-      loading.value = false
+  // Check cache first (solo si no es manual)
+  if (background) {
+    const cached = getCachedInsights()
+    if (cached) {
+      insights.value = cached
+      return
     }
-    return
   }
   
-  // Solo limpiar insights si no es background (click manual)
   if (!background) {
     insights.value = null
   }
 
   try {
-    // Preparar datos para el análisis con más detalle
+    // Datos del usuario para contexto
+    const userRole = authStore.user?.role || 'Miembro'
+    const userDept = authStore.user?.department || 'General'
+    const userName = authStore.user?.name || 'Usuario'
+
+    // Preparar datos para el análisis
     const data = {
-      clients: {
-        total: clientsStore.clients.length,
-        recent: clientsStore.clients.filter((c: any) => {
-          const createdDate = new Date(c.createdAt || c.date)
-          const weekAgo = new Date()
-          weekAgo.setDate(weekAgo.getDate() - 7)
-          return createdDate > weekAgo
-        }).length
-      },
+      clients: clientsStore.clients.length,
       activities: {
         total: activitiesStore.activities.length,
         pending: activitiesStore.activities.filter((a: any) => a.status === 'pending').length,
         completed: activitiesStore.activities.filter((a: any) => a.status === 'completed').length,
-        overdue: activitiesStore.activities.filter((a: any) => a.status === 'overdue').length,
-        inProgress: activitiesStore.activities.filter((a: any) => a.status === 'in-progress').length
-      },
-      payments: {
-        totalRevenue: paymentsStore.totalRevenue,
-        recentPayments: paymentsStore.payments?.slice(0, 10) || []
+        overdue: activitiesStore.activities.filter((a: any) => a.status === 'overdue').length
       },
       issues: {
         total: issuesStore.issues.length,
-        open: issuesStore.issues.filter((i: any) => i.status === 'open').length,
-        closed: issuesStore.issues.filter((i: any) => i.status === 'closed').length
+        open: issuesStore.issues.filter((i: any) => i.status === 'open').length
       },
-      team: {
-        total: teamStore.members.length,
-        active: teamStore.members.filter((m: any) => m.isActive).length
-      }
+      team: teamStore.members.length
     }
 
-    // Crear prompt más conciso para respuesta más rápida
-    const prompt = `Analiza estos datos CRM y genera insights:
+    const prompt = `Actúa como un Consultor Estratégico de Negocios de alto nivel. 
+    IMPORTANTE: No menciones la palabra "GEMS" en ninguna parte de tu respuesta. 
+    Refiérete al sistema simplemente como "tu plataforma", "tu CRM" o "tu ecosistema de gestión".
+    
+    CONTEXTO DEL USUARIO:
+    - Nombre: ${userName}
+    - Rol: ${userRole}
+    - Departamento: ${userDept}
 
-DATOS:
-• ${data.clients.total} clientes (${data.clients.recent} nuevos esta semana)
-• ${data.activities.total} actividades (${data.activities.pending} pendientes, ${data.activities.completed} completadas)
-• Ingresos: $${data.payments.totalRevenue.toLocaleString()}
-• ${data.issues.total} casos (${data.issues.open} abiertos)
-• Equipo: ${data.team.active}/${data.team.total} activos
+    DATOS ACTUALES DEL CRM:
+    - Clientes: ${data.clients}
+    - Actividades: ${data.activities.total} (${data.activities.pending} pendientes, ${data.activities.overdue} vencidas)
+    - Casos/Issues: ${data.issues.total} (${data.issues.open} abiertos)
+    - Equipo: ${data.team} integrantes
 
-Proporciona:
-1. Resumen creativo (1-2 líneas)
-2. 3 recomendaciones específicas
-3. 2-3 tendencias clave`
+    TAREA:
+    Genera un análisis específico para este ROL y DEPARTAMENTO enfocado en la escalabilidad y eficiencia técnica.
+    
+    FORMATO DE RESPUESTA (Estricto):
+    Resumen: [1 frase potente y motivadora de visión]
+    Rec1: [Recomendación táctica 1]
+    Rec2: [Recomendación táctica 2]
+    Rec3: [Recomendación táctica 3]
+    Trend1: [Tendencia detectada 1]
+    Trend2: [Tendencia detectada 2]
+    
+    Evita introducciones, ve directo al formato.`
 
-    // Llamada a OpenAI API usando GPT-3.5-turbo (más económico)
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          {
-            role: 'system',
-            content: 'Eres un analista de negocio creativo especializado en CRM. Proporciona insights accionables, creativos y específicos con un toque de innovación.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        max_tokens: 400, // Reducido para respuesta más rápida
-        temperature: 0.6 // Menos creativo pero más rápido
+    let response
+    let errorDetail = null
+
+    try {
+      // Intento 1: Gemini 2.5 Flash (El estándar actual en 2026)
+      response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
       })
-    })
+
+      if (!response.ok) {
+        errorDetail = await response.json().catch(() => ({}))
+        console.warn('Fallo con 2.5 Flash, intentando con 3.1 Lite...', errorDetail)
+        
+        // Intento 2: Gemini 3.1 Flash Lite (Fallback de ultra-baja latencia)
+        response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${API_KEY}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        })
+      }
+    } catch (e) {
+      console.error('Error de red inicial:', e)
+      throw new Error('Error de conexión con la IA')
+    }
 
     if (!response.ok) {
-      throw new Error('Error en la API de OpenAI')
+      const finalError = await response.json().catch(() => ({}))
+      console.error('Gemini API Error FINAL:', finalError)
+      throw new Error(`Error de API: ${response.status}`)
     }
 
     const result = await response.json()
+    const aiText = result.candidates?.[0]?.content?.parts?.[0]?.text || ''
+    
+    if (!aiText) throw new Error('Gemini no devolvió contenido')
 
-    if (!result.choices || !result.choices[0]?.message?.content) {
-      throw new Error('Respuesta inválida de la IA')
-    }
-
-    // Parsear respuesta de manera más robusta
-    const aiResponse = result.choices[0].message.content
-    console.log('Respuesta de IA:', aiResponse)
-
-    const lines = aiResponse.split('\n').filter((line: string) => line.trim().length > 0)
-
-    let summary = ''
-    let recommendations: string[] = []
-    let trends: string[] = []
-    let currentSection = ''
-
-    lines.forEach((line: string) => {
-      const trimmed = line.trim()
-
-      // Detectar secciones por patrones comunes
-      if (trimmed.match(/^(1\.|resumen|summary|visión|overview)/i)) {
-        currentSection = 'summary'
-        summary = trimmed.replace(/^(1\.|resumen|summary|visión|overview)[:.]?\s*/i, '')
-      } else if (trimmed.match(/^(2\.|recomendaciones?|recommendations?|sugerencias|suggestions)/i)) {
-        currentSection = 'recommendations'
-      } else if (trimmed.match(/^(3\.|tendencias?|trends?|insights?|patrones)/i)) {
-        currentSection = 'trends'
-      } else if (currentSection === 'recommendations' && trimmed.match(/^[-•*\d+.\s]*[a-zA-Z]/)) {
-        // Extraer texto después de viñetas o números
-        const cleanText = trimmed.replace(/^[-•*\d+.\s]*/, '').trim()
-        if (cleanText.length > 10) { // Solo agregar si es significativo
-          recommendations.push(cleanText)
-        }
-      } else if (currentSection === 'trends' && trimmed.match(/^[-•*\d+.\s]*[a-zA-Z]/)) {
-        const cleanText = trimmed.replace(/^[-•*\d+.\s]*/, '').trim()
-        if (cleanText.length > 10) {
-          trends.push(cleanText)
-        }
-      } else if (currentSection === 'summary' && trimmed.length > 10) {
-        // Continuar agregando al resumen si no es una nueva sección
-        if (!trimmed.match(/^\d+\./) && !trimmed.match(/^(recomendaciones?|tendencias?)/i)) {
-          summary += (summary ? ' ' : '') + trimmed
-        }
-      }
-    })
-
-    // Si no se encontraron secciones estructuradas, intentar extraer de texto libre
-    if (recommendations.length === 0 || trends.length === 0) {
-      // Buscar recomendaciones en el texto
-      if (recommendations.length === 0) {
-        const recMatches = aiResponse.match(/(?:recomendaciones?|sugerencias?)[^:]*:([\s\S]*?)(?=\n(?:tendencias?|trends?|insights?)|$)/i)
-        if (recMatches) {
-          const recText = recMatches[1]
-          const recLines = recText.split('\n').filter((l: string) => l.trim().match(/^[-•*\d+.\s]*[a-zA-Z]/))
-          recommendations = recLines.map((l: string) => l.replace(/^[-•*\d+.\s]*/, '').trim()).filter((l: string) => l.length > 10).slice(0, 3)
-        }
-      }
-
-      // Buscar tendencias en el texto
-      if (trends.length === 0) {
-        const trendMatches = aiResponse.match(/(?:tendencias?|trends?|insights?)[^:]*:([\s\S]*?)$/i)
-        if (trendMatches) {
-          const trendText = trendMatches[1]
-          const trendLines = trendText.split('\n').filter((l: string) => l.trim().match(/^[-•*\d+.\s]*[a-zA-Z]/))
-          trends = trendLines.map((l: string) => l.replace(/^[-•*\d+.\s]*/, '').trim()).filter((l: string) => l.length > 10).slice(0, 3)
-        }
-      }
-    }
+    // Parsing simple pero efectivo
+    const lines = aiText.split('\n')
+    const summaryLine = lines.find((l: string) => l.startsWith('Resumen:'))?.replace('Resumen:', '').trim()
+    
+    const recs = lines
+      .filter((l: string) => l.includes('Rec'))
+      .map((l: string) => l.substring(l.indexOf(':') + 1).trim())
+      .filter((l: string) => l.length > 5)
+    
+    const trends = lines
+      .filter((l: string) => l.includes('Trend'))
+      .map((l: string) => l.substring(l.indexOf(':') + 1).trim())
+      .filter((l: string) => l.length > 5)
 
     const finalInsights = {
-      summary: summary || 'Tu negocio muestra un rendimiento sólido con oportunidades de crecimiento.',
-      recommendations: recommendations.length > 0 ? recommendations : [
-        'Optimiza el seguimiento de actividades pendientes',
-        'Implementa estrategias de retención de clientes',
-        'Explora oportunidades de cross-selling'
-      ],
-      trends: trends.length > 0 ? trends : [
-        'Crecimiento en adquisición de nuevos clientes',
-        'Mejora en resolución de casos',
-        'Tendencia positiva en colaboración del equipo'
-      ]
+      summary: summaryLine || 'Análisis completado con éxito para tu perfil.',
+      recommendations: recs.length > 0 ? recs : defaultInsights.recommendations,
+      trends: trends.length > 0 ? trends : defaultInsights.trends
     }
 
-    console.log('Insights finales:', finalInsights)
     insights.value = finalInsights
     setCachedInsights(finalInsights)
 
   } catch (err: any) {
-    error.value = err.message || 'Error al generar insights'
-    console.error('Error generating insights:', err)
+    error.value = 'No se pudo conectar con la IA en este momento'
+    console.error('Gemini Error:', err)
   } finally {
-    if (!background) {
-      loading.value = false
-    }
+    if (!background) loading.value = false
   }
 }
+
 
 // Generar insights automáticamente al montar el componente
 onMounted(() => {

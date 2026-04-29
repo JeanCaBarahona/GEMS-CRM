@@ -22,7 +22,7 @@
       <!-- Iniciales como fallback -->
       <span v-else>{{ initials }}</span>
     </div>
-    <span class="text-xs text-gray-300 truncate">{{ name || 'Sin asignar' }}</span>
+    <span v-if="!hideName" class="text-xs text-gray-300 truncate">{{ name || 'Sin asignar' }}</span>
   </div>
 </template>
 
@@ -35,10 +35,12 @@ const props = withDefaults(defineProps<{
   name?: string
   photo?: string
   avatar?: string
+  hideName?: boolean
 }>(), {
   name: '',
   photo: '',
-  avatar: ''
+  avatar: '',
+  hideName: false
 })
 
 const errored = ref(false)

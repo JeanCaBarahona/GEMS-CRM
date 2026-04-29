@@ -3,19 +3,13 @@
     <!-- Sidebar -->
     <div class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200">
       <!-- Logo -->
-      <div class="flex items-center justify-center h-20 border-b border-slate-200">
-        <div class="flex items-center">
-          <!-- Logo Customer CRM -->
+        <div class="flex items-center px-6 py-8">
           <img 
-            src="/ct-logo.svg" 
-            alt="Customer CRM Logo" 
-            class="w-10 h-10 mr-3"
+            :src="logoCT" 
+            alt="Customer Logo" 
+            class="h-12 w-auto"
           />
-          <div class="text-xl font-bold text-slate-800">
-            Customer Touch
-          </div>
         </div>
-      </div>
       
       <!-- Navigation -->
       <nav class="flex-1 px-4 py-6 space-y-2 flex flex-col justify-between h-full">
@@ -167,6 +161,7 @@ import OnlineUsersPopover from './OnlineUsersPopover.vue'
 import NewMessageToast from './NewMessageToast.vue'
 import { getAvatarById } from '@/utils/avatarConfig'
 import { API_CONFIG } from '@/config/api'
+import logoCT from '@/assets/logo.png'
 import {
   UserGroupIcon,
   ClipboardDocumentListIcon,

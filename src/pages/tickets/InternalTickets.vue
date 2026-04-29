@@ -77,105 +77,156 @@
         <option value="medium">Medium</option>
         <option value="low">Low</option>
       </select>
-    </div>
 
+      <div class="h-6 w-px bg-slate-200"></div>
+
+      <select v-model="filterAssignedTo" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 focus:outline-none max-w-[150px]">
+        <option value="">Agente Asignado</option>
+        <option v-for="member in supportAgents" :key="member._id" :value="member._id">
+          {{ member.name }}
+        </option>
+      </select>
+    </div>
     <!-- Main Content Area -->
     <div class="flex-1 min-h-0 relative">
       
       <!-- BOARD VIEW -->
-      <div v-if="viewMode === 'board'" class="h-full grid grid-cols-4 gap-4 overflow-x-auto pb-4">
-        <div v-for="col in columns" :key="col.id" class="flex flex-col min-w-[280px]">
-          <!-- Column Header with top accent bar -->
-          <div class="flex-shrink-0 mb-3">
-             <div :class="col.color" class="h-1.5 w-full rounded-t-lg opacity-80"></div>
-             <div class="bg-white border-x border-b border-slate-200 rounded-b-xl p-3 flex items-center justify-between shadow-sm">
-                <div class="flex items-center gap-2">
-                  <i :class="[col.icon, col.textColor]" class="text-xs"></i>
-                  <span class="text-xs font-black text-slate-700 uppercase tracking-wider">{{ col.title }}</span>
-                </div>
-                <span class="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full text-[10px] font-black border border-slate-200">
-                  {{ getTicketsByStatus(col.id).length }}
-                </span>
-             </div>
+      <div v-if="viewMode === 'board'" class="h-full flex gap-6 overflow-x-auto pb-6 custom-scrollbar px-2">
+        <div 
+          v-for="col in columns" 
+          :key="col.id" 
+          class="flex flex-col min-w-[320px] max-w-[320px] bg-slate-50/50 rounded-[2rem] border border-slate-200/60 shadow-inner"
+        >
+          <!-- Column Header -->
+          <div class="flex-shrink-0 p-5 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div :class="col.textColor" class="w-8 h-8 rounded-xl bg-white shadow-sm border border-slate-100 flex items-center justify-center">
+                <i :class="col.icon" class="text-xs"></i>
+              </div>
+              <div>
+                <h3 class="text-xs font-black text-slate-700 uppercase tracking-widest">{{ col.title }}</h3>
+                <p class="text-[9px] font-bold text-slate-400">{{ getTicketsByStatus(col.id).length }} tickets</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+               <button class="w-6 h-6 rounded-lg hover:bg-slate-200/50 text-slate-400 transition-colors">
+                 <i class="fas fa-ellipsis-h text-[10px]"></i>
+               </button>
+            </div>
           </div>
 
-          <!-- Column Cards -->
-          <div class="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1">
+          <!-- Column Cards Container -->
+          <div class="flex-1 overflow-y-auto px-4 pb-4 space-y-4 custom-scrollbar-slim">
             <div 
               v-for="ticket in getTicketsByStatus(col.id)" 
               :key="ticket._id"
               @click="openTicketDetail(ticket)"
-              class="bg-white rounded-xl p-3 border border-slate-200 shadow-sm hover:shadow-md hover:border-primary-300 transition-all cursor-pointer group relative overflow-hidden"
+              class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm hover:shadow-xl hover:border-primary-300 hover:-translate-y-1 transition-all duration-300 cursor-pointer group relative overflow-hidden flex flex-col gap-3"
             >
-              <!-- Priority indicator bar -->
-              <div :class="getPriorityClass(ticket.priority)" class="absolute left-0 top-0 bottom-0 w-1"></div>
-              
-              <div class="flex items-center justify-between mb-2 pl-1">
-                <span class="text-[9px] font-black font-mono text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded border border-primary-100">#{{ ticket.ticketNumber }}</span>
-                <span :class="getPriorityBadgeClass(ticket.priority)" class="text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-tighter">
+              <!-- Priority indicator & Number -->
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="text-[9px] font-black font-mono text-primary-600 bg-primary-50 px-2 py-0.5 rounded-lg border border-primary-100 shadow-sm">
+                    #{{ ticket.ticketNumber }}
+                  </span>
+                  <div v-if="ticket.priority === 'urgent'" class="flex items-center gap-1 px-1.5 py-0.5 bg-rose-50 text-rose-500 rounded-md border border-rose-100 animate-pulse">
+                    <span class="w-1 h-1 bg-rose-500 rounded-full"></span>
+                    <span class="text-[8px] font-black uppercase">Crítico</span>
+                  </div>
+                </div>
+                <span :class="getPriorityBadgeClass(ticket.priority)" class="text-[8px] font-black px-2 py-1 rounded-full uppercase tracking-tighter border">
                   {{ ticket.priority }}
                 </span>
               </div>
 
-              <h4 class="text-xs font-bold text-slate-800 line-clamp-2 mb-2 group-hover:text-primary-600 leading-snug pl-1">{{ ticket.subject }}</h4>
+              <!-- Subject -->
+              <h4 class="text-xs font-black text-slate-800 line-clamp-2 group-hover:text-primary-600 transition-colors leading-relaxed">
+                {{ ticket.subject }}
+              </h4>
 
-              <div class="flex items-center gap-1.5 mb-3 pl-1">
-                <div class="w-4 h-4 rounded-full bg-slate-100 flex items-center justify-center">
-                   <i class="fas fa-user text-[8px] text-slate-400"></i>
+              <!-- Meta -->
+              <div class="flex items-center gap-2 mt-1">
+                <div class="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[8px] font-black text-slate-500 overflow-hidden shadow-inner">
+                  {{ getInitials(ticket.submittedBy?.name || 'G') }}
                 </div>
-                <p class="text-[10px] text-slate-500 font-bold truncate">{{ ticket.submittedBy.name }}</p>
+                <p class="text-[10px] text-slate-500 font-bold truncate">{{ ticket.submittedBy?.name || 'Usuario' }}</p>
               </div>
 
-              <div class="flex items-center justify-between pt-2 border-t border-slate-50 pl-1">
-                <span class="text-[9px] text-slate-400 font-medium">hace {{ formatDateRelative(ticket.createdAt) }}</span>
-                <div v-if="ticket.assignedTo" class="w-6 h-6 rounded-lg bg-indigo-50 flex items-center justify-center border border-indigo-100 shadow-sm overflow-hidden" :title="typeof ticket.assignedTo === 'object' ? ticket.assignedTo.name : 'Asignado'">
-                  <img v-if="typeof ticket.assignedTo === 'object' && (ticket.assignedTo.avatar || ticket.assignedTo.photo)" :src="ticket.assignedTo.avatar || ticket.assignedTo.photo" class="w-full h-full object-cover">
-                  <span v-else class="text-[9px] font-black text-primary-700">{{ typeof ticket.assignedTo === 'object' ? getInitials(ticket.assignedTo.name) : 'A' }}</span>
+              <!-- Footer info -->
+              <div class="flex items-center justify-between pt-3 border-t border-slate-50 mt-1">
+                <div class="flex items-center gap-1.5">
+                  <i class="far fa-clock text-[9px] text-slate-300"></i>
+                  <span class="text-[9px] text-slate-400 font-bold">hace {{ formatDateRelative(ticket.createdAt) }}</span>
                 </div>
-                <div v-else class="w-6 h-6 rounded-lg bg-orange-50 border border-orange-200 flex items-center justify-center dashed-border" title="Sin asignar">
-                   <i class="fas fa-user-slash text-[9px] text-orange-400"></i>
+                
+                <div v-if="ticket.assignedTo" class="w-7 h-7 rounded-xl bg-indigo-50 flex items-center justify-center border border-indigo-100 shadow-sm overflow-hidden group-hover:scale-110 transition-transform">
+                  <img v-if="ticket.assignedTo.avatar || ticket.assignedTo.photo" :src="resolveImageUrl(ticket.assignedTo.avatar || ticket.assignedTo.photo)" class="w-full h-full object-cover">
+                  <span v-else class="text-[9px] font-black text-primary-700">{{ getInitials(ticket.assignedTo.name) }}</span>
+                </div>
+                <div v-else class="w-7 h-7 rounded-xl bg-slate-50 border border-slate-200 border-dashed flex items-center justify-center" title="Sin asignar">
+                   <i class="fas fa-user-slash text-[9px] text-slate-300"></i>
                 </div>
               </div>
             </div>
 
             <!-- Empty State for Column -->
-            <div v-if="getTicketsByStatus(col.id).length === 0" class="py-8 flex flex-col items-center justify-center opacity-40">
-               <i class="fas fa-inbox text-2xl text-slate-300"></i>
-               <span class="text-[10px] font-bold text-slate-400 mt-1">Sin tickets</span>
+            <div v-if="getTicketsByStatus(col.id).length === 0" class="py-12 flex flex-col items-center justify-center opacity-30 select-none">
+               <div class="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center mb-3">
+                 <i class="fas fa-inbox text-xl text-slate-300"></i>
+               </div>
+               <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Columna Vacía</span>
             </div>
           </div>
         </div>
       </div>
 
       <!-- INBOX VIEW -->
-      <div v-else class="h-full bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden animate-fade-in">
+      <div v-else class="h-full bg-white rounded-[2.5rem] border border-slate-200 shadow-xl flex flex-col overflow-hidden animate-fade-in relative">
+        <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary-500 to-indigo-500 opacity-80"></div>
+        
         <!-- Inbox Toolbar -->
-        <div class="flex-shrink-0 border-b border-slate-100 p-3 bg-slate-50 flex items-center justify-between">
-           <div class="flex items-center gap-4">
-              <span class="text-xs font-black text-slate-500 uppercase tracking-widest pl-2">Mis Asignaciones</span>
-              <div class="h-4 w-px bg-slate-200"></div>
-              <div class="flex items-center gap-2">
-                 <button class="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-primary-600 transition-colors shadow-sm">
-                   <i class="fas fa-filter text-[10px]"></i>
-                 </button>
+        <div class="flex-shrink-0 border-b border-slate-100 px-8 py-6 bg-slate-50/30 flex items-center justify-between">
+           <div class="flex items-center gap-6">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white shadow-sm border border-slate-100 rounded-2xl flex items-center justify-center">
+                  <i class="fas fa-inbox text-primary-500"></i>
+                </div>
+                <div>
+                  <h3 class="text-base font-black text-slate-800">Mi Bandeja</h3>
+                  <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tickets asignados a ti</p>
+                </div>
+              </div>
+              <div class="h-8 w-px bg-slate-200"></div>
+              <div class="flex items-center gap-3">
+                 <div class="flex flex-col">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Pendientes</span>
+                    <span class="text-sm font-black text-slate-800">{{ inboxTickets.filter(t => t.status !== 'resolved' && t.status !== 'closed').length }}</span>
+                 </div>
               </div>
            </div>
-           <div class="text-[10px] font-bold text-slate-400">
-             Mostrando {{ inboxTickets.length }} tickets asignados a ti
+           <div class="flex items-center gap-3">
+              <button @click="loadMyTickets" class="p-2 text-slate-400 hover:text-primary-600 transition-colors">
+                <i class="fas fa-sync-alt" :class="{ 'fa-spin': loadingMyTickets }"></i>
+              </button>
            </div>
         </div>
 
         <!-- Inbox List -->
-        <div class="flex-1 overflow-y-auto">
-          <table class="w-full text-left border-collapse">
-            <thead class="bg-slate-50 sticky top-0 z-10 border-b border-slate-100">
-              <tr>
-                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ticket</th>
-                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Asunto</th>
-                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cliente</th>
-                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Prioridad</th>
-                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha</th>
+        <div class="flex-1 overflow-y-auto custom-scrollbar px-6">
+          <div v-if="loadingMyTickets" class="py-20 flex flex-col items-center justify-center gap-4">
+            <i class="fas fa-circle-notch fa-spin text-3xl text-primary-400"></i>
+            <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Cargando tu bandeja...</span>
+          </div>
+
+          <table v-else class="w-full text-left border-collapse mt-4">
+            <thead>
+              <tr class="border-b border-slate-100">
+                <th class="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                <th class="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ticket</th>
+                <th class="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Asunto</th>
+                <th class="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cliente</th>
+                <th class="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Prioridad</th>
+                <th class="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Antigüedad</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-50">
@@ -183,80 +234,57 @@
                 v-for="ticket in inboxTickets" 
                 :key="ticket._id"
                 @click="openTicketDetail(ticket)"
-                class="hover:bg-primary-50 transition-colors cursor-pointer group"
+                class="hover:bg-primary-50 transition-all cursor-pointer group"
               >
-                <td class="px-4 py-4">
-                  <span :class="getStatusPillClass(ticket.status)" class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase border">
+                <td class="px-4 py-5">
+                  <span :class="getStatusPillClass(ticket.status)" class="px-3 py-1 rounded-xl text-[9px] font-black uppercase border shadow-sm transition-transform group-hover:scale-105">
                     {{ ticket.status }}
                   </span>
                 </td>
-                <td class="px-4 py-4">
+                <td class="px-4 py-5">
                   <span class="text-xs font-black font-mono text-primary-600">#{{ ticket.ticketNumber }}</span>
                 </td>
-                <td class="px-4 py-4">
+                <td class="px-4 py-5">
                   <div class="max-w-md">
-                    <p class="text-[13px] font-bold text-slate-800 line-clamp-1 group-hover:text-primary-600 transition-colors">{{ ticket.subject }}</p>
-                    <p class="text-[10px] text-slate-400 truncate">{{ ticket.category }}</p>
+                    <p class="text-sm font-black text-slate-800 line-clamp-1 group-hover:text-primary-600 transition-colors">{{ ticket.subject }}</p>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase mt-0.5">{{ ticket.category }}</p>
                   </div>
                 </td>
-                <td class="px-4 py-4">
-                  <div class="flex items-center gap-2">
-                    <div class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[9px] font-black text-slate-400">
-                      {{ getInitials(ticket.submittedBy.name) }}
+                <td class="px-4 py-5">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-[10px] font-black text-slate-500 shadow-inner">
+                      {{ getInitials(ticket.submittedBy?.name || 'G') }}
                     </div>
-                    <span class="text-xs font-bold text-slate-600">{{ ticket.submittedBy.name }}</span>
+                    <div class="flex flex-col">
+                       <span class="text-xs font-black text-slate-700">{{ ticket.submittedBy?.name || 'Usuario' }}</span>
+                       <span class="text-[9px] font-bold text-slate-400 truncate max-w-[120px]">{{ ticket.submittedBy?.email || 'N/A' }}</span>
+                    </div>
                   </div>
                 </td>
-                <td class="px-4 py-4">
-                   <span :class="getPriorityBadgeClass(ticket.priority)" class="px-2 py-1 rounded-lg text-[9px] font-black uppercase">
+                <td class="px-4 py-5">
+                   <span :class="getPriorityBadgeClass(ticket.priority)" class="px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase border shadow-sm">
                      {{ ticket.priority }}
                    </span>
                 </td>
-                <td class="px-4 py-4">
-                  <span class="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{{ formatDate(ticket.createdAt) }}</span>
+                <td class="px-4 py-5">
+                  <div class="flex flex-col">
+                    <span class="text-xs font-black text-slate-600">{{ formatDateRelative(ticket.createdAt) }}</span>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase">{{ formatDate(ticket.createdAt) }}</span>
+                  </div>
                 </td>
               </tr>
 
               <tr v-if="inboxTickets.length === 0">
-                <td colspan="6" class="py-20 text-center">
-                   <i class="fas fa-check-circle text-4xl text-emerald-100 mb-3"></i>
-                   <p class="text-sm font-black text-slate-400">¡Al día! No tienes tickets asignados pendientes</p>
+                <td colspan="6" class="py-32 text-center">
+                   <div class="w-20 h-20 bg-emerald-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6 border border-emerald-100 shadow-sm animate-bounce-subtle">
+                     <i class="fas fa-check-circle text-3xl text-emerald-500"></i>
+                   </div>
+                   <h4 class="text-lg font-black text-slate-800 mb-1">¡Bandeja al día!</h4>
+                   <p class="text-xs font-black text-slate-400 uppercase tracking-widest">No tienes tickets asignados pendientes</p>
                 </td>
               </tr>
             </tbody>
           </table>
-        </div>
-
-        <!-- Pagination Footer (Internal) -->
-        <div v-if="pagination.pages > 1" class="flex-shrink-0 bg-slate-50/50 border-t border-slate-100 p-3 flex items-center justify-between">
-           <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">
-              Página {{ pagination.page }} de {{ pagination.pages }} ({{ pagination.total }} total)
-           </span>
-           <div class="flex items-center gap-1.5 mr-4">
-              <button 
-                @click="changePage(pagination.page - 1)"
-                :disabled="pagination.page === 1"
-                class="w-8 h-8 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-400 hover:text-primary-600 disabled:opacity-30 transition-all shadow-sm"
-              >
-                <i class="fas fa-chevron-left text-[8px]"></i>
-              </button>
-              <button 
-                v-for="p in pagination.pages" 
-                :key="p"
-                @click="changePage(p)"
-                :class="p === pagination.page ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-400 hover:bg-slate-50'"
-                class="w-7 h-7 rounded-lg text-[9px] font-black transition-all"
-              >
-                {{ p }}
-              </button>
-              <button 
-                @click="changePage(pagination.page + 1)"
-                :disabled="pagination.page === pagination.pages"
-                class="w-8 h-8 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-400 hover:text-primary-600 disabled:opacity-30 transition-all shadow-sm"
-              >
-                <i class="fas fa-chevron-right text-[8px]"></i>
-              </button>
-           </div>
         </div>
       </div>
 
@@ -310,8 +338,8 @@
                      <i class="fas fa-user text-xs text-slate-400"></i>
                    </div>
                    <div class="flex flex-col">
-                     <span class="text-xs font-black text-slate-800">{{ selectedTicket.submittedBy.name }}</span>
-                     <span class="text-[10px] font-bold text-slate-400">{{ selectedTicket.submittedBy.email }}</span>
+                     <span class="text-xs font-black text-slate-800">{{ selectedTicket.submittedBy?.name || 'Usuario' }}</span>
+                     <span class="text-[10px] font-bold text-slate-400">{{ selectedTicket.submittedBy?.email || 'N/A' }}</span>
                    </div>
                  </div>
                  <div class="text-[10px] font-black text-slate-400 uppercase">
@@ -532,9 +560,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, reactive } from 'vue'
 import { ticketService } from '../../services/ticketService'
+import { teamService } from '../../services/teamService'
 import { useAuthStore } from '../../stores/auth'
 import { useNotifications } from '../../composables/useNotifications'
 import type { Ticket } from '../../types/ticket'
+import type { TeamMember } from '../../types'
 import { formatDistanceToNow, format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -549,12 +579,17 @@ const searchQuery = ref('')
 const filterPriority = ref('')
 const filterCategory = ref('')
 const filterStatus = ref('')
+const filterAssignedTo = ref('')
+const teamMembers = ref<TeamMember[]>([])
 const pagination = ref({
   page: 1,
-  limit: 15,
+  limit: 25, // Aumentado para mejor vista de tablero
   total: 0,
   pages: 1
 })
+
+const myInboxTickets = ref<Ticket[]>([])
+const loadingMyTickets = ref(false)
 
 // Selection & Modal
 const selectedTicket = ref<Ticket | null>(null)
@@ -590,23 +625,55 @@ const columns = [
 
 // Computed
 const filteredTickets = computed(() => {
+  if (!tickets.value) return []
   return tickets.value.filter(t => {
-    const matchSearch = !searchQuery.value || 
-      t.subject.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      t.ticketNumber.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      t.submittedBy.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+    if (!t) return false
+    const query = searchQuery.value.toLowerCase()
+    const matchSearch = !query || 
+      (t.subject && t.subject.toLowerCase().includes(query)) ||
+      (t.ticketNumber && t.ticketNumber.toLowerCase().includes(query)) ||
+      (t.submittedBy?.name && t.submittedBy.name.toLowerCase().includes(query))
+    
+    // Extract ID from assignedTo (could be object or string)
+    const assignedId = typeof t.assignedTo === 'object' ? (t.assignedTo as any)?._id : t.assignedTo
+    const matchAgent = !filterAssignedTo.value || assignedId === filterAssignedTo.value
     
     const matchPriority = !filterPriority.value || t.priority === filterPriority.value
     const matchCategory = !filterCategory.value || t.category === filterCategory.value
     
-    return matchSearch && matchPriority && matchCategory
+    return matchSearch && matchAgent && matchPriority && matchCategory
   })
 })
 
+const supportAgents = computed(() => {
+  return teamMembers.value.filter(member => 
+    member.role !== 'client' && 
+    ['admin', 'manager', 'support', 'development', 'fullstack'].includes(member.role)
+  )
+})
+
 const inboxTickets = computed(() => {
-  return filteredTickets.value.filter(t => {
-    const assignedId = typeof t.assignedTo === 'object' ? t.assignedTo?._id : t.assignedTo;
-    return assignedId === authStore.user?._id;
+  if (!myInboxTickets.value) return []
+  // For inbox, we only apply search query and priority/category if needed, 
+  // but status is usually less relevant since it's "your" inbox.
+  // However, we'll keep them but make sure they don't break things.
+  return myInboxTickets.value.filter(t => {
+    if (!t) return false
+    const query = searchQuery.value.toLowerCase()
+    const matchSearch = !query || 
+      (t.subject && t.subject.toLowerCase().includes(query)) ||
+      (t.ticketNumber && t.ticketNumber.toLowerCase().includes(query)) ||
+      (t.submittedBy?.name && t.submittedBy.name.toLowerCase().includes(query))
+    
+    // In inbox, status filter only applies if explicitly selected
+    const assignedId = typeof t.assignedTo === 'object' ? (t.assignedTo as any)?._id : t.assignedTo
+    const matchAgent = !filterAssignedTo.value || assignedId === filterAssignedTo.value
+    
+    const matchStatus = !filterStatus.value || t.status === filterStatus.value
+    const matchPriority = !filterPriority.value || t.priority === filterPriority.value
+    const matchCategory = !filterCategory.value || t.category === filterCategory.value
+    
+    return matchSearch && matchAgent && matchStatus && matchPriority && matchCategory
   })
 })
 
@@ -614,12 +681,14 @@ const inboxTickets = computed(() => {
 const loadTickets = async (page = 1) => {
   loading.value = true
   try {
+    const isBoard = viewMode.value === 'board'
     const response = await ticketService.getAll({
-      status: filterStatus.value, // We should bind status to a ref if we want it filtered in API
-      priority: filterPriority.value,
-      category: filterCategory.value,
+      status: filterStatus.value || undefined,
+      priority: filterPriority.value || undefined,
+      category: filterCategory.value || undefined,
+      assignedTo: filterAssignedTo.value || undefined,
       page,
-      limit: pagination.value.limit
+      limit: isBoard ? 100 : pagination.value.limit // More tickets for board view
     })
     
     if (response.success) {
@@ -633,6 +702,18 @@ const loadTickets = async (page = 1) => {
   }
 }
 
+const loadMyTickets = async () => {
+  loadingMyTickets.value = true
+  try {
+    const data = await ticketService.getMyTickets()
+    myInboxTickets.value = data
+  } catch (err: any) {
+    showError(err.message)
+  } finally {
+    loadingMyTickets.value = false
+  }
+}
+
 const changePage = (page: number) => {
   if (page < 1 || page > pagination.value.pages) return
   loadTickets(page)
@@ -643,13 +724,21 @@ const getTicketsByStatus = (status: string) => {
 }
 
 const openTicketDetail = async (ticket: Ticket) => {
+  if (!ticket || !ticket._id) return
+  
+  // 1. Show immediately with existing data to avoid perceived delay
+  selectedTicket.value = { ...ticket }
+  
   try {
-    // Fetch full detail with comments
-    selectedTicket.value = await ticketService.getById(ticket._id!)
+    // 2. Fetch full detail (including comments) in background
+    const fullTicket = await ticketService.getById(ticket._id.toString())
+    if (selectedTicket.value && selectedTicket.value._id === fullTicket._id) {
+       selectedTicket.value = fullTicket
+    }
   } catch (err: any) {
-    showError(err.message)
-    // Fallback if detail fetch fails
-    selectedTicket.value = ticket
+    console.error('Error fetching ticket detail:', err)
+    // We don't show error here to not interrupt user viewing the local data
+    // unless the local data is very sparse.
   }
 }
 
@@ -778,11 +867,13 @@ const formatDate = (dateStr?: string) => {
 
 import { API_CONFIG } from '@/config/api'
 
-// ... (existing code)
-
-const isImgUrl = (url: string) => /\.(jpg|jpeg|png|webp|avif|gif)$/.test(url.toLowerCase())
+const isImgUrl = (url: string) => {
+  if (!url) return false
+  return /\.(jpg|jpeg|png|webp|avif|gif)$/.test(url.toLowerCase())
+}
 
 const resolveImageUrl = (url: string) => {
+  if (!url) return ''
   if (url.startsWith('http')) return url
   const origin = String(API_CONFIG.BASE_URL).replace(/\/?api\/?$/i, '')
   return `${origin.replace(/\/$/, '')}/${url.replace(/^\//, '')}`
@@ -797,30 +888,72 @@ const formatDateLong = (dateStr?: string) => {
   return format(new Date(dateStr), "d 'DE' MMMM, yyyy", { locale: es })
 }
 
-watch([filterStatus, filterPriority, filterCategory], () => {
-  loadTickets(1)
+watch(viewMode, (newVal) => {
+  if (newVal === 'inbox') {
+    loadMyTickets()
+  } else {
+    loadTickets()
+  }
 })
 
-onMounted(() => {
-  loadTickets()
+watch([filterStatus, filterPriority, filterCategory, filterAssignedTo], () => {
+  if (viewMode.value === 'board') {
+    loadTickets(1)
+  }
+})
+
+const loadTeamMembers = async () => {
+  try {
+    teamMembers.value = await teamService.getActiveMembers()
+  } catch (err) {
+    console.error('Error loading team members:', err)
+  }
+}
+
+onMounted(async () => {
+  await loadTeamMembers()
+  
+  // Set default filter if current user is support
+  const isSupport = ['support', 'development', 'fullstack'].includes(authStore.user?.role || '')
+  if (isSupport && authStore.user?._id) {
+    filterAssignedTo.value = authStore.user._id
+  }
+
+  if (viewMode.value === 'inbox') {
+    loadMyTickets()
+  } else {
+    loadTickets()
+  }
 })
 </script>
 
 <style scoped>
-.custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
+.custom-scrollbar-slim::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
 }
-.custom-scrollbar::-webkit-scrollbar-track {
+
+.custom-scrollbar-slim::-webkit-scrollbar-track {
   background: transparent;
 }
-.custom-scrollbar::-webkit-scrollbar-thumb {
+
+.custom-scrollbar-slim::-webkit-scrollbar-thumb {
   background: #e2e8f0;
   border-radius: 10px;
 }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+
+.custom-scrollbar-slim::-webkit-scrollbar-thumb:hover {
   background: #cbd5e1;
 }
 
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 3s ease-in-out infinite;
+}
 .dashed-border {
   border-style: dashed;
 }
@@ -834,12 +967,21 @@ onMounted(() => {
   animation: slide-in-right 0.3s ease-out forwards;
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 .animate-fade-in {
   animation: fadeIn 0.2s ease-out forwards;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.98); }
-  to { opacity: 1; transform: scale(1); }
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 3s ease-in-out infinite;
 }
 </style>

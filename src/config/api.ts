@@ -1,13 +1,7 @@
 // Configuración automática de API según el ambiente
 const getBaseURL = (): string => {
-  // Usar Render como URL por defecto
   const devURL = 'https://gems-crm-backend.onrender.com/api'
   const prodURL = 'https://gems-crm-backend.onrender.com/api'
-  
-  // Si estamos en localhost (desarrollo), aún podemos usar la URL de Render si el backend ya está desplegado
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    return devURL
-  }
   
   return prodURL
 }

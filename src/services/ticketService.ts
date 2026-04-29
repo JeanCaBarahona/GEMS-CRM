@@ -39,12 +39,13 @@ class TicketService {
 
 
   // Get all tickets (authenticated) with pagination
-  async getAll(filters?: { status?: string; priority?: string; category?: string; page?: number; limit?: number }): Promise<{ success: boolean; data: Ticket[]; pagination: any }> {
+  async getAll(filters?: { status?: string; priority?: string; category?: string; assignedTo?: string; page?: number; limit?: number }): Promise<{ success: boolean; data: Ticket[]; pagination: any }> {
     try {
       const params = new URLSearchParams();
       if (filters?.status) params.append('status', filters.status);
       if (filters?.priority) params.append('priority', filters.priority);
       if (filters?.category) params.append('category', filters.category);
+      if (filters?.assignedTo) params.append('assignedTo', filters.assignedTo);
       if (filters?.page) params.append('page', filters.page.toString());
       if (filters?.limit) params.append('limit', filters.limit.toString());
 

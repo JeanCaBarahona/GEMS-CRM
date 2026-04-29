@@ -311,7 +311,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     
     if (canViewReports.value) {
-      modules.push({ id: 'reports', name: 'Reportes & Analytics', icon: 'fas fa-chart-bar', path: '/reports', canAccess: true })
+      modules.push({ id: 'reports', name: 'Reportes', icon: 'fas fa-chart-bar', path: '/reports', canAccess: true })
     }
     
     if (canViewTickets.value) {

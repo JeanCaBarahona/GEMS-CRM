@@ -47,26 +47,34 @@
             <i class="fas fa-sun mr-2"></i>
             Daily
           </button>
+          <button
+            v-if="authStore.isLeader"
+            @click="currentView = 'team'"
+            :class="currentView === 'team' 
+              ? 'bg-white text-primary shadow-sm font-bold border-slate-200' 
+              : 'text-slate-500 hover:text-slate-800'"
+            class="px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center"
+          >
+            <i class="fas fa-users-viewfinder mr-2"></i>
+            Equipo
+          </button>
         </div>
         
         <!-- Botón crear -->
-        <PermissionGuard :permissions="['create-activities']" :fallback="false">
-          <button
-            @click="showCreateModal = true"
-            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors font-bold flex items-center gap-2 shadow-sm text-sm"
-          >
-            <i class="fas fa-plus"></i>
-            Nueva Actividad
-          </button>
-        </PermissionGuard>
-        
-        <!-- Botones de gestión de notificaciones - REMOVED -->
+        <button
+          v-if="authStore.canCreateActivities"
+          @click="showCreateModal = true"
+          class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors font-bold flex items-center gap-2 shadow-sm text-sm"
+        >
+          <i class="fas fa-plus"></i>
+          Nueva Actividad
+        </button>
+
       </div>
     </div>
 
-    <!-- Barra de tarea rápida (solo en Kanban y Calendario) -->
+    <!-- Barra de tarea rápida -->
     <div 
-      v-if="currentView !== 'tasks'"
       class="bg-indigo-50 rounded-xl p-3 border border-indigo-100 shadow-sm relative"
     >
       <div class="flex items-center gap-4">
@@ -130,9 +138,8 @@
       </div>
     </div>
 
-    <!-- Filtros (solo en Kanban y Calendario) -->
+    <!-- Filtros -->
     <div 
-      v-if="currentView !== 'tasks'"
       class="bg-white rounded-xl border shadow-sm transition-all"
       :class="filtersLocked ? 'border-primary-200 ring-2 ring-primary-100' : 'border-slate-200'"
     >
@@ -161,6 +168,15 @@
           >
             <i :class="filtersLocked ? 'fas fa-lock' : 'fas fa-lock-open'" class="text-xs"></i>
           </button>
+          
+          <!-- Botón Copiar Resumen (Compacto) -->
+          <button
+            @click="copyActivitiesSummary"
+            title="Copiar resumen para WhatsApp/Slack"
+            class="w-8 h-8 rounded-lg flex items-center justify-center bg-indigo-500 text-white hover:bg-indigo-600 shadow-md shadow-indigo-100 transition-all"
+          >
+            <i class="fas fa-copy text-xs"></i>
+          </button>
           <!-- Mis Tareas shortcut -->
           <button
             @click="setMyTasksFilter"
@@ -180,6 +196,19 @@
 
       <!-- Filter Selects -->
       <div class="flex flex-wrap gap-3 sm:gap-4 items-center p-3 sm:p-4">
+        <!-- Filtro por cliente -->
+        <div class="flex-1 min-w-[180px]">
+          <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1 ml-1">
+            Cliente
+          </label>
+          <CustomSelect
+            v-model="selectedClient"
+            :options="[
+              { value: '', label: 'Todos los clientes' },
+              ...clients.map(c => ({ value: c._id || '', label: c.name }))
+            ]"
+          />
+        </div>
         <!-- Filtro por departamento -->
         <div class="flex-1 min-w-[140px]">
           <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1 ml-1">
@@ -226,6 +255,30 @@
             ]"
           />
         </div>
+
+        <!-- Filtro por rango de fechas -->
+        <div class="flex items-center gap-2 min-w-[280px]">
+          <div class="flex-1">
+            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1 ml-1">
+              Desde
+            </label>
+            <input 
+              v-model="startDate" 
+              type="date" 
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+            />
+          </div>
+          <div class="flex-1">
+            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1 ml-1">
+              Hasta
+            </label>
+            <input 
+              v-model="endDate" 
+              type="date" 
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+            />
+          </div>
+        </div>
       </div>
     </div>
 
@@ -246,41 +299,46 @@
       <DailyScrum :activities="filteredActivities" />
     </div>
 
+    <!-- Vista Equipo (Líderes) -->
+    <div v-else-if="currentView === 'team'">
+      <TeamActivities />
+    </div>
+
     <!-- Vista de Lista -->
-    <div v-else-if="currentView === 'tasks'" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mt-6">
+    <div v-else-if="currentView === 'tasks'" class="bg-white rounded-2xl border border-slate-200 shadow-sm mt-6 flex flex-col min-h-0 overflow-visible">
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
           <thead>
-            <tr class="bg-slate-50 border-b border-slate-200 text-[10px] uppercase font-black text-slate-500 tracking-wider">
-              <th class="p-4 pl-6">Actividad</th>
-              <th class="p-4 hidden md:table-cell">Cliente</th>
-              <th class="p-4">Asignado</th>
-              <th class="p-4">Estado</th>
-              <th class="p-4 hidden sm:table-cell">Prioridad</th>
-              <th class="p-4 pr-6 text-right">Acciones</th>
+            <tr class="bg-slate-50/50 border-b border-slate-200 text-[10px] uppercase font-black text-slate-500 tracking-wider">
+              <th class="py-5 px-4 pl-8">Actividad</th>
+              <th class="py-5 px-4 hidden md:table-cell">Cliente</th>
+              <th class="py-5 px-4">Asignado</th>
+              <th class="py-5 px-4">Estado</th>
+              <th class="py-5 px-4 hidden sm:table-cell">Prioridad</th>
+              <th class="py-5 px-4 pr-8 text-right">Acciones</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
-            <tr v-for="activity in filteredActivities" :key="activity._id" class="hover:bg-slate-50 transition-colors group">
-              <td class="p-4 pl-6">
-                <div class="font-bold text-slate-800 text-sm">{{ activity.title }}</div>
-                <div class="text-xs text-slate-500 line-clamp-1 mt-0.5 max-w-md">{{ activity.description || 'Sin descripción' }}</div>
+            <tr v-for="activity in filteredActivities" :key="activity._id" class="hover:bg-slate-50/80 transition-colors group">
+              <td class="py-6 px-4 pl-8">
+                <div class="font-bold text-slate-800 text-sm tracking-tight">{{ activity.title }}</div>
+                <div class="text-[11px] text-slate-500 line-clamp-1 mt-1.5 max-w-md font-medium">{{ activity.description || 'Sin descripción' }}</div>
                 <!-- Progreso y Tiempo (List View) -->
-                <div v-if="activity.estimatedTime || activity.timeSpent || activity.completionPercentage !== undefined" class="mt-2 flex items-center gap-3">
-                  <div class="flex-1 max-w-[120px] bg-slate-100 rounded-full h-1.5 overflow-hidden flex items-center">
-                    <div class="bg-primary-500 h-1.5 rounded-full transition-all" :style="{ width: `${activity.completionPercentage || 0}%` }"></div>
+                <div v-if="activity.estimatedTime || activity.timeSpent || activity.completionPercentage !== undefined" class="mt-4 flex items-center gap-4">
+                  <div class="flex-1 max-w-[140px] bg-slate-100 rounded-full h-1.5 overflow-hidden flex items-center shadow-inner">
+                    <div class="bg-primary-500 h-1.5 rounded-full transition-all shadow-sm" :style="{ width: `${activity.completionPercentage || 0}%` }"></div>
                   </div>
-                  <div class="flex items-center gap-1.5 text-[10px] font-black text-slate-400">
-                    <button @click.stop="toggleTimer(activity)" class="p-1 rounded-md transition-colors" :class="isTimerActive(activity) ? 'text-red-500 bg-red-50 hover:bg-red-100' : 'text-primary-500 bg-primary-50 hover:bg-primary-100'">
-                      <i :class="isTimerActive(activity) ? 'fas fa-stop' : 'fas fa-play'"></i>
+                  <div class="flex items-center gap-2 text-[10px] font-black text-slate-400">
+                    <button @click.stop="toggleTimer(activity)" class="w-7 h-7 flex items-center justify-center rounded-lg transition-all shadow-sm" :class="isTimerActive(activity) ? 'text-red-500 bg-red-50 hover:bg-red-100 border border-red-100' : 'text-primary-500 bg-primary-50 hover:bg-primary-100 border border-primary-50'">
+                      <i :class="isTimerActive(activity) ? 'fas fa-stop' : 'fas fa-play' " class="text-[10px]"></i>
                     </button>
-                    <span :class="isTimerActive(activity) ? 'text-red-500' : ''">{{ formatTime(activity.timeSpent) }}</span>
-                    <span v-if="activity.estimatedTime">/ {{ activity.estimatedTime }}</span>
+                    <span :class="isTimerActive(activity) ? 'text-red-500 font-black' : ''" class="ml-1">{{ formatTime(activity.timeSpent) }}</span>
+                    <span v-if="activity.estimatedTime" class="opacity-60">/ {{ activity.estimatedTime }}</span>
                     
                     <div class="relative">
                       <button 
                         @click.stop="activeTimePopover = activeTimePopover === activity._id ? null : activity._id" 
-                        class="ml-0.5 w-5 h-5 rounded-md flex items-center justify-center bg-slate-100 text-slate-500 hover:bg-primary-100 hover:text-primary-600 transition-all opacity-0 group-hover:opacity-100" 
+                        class="ml-1 w-6 h-6 rounded-lg flex items-center justify-center bg-slate-100 text-slate-500 hover:bg-primary-100 hover:text-primary-600 transition-all opacity-0 group-hover:opacity-100 border border-transparent hover:border-primary-200" 
                         title="Añadir minutos (Manual)"
                       >
                         <i class="fas fa-plus text-[10px]"></i>
@@ -297,10 +355,10 @@
                   </div>
                 </div>
               </td>
-              <td class="p-4 hidden md:table-cell text-xs font-bold text-slate-600">
+              <td class="py-6 px-4 hidden md:table-cell text-xs font-bold text-slate-600">
                 {{ getClientName(activity.clientId) }}
               </td>
-              <td class="p-4">
+              <td class="py-6 px-4">
                 <div class="flex items-center gap-2">
                   <template v-if="Array.isArray(activity.assignedTo) && activity.assignedTo.length">
                     <div class="flex -space-x-2">
@@ -310,6 +368,7 @@
                         :name="getUserInfo(user).name"
                         :photo="getUserInfo(user).photo"
                         :avatar="getUserInfo(user).avatar"
+                        :hide-name="true"
                         class="ring-2 ring-white relative"
                         :style="{ zIndex: 10 - i }"
                       />
@@ -327,12 +386,12 @@
                   </template>
                 </div>
               </td>
-              <td class="p-4">
+              <td class="py-6 px-4">
                 <span :class="getStatusBadgeClass(activity.status)" class="text-[10px] font-black px-2.5 py-1 rounded-lg border inline-block whitespace-nowrap shadow-sm">
                   {{ getStatusLabel(activity.status) }}
                 </span>
               </td>
-              <td class="p-4 hidden sm:table-cell">
+              <td class="py-6 px-4 hidden sm:table-cell">
                 <span 
                   v-if="activity.priority"
                   class="px-2.5 py-1 rounded-lg text-[10px] font-black border inline-flex items-center gap-1.5 shadow-sm"
@@ -342,21 +401,17 @@
                   {{ getPriorityLabel(activity.priority) }}
                 </span>
               </td>
-              <td class="p-4 pr-6 text-right">
+              <td class="py-6 px-4 pr-8 text-right">
                 <div class="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button @click="markAsCompleted(activity._id!)" class="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all" title="Completar">
                     <i class="fas fa-check text-xs"></i>
                   </button>
-                  <PermissionGuard :permissions="['edit-activities']" :fallback="false">
-                    <button @click="editActivity(activity)" class="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all" title="Editar">
-                      <i class="fas fa-edit text-xs"></i>
-                    </button>
-                  </PermissionGuard>
-                  <PermissionGuard :permissions="['delete-activities']" :fallback="false">
-                    <button @click="deleteActivity(activity._id!)" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Eliminar">
-                      <i class="fas fa-trash text-xs"></i>
-                    </button>
-                  </PermissionGuard>
+                  <button v-if="authStore.canEditActivities" @click="editActivity(activity)" class="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all" title="Editar">
+                    <i class="fas fa-edit text-xs"></i>
+                  </button>
+                  <button v-if="authStore.canDeleteActivities" @click="deleteActivity(activity._id!)" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Eliminar">
+                    <i class="fas fa-trash text-xs"></i>
+                  </button>
                 </div>
               </td>
             </tr>
@@ -811,24 +866,22 @@
                 >
                   <i class="fas fa-check text-xs"></i>
                 </button>
-                <PermissionGuard :permissions="['edit-activities']" :fallback="false">
-                  <button
-                    @click="editActivity(activity)"
-                    class="p-1 text-gray-400 hover:text-purple-400 hover:bg-purple-500/20 rounded transition-all duration-200"
-                    title="Editar"
-                  >
-                    <i class="fas fa-edit text-xs"></i>
-                  </button>
-                </PermissionGuard>
-                <PermissionGuard :permissions="['delete-activities']" :fallback="false">
-                  <button
-                    @click="deleteActivity(activity._id!)"
-                    class="p-1 text-gray-400 hover:text-red-400 hover:bg-red-500/20 rounded transition-all duration-200"
-                    title="Eliminar"
-                  >
-                    <i class="fas fa-trash text-xs"></i>
-                  </button>
-                </PermissionGuard>
+                <button
+                  v-if="authStore.canEditActivities"
+                  @click="editActivity(activity)"
+                  class="p-1 text-gray-400 hover:text-purple-400 hover:bg-purple-500/20 rounded transition-all duration-200"
+                  title="Editar"
+                >
+                  <i class="fas fa-edit text-xs"></i>
+                </button>
+                <button
+                  v-if="authStore.canDeleteActivities"
+                  @click="deleteActivity(activity._id!)"
+                  class="p-1 text-gray-400 hover:text-red-400 hover:bg-red-500/20 rounded transition-all duration-200"
+                  title="Eliminar"
+                >
+                  <i class="fas fa-trash text-xs"></i>
+                </button>
               </div>
             </div>
 
@@ -846,6 +899,7 @@
                     :name="getUserInfo(user).name"
                     :photo="getUserInfo(user).photo"
                     :avatar="getUserInfo(user).avatar"
+                    :hide-name="activity.assignedTo.length > 1"
                   />
                 </div>
               </template>
@@ -876,8 +930,25 @@
               </div>
               
               <div v-if="activity.estimatedTime || activity.timeSpent || activity.completionPercentage !== undefined" class="flex items-center gap-3">
-                <div class="flex-1 bg-slate-100 rounded-full h-1.5 overflow-hidden flex items-center shrink-0">
-                  <div class="bg-primary-500 h-1.5 rounded-full transition-all" :style="{ width: `${activity.completionPercentage || 0}%` }"></div>
+                <div class="flex-1 relative group/progress">
+                  <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden flex items-center shrink-0">
+                    <div class="bg-primary-500 h-1.5 rounded-full transition-all" :style="{ width: `${activity.completionPercentage || 0}%` }"></div>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="100" 
+                    step="5"
+                    :value="activity.completionPercentage || 0"
+                    @change="(e) => updatePercentage(activity, parseInt((e.target as HTMLInputElement).value))"
+                    @click.stop
+                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    title="Ajustar progreso"
+                  />
+                  <!-- Tooltip de porcentaje -->
+                  <div class="absolute -top-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-slate-800 text-white text-[9px] font-black rounded opacity-0 group-hover/progress:opacity-100 transition-opacity pointer-events-none">
+                    {{ activity.completionPercentage || 0 }}%
+                  </div>
                 </div>
                 <div class="flex items-center gap-1.5 text-[10px] font-black text-slate-500 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200 shadow-sm transition-colors group/timer" :class="isTimerActive(activity) ? 'border-red-200 bg-red-50' : 'hover:border-primary-200'">
                   <button @click.stop="toggleTimer(activity)" class="flex items-center justify-center transition-transform hover:scale-110 active:scale-95">
@@ -977,24 +1048,22 @@
                 >
                   <i class="fas fa-check text-xs"></i>
                 </button>
-                <PermissionGuard :permissions="['edit-activities']" :fallback="false">
-                  <button
-                    @click="editActivity(activity)"
-                    class="p-1 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-all duration-200"
-                    title="Editar"
-                  >
-                    <i class="fas fa-edit text-xs"></i>
-                  </button>
-                </PermissionGuard>
-                <PermissionGuard :permissions="['delete-activities']" :fallback="false">
-                  <button
-                    @click="deleteActivity(activity._id!)"
-                    class="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-all duration-200"
-                    title="Eliminar"
-                  >
-                    <i class="fas fa-trash text-xs"></i>
-                  </button>
-                </PermissionGuard>
+                <button
+                  v-if="authStore.canEditActivities"
+                  @click="editActivity(activity)"
+                  class="p-1 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-all duration-200"
+                  title="Editar"
+                >
+                  <i class="fas fa-edit text-xs"></i>
+                </button>
+                <button
+                  v-if="authStore.canDeleteActivities"
+                  @click="deleteActivity(activity._id!)"
+                  class="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-all duration-200"
+                  title="Eliminar"
+                >
+                  <i class="fas fa-trash text-xs"></i>
+                </button>
               </div>
             </div>
 
@@ -1012,6 +1081,7 @@
                     :name="getUserInfo(user).name"
                     :photo="getUserInfo(user).photo"
                     :avatar="getUserInfo(user).avatar"
+                    :hide-name="activity.assignedTo.length > 1"
                   />
                 </div>
               </template>
@@ -1042,8 +1112,25 @@
               </div>
               
               <div v-if="activity.estimatedTime || activity.timeSpent || activity.completionPercentage !== undefined" class="flex items-center gap-3">
-                <div class="flex-1 bg-slate-100 rounded-full h-1.5 overflow-hidden flex items-center shrink-0">
-                  <div class="bg-primary-500 h-1.5 rounded-full transition-all" :style="{ width: `${activity.completionPercentage || 0}%` }"></div>
+                <div class="flex-1 relative group/progress">
+                  <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden flex items-center shrink-0">
+                    <div class="bg-primary-500 h-1.5 rounded-full transition-all" :style="{ width: `${activity.completionPercentage || 0}%` }"></div>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="100" 
+                    step="5"
+                    :value="activity.completionPercentage || 0"
+                    @change="(e) => updatePercentage(activity, parseInt((e.target as HTMLInputElement).value))"
+                    @click.stop
+                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    title="Ajustar progreso"
+                  />
+                  <!-- Tooltip de porcentaje -->
+                  <div class="absolute -top-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-slate-800 text-white text-[9px] font-black rounded opacity-0 group-hover/progress:opacity-100 transition-opacity pointer-events-none">
+                    {{ activity.completionPercentage || 0 }}%
+                  </div>
                 </div>
                 <div class="flex items-center gap-1.5 text-[10px] font-black text-slate-500 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200 shadow-sm transition-colors group/timer" :class="isTimerActive(activity) ? 'border-red-200 bg-red-50' : 'hover:border-primary-200'">
                   <button @click.stop="toggleTimer(activity)" class="flex items-center justify-center transition-transform hover:scale-110 active:scale-95">
@@ -1156,24 +1243,22 @@
                 >
                   <i class="fas fa-undo text-xs"></i>
                 </button>
-                <PermissionGuard :permissions="['edit-activities']" :fallback="false">
-                  <button
-                    @click="editActivity(activity)"
-                    class="p-1 text-gray-400 hover:text-purple-400 hover:bg-purple-500/20 rounded transition-all duration-200"
-                    title="Editar"
-                  >
-                    <i class="fas fa-edit text-xs"></i>
-                  </button>
-                </PermissionGuard>
-                <PermissionGuard :permissions="['delete-activities']" :fallback="false">
-                  <button
-                    @click="deleteActivity(activity._id!)"
-                    class="p-1 text-gray-400 hover:text-red-400 hover:bg-red-500/20 rounded transition-all duration-200"
-                    title="Eliminar"
-                  >
-                    <i class="fas fa-trash text-xs"></i>
-                  </button>
-                </PermissionGuard>
+                <button
+                  v-if="authStore.canEditActivities"
+                  @click="editActivity(activity)"
+                  class="p-1 text-gray-400 hover:text-purple-400 hover:bg-purple-500/20 rounded transition-all duration-200"
+                  title="Editar"
+                >
+                  <i class="fas fa-edit text-xs"></i>
+                </button>
+                <button
+                  v-if="authStore.canDeleteActivities"
+                  @click="deleteActivity(activity._id!)"
+                  class="p-1 text-gray-400 hover:text-red-400 hover:bg-red-500/20 rounded transition-all duration-200"
+                  title="Eliminar"
+                >
+                  <i class="fas fa-trash text-xs"></i>
+                </button>
               </div>
             </div>
 
@@ -1191,6 +1276,7 @@
                     :name="getUserInfo(user).name"
                     :photo="getUserInfo(user).photo"
                     :avatar="getUserInfo(user).avatar"
+                    :hide-name="activity.assignedTo.length > 1"
                   />
                 </div>
               </template>
@@ -1285,24 +1371,22 @@
                 >
                   <i class="fas fa-calendar-plus text-xs"></i>
                 </button>
-                <PermissionGuard :permissions="['edit-activities']" :fallback="false">
-                  <button
-                    @click="editActivity(activity)"
-                    class="p-1 text-gray-400 hover:text-purple-400 hover:bg-purple-500/20 rounded transition-all duration-200"
-                    title="Editar"
-                  >
-                    <i class="fas fa-edit text-xs"></i>
-                  </button>
-                </PermissionGuard>
-                <PermissionGuard :permissions="['delete-activities']" :fallback="false">
-                  <button
-                    @click="deleteActivity(activity._id!)"
-                    class="p-1 text-gray-400 hover:text-red-400 hover:bg-red-500/20 rounded transition-all duration-200"
-                    title="Eliminar"
-                  >
-                    <i class="fas fa-trash text-xs"></i>
-                  </button>
-                </PermissionGuard>
+                <button
+                  v-if="authStore.canEditActivities"
+                  @click="editActivity(activity)"
+                  class="p-1 text-gray-400 hover:text-purple-400 hover:bg-purple-500/20 rounded transition-all duration-200"
+                  title="Editar"
+                >
+                  <i class="fas fa-edit text-xs"></i>
+                </button>
+                <button
+                  v-if="authStore.canDeleteActivities"
+                  @click="deleteActivity(activity._id!)"
+                  class="p-1 text-gray-400 hover:text-red-400 hover:bg-red-500/20 rounded transition-all duration-200"
+                  title="Eliminar"
+                >
+                  <i class="fas fa-trash text-xs"></i>
+                </button>
               </div>
             </div>
 
@@ -1320,6 +1404,7 @@
                     :name="getUserInfo(user).name"
                     :photo="getUserInfo(user).photo"
                     :avatar="getUserInfo(user).avatar"
+                    :hide-name="activity.assignedTo.length > 1"
                   />
                 </div>
               </template>
@@ -2344,7 +2429,6 @@ import { useTasksStore } from '../../stores/tasks'
 import { useGitHubStore } from '../../stores/github'
 import { API_CONFIG } from '../../config/api'
 import type { Client, TeamMember } from '../../types'
-import PermissionGuard from '../PermissionGuard.vue'
 import ActivityFormModal from '../forms/ActivityFormModal.vue'
 import AssignActivityModal from '../modals/AssignActivityModal.vue'
 import CustomSelect from '../ui/CustomSelect.vue'
@@ -2389,8 +2473,9 @@ const isDragging = ref(false)
 
 // Vista y UI
 import DailyScrum from '../../pages/DailyScrum.vue'
+import TeamActivities from '../../pages/TeamActivities.vue'
 
-const currentView = ref<'kanban' | 'tasks' | 'calendar' | 'daily'>('kanban')
+const currentView = ref<'kanban' | 'tasks' | 'calendar' | 'daily' | 'team'>('kanban')
 const quickTaskTitle = ref('')
 const showQuickSettings = ref(false)
 const showQuickTaskHints = ref(false)
@@ -2408,10 +2493,6 @@ const quickTaskSettings = ref({
   autoAssign: true
 })
 
-// Filtros
-const selectedTeamMember = ref('')
-const selectedStatus = ref('')
-const selectedDepartment = ref('')
 
 // Filtros de Tareas (Boards)
 const showTaskFilters = ref(false)
@@ -2432,6 +2513,14 @@ const editingActivity = ref<ActivityData | null>(null)
 const showAssignModalState = ref(false)
 const assigningActivity = ref<ActivityData | null>(null)
 const assignLoading = ref(false)
+
+// Filtros
+const selectedDepartment = ref('')
+const selectedTeamMember = ref('')
+const selectedStatus = ref('')
+const selectedClient = ref('')
+const startDate = ref('')
+const endDate = ref('')
 
 // Modales para tableros
 const showCreateBoardModal = ref(false)
@@ -2533,6 +2622,26 @@ const filteredActivities = computed(() => {
     filtered = filtered.filter(activity => activity.status === selectedStatus.value)
   }
 
+  // Filtro por rango de fechas
+  if (startDate.value) {
+    const start = new Date(startDate.value)
+    start.setHours(0, 0, 0, 0)
+    filtered = filtered.filter(a => new Date(a.date) >= start)
+  }
+  if (endDate.value) {
+    const end = new Date(endDate.value)
+    end.setHours(23, 59, 59, 999)
+    filtered = filtered.filter(a => new Date(a.date) <= end)
+  }
+
+  // Filtrar por cliente
+  if (selectedClient.value) {
+    filtered = filtered.filter(a => {
+      const id = (typeof a.clientId === 'object' && a.clientId !== null) ? (a.clientId as any)._id : a.clientId
+      return id === selectedClient.value
+    })
+  }
+
   return filtered
 })
 
@@ -2580,6 +2689,22 @@ const toggleTimer = async (activity: any) => {
   }
 }
 
+const updatePercentage = async (activity: any, value: number) => {
+  try {
+    const updated = await activityService.update(activity._id, {
+      ...activity,
+      completionPercentage: value
+    })
+    const index = activities.value.findIndex(a => a._id === updated._id)
+    if (index !== -1) {
+      activities.value[index] = updated
+    }
+    toast(`Progreso actualizado al ${value}%`, 'success')
+  } catch (error) {
+    showError('Error al actualizar el progreso')
+  }
+}
+
 const activeTimePopover = ref<string | null>(null)
 
 const addManualTime = async (activity: any, mins: number) => {
@@ -2620,6 +2745,52 @@ const getUserInfo = (user: any) => {
   }
   
   return { name: 'Sin asignar', photo: '', avatar: '' }
+}
+
+const copyActivitiesSummary = () => {
+  if (filteredActivities.value.length === 0) {
+    toast('No hay actividades para exportar', 'info')
+    return
+  }
+
+  let text = `📋 *RESUMEN DE ACTIVIDADES*\n`
+  if (startDate.value || endDate.value) {
+    text += `📅 Período: ${startDate.value || '...'} a ${endDate.value || '...'}\n`
+  }
+  if (selectedClient.value) {
+    const client = clients.value.find(c => c._id === selectedClient.value)
+    if (client) text += `🏢 Cliente: ${client.name}\n`
+  }
+  text += `----------------------------------\n\n`
+
+  filteredActivities.value.forEach(activity => {
+    const statusIcon = activity.status === 'completed' ? '✅' : activity.status === 'in-progress' ? '🔄' : '⏳'
+    const assigned = getSmartAssignedName(activity)
+    const clientName = getClientName(activity.clientId)
+    const percentage = activity.completionPercentage || 0
+    const dateStr = formatDate(activity.date)
+    const dueDateStr = activity.dueDate ? formatDate(activity.dueDate) : 'Sin fecha'
+    
+    text += `${statusIcon} *${activity.title}*\n`
+    text += `👤 Asignado: ${assigned}\n`
+    text += `🏢 Cliente: ${clientName}\n`
+    text += `📈 Progreso: ${percentage}%\n`
+    text += `🗓️ Fecha: ${dateStr} - ${dueDateStr}\n`
+    text += `\n`
+  })
+
+  // Copiar al portapapeles
+  const textArea = document.createElement("textarea")
+  textArea.value = text
+  document.body.appendChild(textArea)
+  textArea.select()
+  try {
+    document.execCommand('copy')
+    toast('Resumen copiado al portapapeles', 'success')
+  } catch (err) {
+    toast('Error al copiar', 'error')
+  }
+  document.body.removeChild(textArea)
 }
 
 // Methods
@@ -2684,11 +2855,6 @@ const loadTeamMembers = async () => {
   console.log('👤 Usuario actual:', authStore.user?.name, '- Rol:', authStore.user?.role)
   console.log('🔐 Puede ver equipo:', authStore.canViewTeam)
   
-  if (!authStore.canViewTeam) {
-    console.log('❌ Usuario no tiene permisos para ver el equipo')
-    return
-  }
-  
   try {
     console.log('🔄 Cargando miembros del equipo...')
     teamMembers.value = await teamService.getActiveMembers()
@@ -2719,19 +2885,18 @@ const loadClients = async () => {
   }
 }
 
-const markAsCompleted = async (activityId: string) => {
+const markAsCompleted = async (id: string) => {
   try {
-    await activityService.updateStatus(activityId, 'completed')
-    
-    // Actualizar en el estado local
-    const activityIndex = activities.value.findIndex(a => a._id === activityId)
-    if (activityIndex !== -1) {
-      activities.value[activityIndex].status = 'completed'
+    // Si la tarea se completa, forzamos el progreso al 100%
+    await activityService.updateProgress(id, 100)
+    const updated = await activityService.updateStatus(id, 'completed')
+    const index = activities.value.findIndex(a => a._id === id)
+    if (index !== -1) {
+      activities.value[index] = { ...activities.value[index], ...updated, completionPercentage: 100 }
     }
-    
-    toast('Actividad marcada como completada', 'success')
-  } catch (err) {
-    showError('Error al completar actividad', err instanceof Error ? err.message : 'Error desconocido')
+    showSuccess('Actividad completada y progreso actualizado al 100%')
+  } catch (error) {
+    showError('Error al marcar como completada')
   }
 }
 
@@ -2832,7 +2997,7 @@ const deleteActivity = async (activityId: string) => {
     try {
       await activityService.deleteActivity(activityId)
       activities.value = activities.value.filter(a => a._id !== activityId)
-      toast('Actividad eliminada correctamente', 'success')
+      showSuccess('Actividad eliminada correctamente')
     } catch (err) {
       showError('Error al eliminar actividad', err instanceof Error ? err.message : 'Error desconocido')
     }
@@ -2863,20 +3028,28 @@ const closeModals = () => {
 const FILTER_STORAGE_KEY = computed(() => `ct_activity_filters_${authStore.user?._id}`)
 const filtersLocked = ref(false)
 
-const hasActiveFilters = computed(() => 
-  !!(selectedDepartment.value || selectedTeamMember.value || selectedStatus.value)
-)
+const hasActiveFilters = computed(() => {
+  return selectedDepartment.value !== '' || 
+         selectedTeamMember.value !== '' || 
+         selectedStatus.value !== '' ||
+         startDate.value !== '' ||
+         endDate.value !== ''
+})
 
 const clearFilters = () => {
+  selectedDepartment.value = ''
   selectedTeamMember.value = ''
   selectedStatus.value = ''
-  selectedDepartment.value = ''
+  startDate.value = ''
+  endDate.value = ''
 }
 
 const setMyTasksFilter = () => {
   selectedTeamMember.value = authStore.user?._id || ''
   selectedDepartment.value = ''
   selectedStatus.value = ''
+  startDate.value = ''
+  endDate.value = ''
 }
 
 const toggleLockFilters = () => {
@@ -2922,7 +3095,7 @@ const onActivitySaved = (activity: ActivityData) => {
   } else {
     // Agregar nueva actividad
     activities.value.unshift(activity)
-    toast('Actividad creada correctamente', 'success')
+    showSuccess('Actividad creada correctamente')
   }
 }
 
@@ -3424,46 +3597,36 @@ let currentActivityBeingRendered: any = null
 
 // SOLUCIÓN DEFINITIVA: Crear una versión mejorada que funciona con el contexto de Vue
 const getSmartAssignedName = (activity: any): string => {
-  console.log('🎯 getSmartAssignedName for activity:', activity?._id)
+  if (!activity) return 'Sin asignar'
   
-  if (!activity) {
-    console.log('❌ No activity provided')
-    return 'Sin asignar'
+  const extractName = (user: any): string => {
+    if (!user) return ''
+    if (typeof user === 'object' && user.name) return user.name
+    if (typeof user === 'string') {
+      const member = teamMembers.value.find(m => m._id === user)
+      return member?.name || ''
+    }
+    return ''
   }
-  
-  // Si la actividad tiene assignedTo (el campo correcto del backend)
+
+  // Si es un array de asignados
+  if (Array.isArray(activity.assignedTo) && activity.assignedTo.length > 0) {
+    const names = activity.assignedTo.map(extractName).filter(Boolean)
+    return names.length > 0 ? names.join(', ') : 'Sin asignar'
+  }
+
+  // Si es un objeto/ID individual
   if (activity.assignedTo) {
-    console.log('✅ Found assignedTo:', activity.assignedTo)
-    
-    // Si es un objeto con nombre (populated)
-    if (typeof activity.assignedTo === 'object' && activity.assignedTo.name) {
-      console.log('✅ assignedTo has name:', activity.assignedTo.name)
-      return activity.assignedTo.name
-    }
-    
-    // Si es un ID string, buscar en teamMembers
-    if (typeof activity.assignedTo === 'string') {
-      const member = teamMembers.value.find(m => m._id === activity.assignedTo)
-      console.log('🔍 assignedTo is ID, found member:', member)
-      return member?.name || 'Sin asignar'
-    }
+    const name = extractName(activity.assignedTo)
+    if (name) return name
   }
   
   // Fallback: assignedToUser (campo legacy)
   if (activity.assignedToUser) {
-    console.log('⚠️ Using legacy assignedToUser:', activity.assignedToUser)
-    
-    if (typeof activity.assignedToUser === 'object' && activity.assignedToUser.name) {
-      return activity.assignedToUser.name
-    }
-    
-    if (typeof activity.assignedToUser === 'string') {
-      const member = teamMembers.value.find(m => m._id === activity.assignedToUser)
-      return member?.name || 'Sin asignar'
-    }
+    const name = extractName(activity.assignedToUser)
+    if (name) return name
   }
   
-  console.log('❌ No assignment found')
   return 'Sin asignar'
 }
 
@@ -4754,7 +4917,7 @@ const getTypeLabel = (type: string) => {
 }
 
 const getClientName = (clientData: any): string => {
-  if (!clientData) return 'Cliente no válido'
+  if (!clientData) return 'Interno'
   
   // Si es un objeto cliente con información completa
   if (typeof clientData === 'object' && clientData.name) {
@@ -4763,12 +4926,12 @@ const getClientName = (clientData: any): string => {
   
   // Si es un ID, buscar en la lista de clientes cargados
   if (typeof clientData === 'string') {
-    if (loadingClients.value) return 'Cargando cliente...'
+    if (loadingClients.value) return 'Cargando...'
     const client = clients.value.find(c => c._id === clientData)
-    return client ? client.name : 'Cliente no válido'
+    return client ? client.name : 'Cliente General'
   }
   
-  return 'Cliente no válido'
+  return 'Interno'
 }
 
 const formatDate = (dateString: string | Date): string => {
@@ -4825,6 +4988,11 @@ const onDrop = async (event: DragEvent, newStatus: string) => {
   }
 
   try {
+    // Si se pasa a completado, forzar 100%
+    if (newStatus === 'completed') {
+      await activityService.updateProgress(activityId, 100)
+    }
+    
     // Actualizar en el backend
     await activityService.update(activityId, { status: newStatus })
     
@@ -4832,6 +5000,9 @@ const onDrop = async (event: DragEvent, newStatus: string) => {
     const activityIndex = activities.value.findIndex(a => a._id === activityId)
     if (activityIndex !== -1) {
       activities.value[activityIndex].status = newStatus
+      if (newStatus === 'completed') {
+        activities.value[activityIndex].completionPercentage = 100
+      }
     }
 
     // Mostrar notificación de éxito

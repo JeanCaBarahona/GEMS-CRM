@@ -4,52 +4,12 @@
     <div class="bg-white/70 backdrop-blur-md rounded-3xl p-8 border border-slate-200/60 shadow-sm transition-all duration-300">
       <div class="flex flex-col md:flex-row items-center gap-8">
         <!-- Profile Avatar -->
-        <div class="relative group">
-          <div class="w-36 h-36 rounded-full overflow-hidden border-4 border-white shadow-xl ring-4 ring-primary-100/50 relative">
-            <!-- Personalized photo -->
-            <img
-              v-if="profileData.photo"
-              :src="resolvedPhotoUrl"
-              :alt="profileData.name"
-              class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-              @error="onPhotoError"
-            >
-            <!-- Predefined avatar -->
-            <img
-              v-else-if="selectedAvatarData"
-              :src="selectedAvatarData.path"
-              :alt="selectedAvatarData.name"
-              class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            >
-            <!-- Fallback initials -->
-            <div
-              v-else
-              class="w-full h-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white text-4xl font-bold"
-            >
-              {{ getInitials(profileData?.name || 'U') }}
-            </div>
-          </div>
-
-          <!-- Action buttons for managing avatar/photo -->
-          <div class="absolute -bottom-2 -right-2 flex gap-2">
-            <!-- Button to upload personalized photo -->
-            <button
-              @click="togglePhotoUploader"
-              class="w-10 h-10 bg-white hover:bg-slate-50 text-primary-600 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 border border-slate-100"
-              title="Subir foto personalizada"
-            >
-              <i class="fas fa-camera text-sm"></i>
-            </button>
-            
-            <!-- Button to choose predefined gem -->
-            <button
-              @click="openAvatarSelector"
-              class="w-10 h-10 bg-primary-500 hover:bg-primary-600 rounded-full flex items-center justify-center text-white shadow-lg transition-all duration-300 transform hover:scale-110"
-              title="Elegir Gema"
-            >
-              <i class="fas fa-gem text-sm"></i>
-            </button>
-          </div>
+        <div class="relative">
+          <UserAvatar
+            :name="profileData?.name || 'U'"
+            size="2xl"
+            class="w-36 h-36 !rounded-full border-4 border-white shadow-xl ring-4 ring-primary-100/50"
+          />
         </div>
         
         <!-- Basic Info -->
@@ -303,46 +263,7 @@
       </div>
     </div>
 
-    <!-- Avatar Selector Modal -->
-    <div v-if="showAvatarSelector" class="fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl border border-white/50 animate__animated animate__zoomIn animate__faster">
-        <div class="flex justify-between items-center mb-8">
-          <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight">Elige tu Gema</h3>
-          <button
-            @click="showAvatarSelector = false"
-            class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-rose-500 transition-colors"
-          >
-            <i class="fas fa-times text-xl"></i>
-          </button>
-        </div>
-
-        <AvatarSelector
-          :selected-avatar="tempSelectedAvatar || profileData.avatar || getDefaultAvatar().id"
-          @select="selectAvatar"
-          @confirm="confirmAvatarSelection"
-        />
-      </div>
-    </div>
-    
-    <!-- Photo Uploader Modal -->
-    <div v-if="showPhotoUploader" class="fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl border border-white/50 animate__animated animate__zoomIn animate__faster">
-        <div class="flex justify-between items-center mb-8">
-          <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight">Foto de Perfil</h3>
-          <button
-            @click="showPhotoUploader = false"
-            class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-rose-500 transition-colors"
-          >
-            <i class="fas fa-times text-xl"></i>
-          </button>
-        </div>
-
-        <ProfilePhotoUploader
-          :current-photo="profileData.photo"
-          @update="handlePhotoUpdate"
-        />
-      </div>
-    </div>
+    <!-- Photo/Avatar Modals removed by user request -->
   </div>
 </template>
 

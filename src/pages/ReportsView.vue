@@ -1,5 +1,7 @@
 <template>
-  <div class="flex flex-col gap-5 h-full min-h-0">
+  <div class="flex flex-col gap-6 h-full min-h-0 bg-slate-50/50 p-4 lg:p-8 relative">
+    <!-- Background Accents -->
+    <div class="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-primary-50/40 to-transparent pointer-events-none"></div>
 
     <!-- Header -->
     <div class="flex-shrink-0 flex flex-col md:flex-row md:items-center justify-end gap-4">
@@ -7,9 +9,17 @@
         <!-- Filtros Rápidos -->
         <div class="flex flex-wrap items-center gap-2">
           <select 
+            v-model="selectedPeriod" 
+            @change="loadData"
+            class="bg-white/90 backdrop-blur-md border border-white/40 text-xs font-bold text-slate-600 rounded-xl px-4 py-2.5 shadow-[0_4px_20px_rgb(0,0,0,0.03)] focus:ring-2 focus:ring-primary-500/20 transition-all outline-none"
+          >
+            <option v-for="p in periods" :key="p.value" :value="p.value">{{ p.label }}</option>
+          </select>
+
+          <select 
             v-model="filters.department" 
             @change="loadData"
-            class="bg-white border border-slate-200 text-xs font-bold text-slate-600 rounded-lg px-3 py-2 shadow-sm focus:ring-2 focus:ring-primary-500/20 transition-all outline-none"
+            class="bg-white/90 backdrop-blur-md border border-white/40 text-xs font-bold text-slate-600 rounded-xl px-4 py-2.5 shadow-[0_4px_20px_rgb(0,0,0,0.03)] focus:ring-2 focus:ring-primary-500/20 transition-all outline-none"
           >
             <option value="">Todos los Equipos</option>
             <option v-for="dept in departments" :key="dept" :value="dept">{{ dept }}</option>
@@ -18,7 +28,7 @@
           <select 
             v-model="filters.clientId" 
             @change="loadData"
-            class="bg-white border border-slate-200 text-xs font-bold text-slate-600 rounded-lg px-3 py-2 shadow-sm focus:ring-2 focus:ring-primary-500/20 transition-all outline-none"
+            class="bg-white/90 backdrop-blur-md border border-white/40 text-xs font-bold text-slate-600 rounded-xl px-4 py-2.5 shadow-[0_4px_20px_rgb(0,0,0,0.03)] focus:ring-2 focus:ring-primary-500/20 transition-all outline-none"
           >
             <option value="">Todos los Clientes</option>
             <option v-for="client in clients" :key="client._id" :value="client._id">{{ client.name }}</option>
@@ -27,7 +37,7 @@
           <select 
             v-model="filters.assignedTo" 
             @change="loadData"
-            class="bg-white border border-slate-200 text-xs font-bold text-slate-600 rounded-lg px-3 py-2 shadow-sm focus:ring-2 focus:ring-primary-500/20 transition-all outline-none"
+            class="bg-white/90 backdrop-blur-md border border-white/40 text-xs font-bold text-slate-600 rounded-xl px-4 py-2.5 shadow-[0_4px_20px_rgb(0,0,0,0.03)] focus:ring-2 focus:ring-primary-500/20 transition-all outline-none"
           >
             <option value="">Todo el Personal</option>
             <option v-for="member in availableMembers" :key="member._id" :value="member._id">{{ member.name }}</option>
@@ -39,7 +49,7 @@
         <button
           @click="refreshData"
           :disabled="loading"
-          class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-lg text-sm flex items-center gap-2 shadow-sm transition-colors disabled:opacity-50"
+          class="px-5 py-2.5 bg-gradient-to-r from-primary-600 to-indigo-500 hover:from-primary-500 hover:to-indigo-400 text-white font-black rounded-xl text-xs flex items-center gap-2 shadow-[0_8px_20px_rgb(99,102,241,0.25)] hover:shadow-[0_8px_25px_rgb(99,102,241,0.4)] transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:transform-none"
         >
           <i :class="loading ? 'fas fa-spinner fa-spin' : 'fas fa-sync-alt'" class="text-xs"></i>
           {{ loading ? 'Actualizar' : 'Actualizar' }}
@@ -48,26 +58,27 @@
     </div>
 
     <!-- KPI Row -->
-    <div class="flex-shrink-0 grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div class="flex-shrink-0 grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
       <div
         v-for="kpi in kpis"
         :key="kpi.label"
-        class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm hover:shadow-md transition-shadow"
+        class="bg-white/80 backdrop-blur-xl rounded-2xl p-5 border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(99,102,241,0.08)] transition-all duration-300 relative overflow-hidden group"
       >
-        <div class="flex items-start justify-between mb-3">
-          <div :class="kpi.iconBg" class="w-9 h-9 rounded-xl flex items-center justify-center border">
-            <i :class="[kpi.icon, kpi.iconColor]" class="text-sm"></i>
+        <div class="absolute -right-6 -top-6 w-24 h-24 bg-gradient-to-br from-current to-transparent opacity-5 rounded-full group-hover:scale-150 transition-transform duration-700" :class="kpi.iconColor"></div>
+        <div class="flex items-start justify-between mb-4">
+          <div :class="kpi.iconBg" class="w-10 h-10 rounded-2xl flex items-center justify-center border shadow-inner">
+            <i :class="[kpi.icon, kpi.iconColor]" class="text-base"></i>
           </div>
           <span
-            class="text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-0.5"
-            :class="kpi.trend >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'"
+            class="text-[10px] font-black px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm"
+            :class="kpi.trend >= 0 ? 'bg-emerald-50 text-emerald-600 border border-emerald-100/50' : 'bg-red-50 text-red-500 border border-red-100/50'"
           >
-            <i :class="kpi.trend >= 0 ? 'fas fa-arrow-up' : 'fas fa-arrow-down'" class="text-[8px]"></i>
+            <i :class="kpi.trend >= 0 ? 'fas fa-arrow-trend-up' : 'fas fa-arrow-trend-down'" class="text-[8px]"></i>
             {{ Math.abs(kpi.trend) }}%
           </span>
         </div>
-        <div class="text-2xl font-black text-slate-800 leading-none mb-1">{{ kpi.value }}</div>
-        <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{{ kpi.label }}</div>
+        <div class="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-500 leading-none mb-2 tracking-tight">{{ kpi.value }}</div>
+        <div class="text-[10px] font-extrabold text-slate-400 uppercase tracking-[0.2em]">{{ kpi.label }}</div>
       </div>
     </div>
 
@@ -79,54 +90,63 @@
 
 
         <!-- Activities + Clients row -->
-        <div class="grid grid-cols-2 gap-4 flex-shrink-0">
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 flex-shrink-0">
           <!-- Activities Donut -->
-          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-            <h3 class="text-sm font-black text-slate-800 mb-1">Actividades por Estado</h3>
-            <p class="text-[10px] text-slate-500 font-medium mb-3">Distribución actual</p>
-            <div class="h-36">
-              <canvas ref="activitiesChart"></canvas>
+          <div class="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5 hover:shadow-md transition-shadow relative overflow-hidden group">
+            <div class="absolute inset-0 bg-gradient-to-br from-primary-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div class="relative z-10">
+              <h3 class="text-base font-black text-slate-800 mb-1">Actividades por Estado</h3>
+              <p class="text-xs text-slate-500 font-medium mb-3">Distribución actual de las tareas</p>
+              <div class="h-64 flex items-center justify-center">
+                <apexchart type="donut" height="100%" width="100%" :options="activitiesChartOptions" :series="activitiesChartSeries"></apexchart>
+              </div>
             </div>
           </div>
           <!-- Client Growth Bar -> Workload -->
-          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-            <h3 class="text-sm font-black text-slate-800 mb-1">Carga de Trabajo</h3>
-            <p class="text-[10px] text-slate-500 font-medium mb-3">Tareas activas por miembro</p>
-            <div class="h-36">
-              <canvas ref="workloadChart"></canvas>
+          <div class="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5 hover:shadow-md transition-shadow relative overflow-hidden group">
+            <div class="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div class="relative z-10">
+              <h3 class="text-base font-black text-slate-800 mb-1">Carga de Trabajo</h3>
+              <p class="text-xs text-slate-500 font-medium mb-3">Tareas activas por miembro del equipo</p>
+              <div class="h-64">
+                <apexchart type="bar" height="100%" width="100%" :options="workloadChartOptions" :series="workloadChartSeries"></apexchart>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Team Performance -->
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex-shrink-0">
-          <div class="flex items-center justify-between mb-4">
+        <div class="bg-white/80 backdrop-blur-xl rounded-2xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 flex-shrink-0 relative overflow-hidden group">
+          <div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-primary-400 to-indigo-600"></div>
+          <div class="flex items-center justify-between mb-6">
             <div>
-              <h3 class="text-sm font-black text-slate-800">Rendimiento del Equipo</h3>
-              <p class="text-[10px] text-slate-500 font-medium">Actividades completadas por miembro</p>
+              <h3 class="text-base font-black text-slate-800 tracking-tight">Rendimiento del Equipo</h3>
+              <p class="text-xs text-slate-400 font-bold mt-0.5">Actividades completadas vs asignadas</p>
             </div>
           </div>
-          <div class="space-y-2.5">
-            <div v-for="member in teamMembers" :key="member.name" class="flex items-center gap-3">
-              <div class="w-7 h-7 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
-                <span class="text-[10px] font-black text-primary-700">{{ member.initials }}</span>
+          <div class="space-y-4">
+            <div v-for="member in teamMembers" :key="member.name" class="flex items-center gap-4 p-2 -mx-2 hover:bg-slate-50/50 rounded-xl transition-colors">
+              <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-50 to-indigo-50 flex items-center justify-center flex-shrink-0 border border-primary-100/50 shadow-inner">
+                <span class="text-xs font-black bg-clip-text text-transparent bg-gradient-to-br from-primary-600 to-indigo-600">{{ member.initials }}</span>
               </div>
               <div class="flex-1 min-w-0">
-                <div class="flex items-center justify-between mb-1">
-                  <span class="text-xs font-bold text-slate-700 truncate">{{ member.name }}</span>
-                  <span class="text-xs font-black text-slate-800 ml-2">{{ member.completed }}/{{ member.total }}</span>
+                <div class="flex items-center justify-between mb-1.5">
+                  <span class="text-xs font-extrabold text-slate-700 truncate">{{ member.name }}</span>
+                  <span class="text-xs font-black text-slate-800 ml-2 tracking-tight">{{ member.completed }}/<span class="text-slate-400">{{ member.total }}</span></span>
                 </div>
-                <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <div class="h-2 bg-slate-100/80 rounded-full overflow-hidden shadow-inner">
                   <div
-                    class="h-full rounded-full transition-all duration-500"
-                    :class="member.rate >= 80 ? 'bg-emerald-500' : member.rate >= 60 ? 'bg-amber-500' : 'bg-red-400'"
+                    class="h-full rounded-full transition-all duration-1000 relative"
+                    :class="member.rate >= 80 ? 'bg-gradient-to-r from-emerald-400 to-emerald-500' : member.rate >= 60 ? 'bg-gradient-to-r from-amber-400 to-amber-500' : 'bg-gradient-to-r from-red-400 to-red-500'"
                     :style="{ width: member.rate + '%' }"
-                  ></div>
+                  >
+                    <div class="absolute inset-0 bg-white/20 w-full h-full animate-[shimmer_2s_infinite]"></div>
+                  </div>
                 </div>
               </div>
               <span
-                class="text-[10px] font-black px-1.5 py-0.5 rounded-md flex-shrink-0"
-                :class="member.rate >= 80 ? 'bg-emerald-50 text-emerald-700' : member.rate >= 60 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-600'"
+                class="text-[10px] font-black px-2 py-1 rounded-lg flex-shrink-0 shadow-sm border"
+                :class="member.rate >= 80 ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50' : member.rate >= 60 ? 'bg-amber-50 text-amber-600 border-amber-100/50' : 'bg-red-50 text-red-500 border-red-100/50'"
               >{{ member.rate }}%</span>
             </div>
           </div>
@@ -138,21 +158,21 @@
       <div class="flex flex-col gap-4 min-h-0 overflow-y-auto">
 
         <!-- Resumen ejecutivo -->
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex-shrink-0">
-          <h3 class="text-sm font-black text-slate-800 mb-3">Resumen Ejecutivo</h3>
-          <div class="space-y-2.5">
-            <div v-for="row in executiveRows" :key="row.label" class="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
-              <div class="flex items-center gap-2">
-                <div :class="row.iconBg" class="w-6 h-6 rounded-md flex items-center justify-center">
-                  <i :class="[row.icon, row.iconColor]" class="text-[10px]"></i>
+        <div class="bg-white/80 backdrop-blur-xl rounded-2xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 flex-shrink-0">
+          <h3 class="text-base font-black text-slate-800 tracking-tight mb-4">Métricas Globales</h3>
+          <div class="space-y-3">
+            <div v-for="row in executiveRows" :key="row.label" class="flex items-center justify-between py-2.5 border-b border-slate-100/50 last:border-0 group">
+              <div class="flex items-center gap-3">
+                <div :class="row.iconBg" class="w-8 h-8 rounded-xl flex items-center justify-center border shadow-sm group-hover:scale-110 transition-transform">
+                  <i :class="[row.icon, row.iconColor]" class="text-[11px]"></i>
                 </div>
-                <span class="text-xs font-medium text-slate-600">{{ row.label }}</span>
+                <span class="text-xs font-bold text-slate-600">{{ row.label }}</span>
               </div>
               <div class="flex items-center gap-2">
-                <span class="text-xs font-black text-slate-800">{{ row.value }}</span>
+                <span class="text-sm font-black text-slate-800">{{ row.value }}</span>
                 <span
-                  class="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
-                  :class="row.growth >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'"
+                  class="text-[9px] font-black px-2 py-0.5 rounded-full border"
+                  :class="row.growth >= 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50' : 'bg-red-50 text-red-500 border-red-100/50'"
                 >{{ row.growth >= 0 ? '+' : '' }}{{ row.growth }}%</span>
               </div>
             </div>
@@ -160,60 +180,61 @@
         </div>
 
         <!-- Top Clientes -->
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex-shrink-0">
-          <h3 class="text-sm font-black text-slate-800 mb-3">Clientes Más Activos</h3>
-          <div class="space-y-2.5">
-            <div v-for="(client, i) in topClients" :key="client.name" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors">
+        <div class="bg-white/80 backdrop-blur-xl rounded-2xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 flex-shrink-0 relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-amber-100 to-transparent opacity-20 rounded-bl-full pointer-events-none"></div>
+          <h3 class="text-base font-black text-slate-800 tracking-tight mb-4">Top Clientes Activos</h3>
+          <div class="space-y-3">
+            <div v-for="(client, i) in topClients" :key="client.name" class="flex items-center gap-3 p-2.5 -mx-2 hover:bg-white rounded-xl transition-all hover:shadow-sm border border-transparent hover:border-slate-100/50">
               <div
-                class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black flex-shrink-0"
-                :class="i === 0 ? 'bg-amber-100 text-amber-700' : i === 1 ? 'bg-slate-200 text-slate-600' : 'bg-orange-100 text-orange-600'"
+                class="w-7 h-7 rounded-xl flex items-center justify-center text-[10px] font-black flex-shrink-0 shadow-inner"
+                :class="i === 0 ? 'bg-gradient-to-br from-amber-100 to-amber-200 text-amber-700 border border-amber-300/50' : i === 1 ? 'bg-gradient-to-br from-slate-100 to-slate-200 text-slate-600 border border-slate-300/50' : 'bg-gradient-to-br from-orange-50 to-orange-100 text-orange-600 border border-orange-200/50'"
               >{{ i + 1 }}</div>
               <div class="flex-1 min-w-0">
-                <p class="text-xs font-bold text-slate-800 truncate">{{ client.name }}</p>
-                <p class="text-[10px] text-slate-400 font-medium">{{ client.activities }} actividades</p>
+                <p class="text-xs font-extrabold text-slate-800 truncate tracking-tight">{{ client.name }}</p>
+                <p class="text-[10px] text-slate-400 font-bold mt-0.5">{{ client.activities }} operaciones</p>
               </div>
               <div class="text-right flex-shrink-0">
-                <div class="text-xs font-black text-emerald-600">{{ client.rate }}%</div>
-                <div class="text-[9px] text-slate-400">completadas</div>
+                <div class="text-sm font-black bg-clip-text text-transparent bg-gradient-to-r from-emerald-500 to-teal-500">{{ client.rate }}%</div>
+                <div class="text-[8px] text-slate-400 font-black uppercase tracking-wider mt-0.5">Éxito</div>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Tiempo resolución -->
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex-shrink-0">
-          <h3 class="text-sm font-black text-slate-800 mb-3">Tiempo de Resolución</h3>
-          <div class="grid grid-cols-3 gap-2">
-            <div class="text-center p-2.5 bg-emerald-50 rounded-xl border border-emerald-100">
-              <div class="text-lg font-black text-emerald-700">{{ resolutionTime.min }}d</div>
-              <div class="text-[9px] font-bold text-emerald-600 uppercase tracking-wide">Mínimo</div>
+        <div class="bg-white/80 backdrop-blur-xl rounded-2xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 flex-shrink-0">
+          <h3 class="text-base font-black text-slate-800 tracking-tight mb-4">Velocidad de Resolución</h3>
+          <div class="grid grid-cols-3 gap-3">
+            <div class="text-center p-3 bg-gradient-to-br from-emerald-50/80 to-emerald-100/40 rounded-2xl border border-emerald-100/50 shadow-sm hover:shadow-md transition-shadow">
+              <div class="text-xl font-black text-emerald-600 tracking-tight">{{ resolutionTime.min }}<span class="text-[10px] ml-0.5 text-emerald-500/80">d</span></div>
+              <div class="text-[9px] font-black text-emerald-500 uppercase tracking-widest mt-1">Mínimo</div>
             </div>
-            <div class="text-center p-2.5 bg-blue-50 rounded-xl border border-blue-100">
-              <div class="text-lg font-black text-blue-700">{{ resolutionTime.avg }}d</div>
-              <div class="text-[9px] font-bold text-blue-600 uppercase tracking-wide">Promedio</div>
+            <div class="text-center p-3 bg-gradient-to-br from-blue-50/80 to-blue-100/40 rounded-2xl border border-blue-100/50 shadow-sm hover:shadow-md transition-shadow">
+              <div class="text-xl font-black text-blue-600 tracking-tight">{{ resolutionTime.avg }}<span class="text-[10px] ml-0.5 text-blue-500/80">d</span></div>
+              <div class="text-[9px] font-black text-blue-500 uppercase tracking-widest mt-1">Promedio</div>
             </div>
-            <div class="text-center p-2.5 bg-red-50 rounded-xl border border-red-100">
-              <div class="text-lg font-black text-red-700">{{ resolutionTime.max }}d</div>
-              <div class="text-[9px] font-bold text-red-600 uppercase tracking-wide">Máximo</div>
+            <div class="text-center p-3 bg-gradient-to-br from-red-50/80 to-red-100/40 rounded-2xl border border-red-100/50 shadow-sm hover:shadow-md transition-shadow">
+              <div class="text-xl font-black text-red-500 tracking-tight">{{ resolutionTime.max }}<span class="text-[10px] ml-0.5 text-red-400/80">d</span></div>
+              <div class="text-[9px] font-black text-red-400 uppercase tracking-widest mt-1">Máximo</div>
             </div>
           </div>
         </div>
 
         <!-- Comparativa mensual -->
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex-shrink-0">
-          <h3 class="text-sm font-black text-slate-800 mb-3">Comparativa Mensual</h3>
-          <div class="space-y-3">
+        <div class="bg-white/80 backdrop-blur-xl rounded-2xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 flex-shrink-0">
+          <h3 class="text-base font-black text-slate-800 tracking-tight mb-4">Progreso vs Periodo Anterior</h3>
+          <div class="space-y-4">
             <div v-for="comp in monthlyComparison" :key="comp.label">
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-xs font-medium text-slate-600">{{ comp.label }}</span>
-                <span class="text-xs font-black" :class="comp.growth >= 0 ? 'text-emerald-600' : 'text-red-500'">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xs font-bold text-slate-600">{{ comp.label }}</span>
+                <span class="text-xs font-black bg-white px-2 py-0.5 rounded-md shadow-sm border border-slate-100" :class="comp.growth >= 0 ? 'text-emerald-500' : 'text-red-500'">
                   {{ comp.growth >= 0 ? '+' : '' }}{{ comp.growth }}%
                 </span>
               </div>
-              <div class="flex items-center gap-2 text-[10px] text-slate-400 font-medium">
-                <span>Este mes: <strong class="text-slate-700">{{ comp.current }}</strong></span>
+              <div class="flex items-center gap-2 text-[10px] text-slate-400 font-bold bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/50">
+                <span class="flex-1 text-center">Actual: <strong class="text-slate-700">{{ comp.current }}</strong></span>
                 <span class="text-slate-300">|</span>
-                <span>Anterior: <strong class="text-slate-500">{{ comp.previous }}</strong></span>
+                <span class="flex-1 text-center">Previo: <strong class="text-slate-500">{{ comp.previous }}</strong></span>
               </div>
             </div>
           </div>
@@ -227,7 +248,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, nextTick, computed } from 'vue'
-import { Chart, registerables } from 'chart.js'
+import VueApexCharts from 'vue3-apexcharts'
 import { reportsService } from '../services/reportsService'
 import { useNotifications } from '../composables/useNotifications'
 import type {
@@ -238,10 +259,13 @@ import type {
   TeamPerformance,
   ExecutiveSummary
 } from '../services/reportsService'
-
-Chart.register(...registerables)
+import { teamService } from '../services/teamService'
+import { clientService } from '../services/clientService'
 
 const { showError, showSuccess } = useNotifications()
+
+// Register apexchart component globally in script setup isn't strictly needed if we just use the imported component
+const apexchart = VueApexCharts
 
 // State
 const loading = ref(false)
@@ -261,9 +285,9 @@ const departments = computed(() => {
 })
 
 const periods = [
-  { value: 'month', label: 'Mes' },
-  { value: 'quarter', label: 'Trimestre' },
-  { value: 'year', label: 'Año' }
+  { value: 'month', label: 'Este Mes' },
+  { value: 'quarter', label: 'Este Trimestre' },
+  { value: 'year', label: 'Este Año' }
 ]
 
 // API Data
@@ -273,15 +297,6 @@ const activityStats = ref<ActivityStats | null>(null)
 const clientStats = ref<ClientStats | null>(null)
 const teamPerformance = ref<TeamPerformance | null>(null)
 const executiveSummary = ref<ExecutiveSummary | null>(null)
-
-// Chart refs
-const revenueChart = ref<HTMLCanvasElement>()
-const activitiesChart = ref<HTMLCanvasElement>()
-const clientGrowthChart = ref<HTMLCanvasElement>()
-
-let revenueChartInstance: Chart | null = null
-let activitiesChartInstance: Chart | null = null
-let clientGrowthChartInstance: Chart | null = null
 
 // Formatters
 const formatCurrency = (amount: number): string => {
@@ -334,7 +349,7 @@ const executiveRows = computed(() => [
 const topClients = computed(() => {
   if (clientStats.value?.topActive?.length) {
     return clientStats.value.topActive.slice(0, 5).map((c: any) => ({
-      name: c.clientName,
+      name: c.clientName || 'Cliente sin nombre',
       activities: c.totalActivities,
       rate: Math.round(c.completionRate * 100)
     }))
@@ -345,7 +360,12 @@ const topClients = computed(() => {
 const teamMembers = computed(() => {
   if (teamPerformance.value?.performance?.length) {
     return teamPerformance.value.performance.map((m: any) => {
-      const name = m.teamMember?.name || `Usuario ${String(m._id).slice(-4)}`
+      // Improved fallback taking first name from availableMembers array
+      let name = m.teamMember?.name || m.teamMember?.nombre
+      if (!name) {
+        const found = availableMembers.value.find(user => user._id === m._id)
+        name = found?.name || `Miembro ${String(m._id).slice(-4)}`
+      }
       const parts = name.split(' ').filter(Boolean)
       const initials = parts.length >= 2 
         ? (parts[0][0] + parts[1][0]).toUpperCase()
@@ -384,194 +404,86 @@ const monthlyComparison = computed(() => [
   },
 ])
 
-// Chart colors for light mode
+// -- ApexCharts Configuration --
 const CHART_COLORS = {
-  primary: 'rgb(99, 102, 241)',
-  primaryLight: 'rgba(99, 102, 241, 0.12)',
-  emerald: 'rgb(16, 185, 129)',
-  amber: 'rgb(245, 158, 11)',
-  red: 'rgb(239, 68, 68)',
-  slate: 'rgb(148, 163, 184)',
-  gridLine: 'rgba(226, 232, 240, 0.8)',
-  tickColor: 'rgb(100, 116, 139)',
+  emerald: '#10b981',
+  primary: '#6366f1',
+  amber: '#f59e0b',
+  red: '#ef4444',
+  text: '#64748b'
 }
 
-const createRevenueChart = () => {
-  if (!revenueChart.value) return
-  revenueChartInstance?.destroy()
-  const ctx = revenueChart.value.getContext('2d')
-  if (!ctx) return
-
-  let labels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
-  let data = [620000, 710000, 680000, 790000, 840000, 847200, 900000, 860000, 920000, 880000, 950000, 1020000]
-
-  if (financialData.value?.transactions?.length) {
-    const monthlyData = financialData.value.transactions
-      .filter((t: any) => t._id.tipo === 'ingreso')
-      .sort((a: any, b: any) => a._id.month - b._id.month)
-    if (monthlyData.length > 0) {
-      const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
-      labels = monthlyData.map((item: any) => monthNames[item._id.month - 1] || `Mes ${item._id.month}`)
-      data = monthlyData.map((item: any) => item.total)
-    }
-  }
-
-  revenueChartInstance = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Ingresos',
-        data,
-        borderColor: CHART_COLORS.primary,
-        backgroundColor: CHART_COLORS.primaryLight,
-        tension: 0.4,
-        fill: true,
-        pointBackgroundColor: CHART_COLORS.primary,
-        pointBorderColor: '#fff',
-        pointBorderWidth: 2,
-        pointRadius: 4,
-        pointHoverRadius: 6
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: '#fff',
-          titleColor: '#1e293b',
-          bodyColor: '#475569',
-          borderColor: '#e2e8f0',
-          borderWidth: 1,
-          cornerRadius: 8,
-          callbacks: {
-            label: ctx => '$' + new Intl.NumberFormat('es-CO').format(Number(ctx.raw))
-          }
-        }
-      },
-      scales: {
-        x: { ticks: { color: CHART_COLORS.tickColor, font: { size: 10, weight: 'bold' } }, grid: { color: CHART_COLORS.gridLine } },
-        y: {
-          beginAtZero: false,
-          ticks: { color: CHART_COLORS.tickColor, font: { size: 10 }, callback: v => '$' + new Intl.NumberFormat('es-CO', { notation: 'compact' }).format(Number(v)) },
-          grid: { color: CHART_COLORS.gridLine }
-        }
-      }
-    }
-  })
-}
-
-const createActivitiesChart = () => {
-  if (!activitiesChart.value) return
-  activitiesChartInstance?.destroy()
-  const ctx = activitiesChart.value.getContext('2d')
-  if (!ctx) return
-
+// Donut Chart for Activities
+const activitiesChartSeries = computed(() => {
   let completed = 142, inProgress = 28, pending = 34
-
   if (activityStats.value?.statusDistribution?.length) {
     completed = 0; inProgress = 0; pending = 0
     activityStats.value.statusDistribution.forEach((s: any) => {
       const id = (s._id || '').toLowerCase()
-      if (id.includes('complet') || id.includes('finaliz')) completed = s.count
-      else if (id.includes('progress') || id.includes('progreso')) inProgress = s.count
+      if (id.includes('complet') || id.includes('finaliz')) completed += s.count
+      else if (id.includes('progress') || id.includes('progreso')) inProgress += s.count
       else pending += s.count
     })
   }
+  return [completed, inProgress, pending]
+})
 
-  activitiesChartInstance = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: ['Completadas', 'En Proceso', 'Pendientes'],
-      datasets: [{
-        data: [completed, inProgress, pending],
-        backgroundColor: [CHART_COLORS.emerald, CHART_COLORS.primary, CHART_COLORS.amber],
-        borderColor: '#fff',
-        borderWidth: 3,
-        hoverOffset: 4
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: '65%',
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: { color: CHART_COLORS.tickColor, font: { size: 10, weight: 'bold' }, boxWidth: 10, padding: 10 }
-        },
-        tooltip: {
-          backgroundColor: '#fff', titleColor: '#1e293b', bodyColor: '#475569',
-          borderColor: '#e2e8f0', borderWidth: 1, cornerRadius: 8
-        }
-      }
-    }
-  })
-}
+const activitiesChartOptions = computed(() => ({
+  chart: { type: 'donut', fontFamily: 'inherit', dropShadow: { enabled: true, top: 2, left: 0, blur: 4, opacity: 0.05 } },
+  labels: ['Completadas', 'En Proceso', 'Pendientes'],
+  colors: [CHART_COLORS.emerald, CHART_COLORS.primary, CHART_COLORS.amber],
+  plotOptions: {
+    pie: { donut: { size: '70%', labels: { show: true, name: { fontSize: '12px' }, value: { fontSize: '20px', fontWeight: 900 } } } }
+  },
+  dataLabels: { enabled: false },
+  stroke: { width: 0 },
+  legend: { position: 'bottom', fontSize: '12px', fontWeight: 600, markers: { radius: 12 } }
+}))
 
-const createWorkloadChart = () => {
-  if (!workloadChart.value) return
-  workloadChartInstance?.destroy()
-  const ctx = workloadChart.value.getContext('2d')
-  if (!ctx) return
-
-  let labels = ['Miembro 1', 'Miembro 2', 'Miembro 3']
+// Bar Chart for Workload
+const workloadChartSeries = computed(() => {
   let data = [5, 8, 4]
-
   if (teamPerformance.value?.currentWorkload?.length) {
-    labels = teamPerformance.value.currentWorkload.map((m: any) => m.teamMember?.name || `U ${String(m._id).slice(-4)}`)
     data = teamPerformance.value.currentWorkload.map((m: any) => m.activeWorkload)
   }
+  return [{ name: 'Tareas Activas', data }]
+})
 
-  workloadChartInstance = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Tareas Activas',
-        data,
-        backgroundColor: 'rgba(99, 102, 241, 0.2)',
-        borderColor: CHART_COLORS.primary,
-        borderWidth: 2,
-        borderRadius: 6,
-        borderSkipped: false
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: '#fff', titleColor: '#1e293b', bodyColor: '#475569',
-          borderColor: '#e2e8f0', borderWidth: 1, cornerRadius: 8
-        }
-      },
-      scales: {
-        x: { ticks: { color: CHART_COLORS.tickColor, font: { size: 10 } }, grid: { display: false } },
-        y: { beginAtZero: true, ticks: { color: CHART_COLORS.tickColor, font: { size: 10 }, stepSize: 1 }, grid: { color: CHART_COLORS.gridLine } }
+const workloadChartOptions = computed(() => {
+  let categories = ['Miembro 1', 'Miembro 2', 'Miembro 3']
+  if (teamPerformance.value?.currentWorkload?.length) {
+    categories = teamPerformance.value.currentWorkload.map((m: any) => {
+      let name = m.teamMember?.name || m.teamMember?.nombre
+      if (!name) {
+        const found = availableMembers.value.find(user => user._id === m._id)
+        name = found?.name || `U ${String(m._id).slice(-4)}`
       }
-    }
-  })
-}
-
-const createCharts = () => {
-  setTimeout(() => {
-    createRevenueChart()
-    createActivitiesChart()
-    createWorkloadChart()
-  }, 100)
-}
-
-import { teamService } from '../services/teamService'
-import { clientService } from '../services/clientService'
+      return name
+    })
+  }
+  return {
+    chart: { type: 'bar', fontFamily: 'inherit', toolbar: { show: false } },
+    plotOptions: {
+      bar: { borderRadius: 6, columnWidth: '45%', distributed: true }
+    },
+    colors: [CHART_COLORS.primary, '#8b5cf6', '#3b82f6', '#14b8a6', '#f59e0b'],
+    dataLabels: { enabled: true, formatter: (val: any) => val, style: { fontSize: '10px', fontWeight: 900 } },
+    legend: { show: false },
+    xaxis: {
+      categories,
+      labels: { style: { colors: CHART_COLORS.text, fontSize: '10px', fontWeight: 600 } },
+      axisBorder: { show: false }, axisTicks: { show: false }
+    },
+    yaxis: {
+      labels: { style: { colors: CHART_COLORS.text, fontSize: '10px', fontWeight: 600 } }
+    },
+    grid: { strokeDashArray: 4, borderColor: '#e2e8f0' }
+  }
+})
 
 const loadData = async () => {
   loading.value = true
   try {
-    // Fetch filter options if empty
     if (availableMembers.value.length === 0) {
       const [membersData, clientsData] = await Promise.all([
         teamService.getAll(),
@@ -600,12 +512,8 @@ const loadData = async () => {
     clientStats.value = cli
     teamPerformance.value = team
     executiveSummary.value = exec
-    await nextTick()
-    createCharts()
   } catch (error) {
     console.error('Error loading reports:', error)
-    await nextTick()
-    createCharts()
   } finally {
     loading.value = false
   }

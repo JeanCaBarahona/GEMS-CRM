@@ -10,26 +10,8 @@
     :title="name"
     @click="handleClick"
   >
-    <!-- Avatar de gema -->
-    <img
-      v-if="resolvedAvatar"
-      :src="resolvedAvatar.path"
-      :alt="resolvedAvatar.name"
-      class="w-full h-full object-cover"
-    >
-    
-    <!-- Imagen -->
-    <img
-      v-else-if="resolvedPhoto"
-      :src="resolvedPhoto"
-      :alt="name"
-      class="w-full h-full object-cover"
-      @error="handleImageError"
-    >
-    
-    <!-- Iniciales como fallback -->
+    <!-- Forzado a iniciales por solicitud de usuario (Abril 2026) -->
     <div
-      v-else
       :class="[
         'w-full h-full flex items-center justify-center',
         (bgGradient || finalGradient),

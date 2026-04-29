@@ -16,7 +16,7 @@
     </div>
 
     <!-- Activities View -->
-    <div class="flex-1 min-h-0 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col p-4">
+    <div class="flex-1 min-h-0 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-y-auto flex flex-col p-4">
       <ActivitiesView 
         ref="activitiesViewRef"
         :searchTerm="searchTerm"

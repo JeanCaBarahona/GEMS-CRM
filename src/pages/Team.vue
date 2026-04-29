@@ -79,12 +79,9 @@
        <div class="flex items-center gap-4 w-full md:w-auto">
           <select v-model="selectedRole" class="px-6 py-4 bg-slate-50 border-none rounded-2xl text-xs font-black uppercase tracking-widest text-slate-500 outline-none focus:ring-4 focus:ring-violet-500/5 transition-all cursor-pointer">
              <option value="">Todos los Roles</option>
-             <option value="admin">Administrador</option>
-             <option value="manager">Gerente</option>
-             <option value="support">Soporte</option>
-             <option value="development">Desarrollo</option>
-             <option value="fullstack">Fullstack</option>
-             <option value="employee">Empleado</option>
+             <option v-for="role in allAvailableRoles" :key="role._id || role.name" :value="role.name">
+                {{ getRoleDisplayName(role.name) }}
+             </option>
           </select>
 
           <select v-model="selectedStatus" class="px-6 py-4 bg-slate-50 border-none rounded-2xl text-xs font-black uppercase tracking-widest text-slate-500 outline-none focus:ring-4 focus:ring-violet-500/5 transition-all cursor-pointer">
@@ -233,13 +230,10 @@
                    <div class="space-y-2">
                       <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Rol Operativo</label>
                       <select v-model="formData.role" required class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-violet-500/5">
-                        <option value="admin">Administrador</option>
-                        <option value="manager">Gerencia / Dirección</option>
-                        <option value="support">Soporte Técnico</option>
-                        <option value="development">Especialista TI</option>
-                        <option value="fullstack">Ingeniero de Software</option>
-                        <option value="employee">Colaborador</option>
-                        <option value="viewer">Consultor (Lectura)</option>
+                        <option value="" disabled>Selecciona un rol</option>
+                        <option v-for="role in allAvailableRoles" :key="role._id || role.name" :value="role.name">
+                          {{ getRoleDisplayName(role.name) }}
+                        </option>
                       </select>
                    </div>
                    <div class="space-y-2">
@@ -299,6 +293,7 @@ import { useTeamStore } from '../stores'
 import { useNotifications } from '../composables/useNotifications'
 import PermissionGuard from '../components/PermissionGuard.vue'
 import UserAvatar from '../components/ui/UserAvatar.vue'
+import { rolesService, type Role } from '../services/rolesService'
 import type { TeamMember } from '../types'
 
 const authStore = useAuthStore()
@@ -312,6 +307,27 @@ const selectedStatus = ref('')
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
 const isSubmitting = ref(false)
+const roles = ref<Role[]>([])
+const baseRolesNames = ['admin', 'manager', 'support', 'development', 'fullstack', 'employee', 'viewer', 'client']
+
+const allAvailableRoles = computed(() => {
+  // Start with dynamic roles
+  const combined = [...roles.value]
+  
+  // Add base roles if they are not already present (by name)
+  baseRolesNames.forEach(name => {
+    if (!combined.some(r => r.name.toLowerCase() === name.toLowerCase())) {
+      combined.push({
+        name: name,
+        isSystem: true,
+        permissions: {} as any // Will use backend defaults
+      })
+    }
+  })
+  
+  return combined
+})
+
 const editingMember = ref<TeamMember | null>(null)
 const pagination = reactive({
   page: 1,
@@ -376,7 +392,9 @@ const getRoleDisplayName = (role: string) => {
     development: 'Especialista TI',
     fullstack: 'Ingeniero Soft.',
     employee: 'Colaborador',
-    viewer: 'Consultor'
+    viewer: 'Consultor',
+    client: 'Cliente',
+    development: 'Especialista TI'
   }
   return roleNames[role] || role
 }
@@ -421,6 +439,12 @@ const submitForm = async () => {
   try {
     isSubmitting.value = true
     if (showCreateModal.value) {
+      // Validaciones extra
+      if (formData.password.length < 6) {
+        showError('Validación', 'La contraseña debe tener al menos 6 caracteres')
+        isSubmitting.value = false
+        return
+      }
       await teamStore.createMember(formData)
     } else if (editingMember.value) {
       const { password, ...updateData } = formData
@@ -429,6 +453,8 @@ const submitForm = async () => {
     closeModal()
   } catch (error: any) {
     console.error('Error submitting form:', error)
+    const message = error.response?.data?.message || error.message || 'Error al guardar los datos'
+    showError('Error en el formulario', message)
   } finally {
     isSubmitting.value = false
   }
@@ -470,6 +496,13 @@ const changePage = (page: number) => {
 }
 
 onMounted(async () => {
+  // Load roles
+  try {
+    roles.value = await rolesService.getAll()
+  } catch (error) {
+    console.error('Error loading roles:', error)
+  }
+
   if (authStore.canViewTeam) {
     const res = await teamStore.fetchTeam(pagination.page, pagination.limit)
     if (res) Object.assign(pagination, res)

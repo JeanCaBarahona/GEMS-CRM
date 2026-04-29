@@ -42,7 +42,11 @@ class TeamService {
   async getActiveMembers(): Promise<TeamMember[]> {
     try {
       const allMembers = await this.getAll()
-      return allMembers.filter(member => member.isActive)
+      return allMembers.filter(member => {
+        const isClient = member.role?.toLowerCase().includes('client') || 
+                        member.role?.toLowerCase().includes('cliente')
+        return member.isActive && !isClient
+      })
     } catch (error) {
       console.error('Error fetching active team members:', error)
       throw new Error('No se pudieron cargar los miembros activos del equipo')

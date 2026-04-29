@@ -125,16 +125,28 @@ class CasesService {
 
   // Crear nuevo caso
   async createCase(caseData: Partial<Case>): Promise<Case> {
+    const formData = new FormData()
+    
+    Object.entries(caseData).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        if (Array.isArray(value)) {
+          // Si es un array (como tags), agregamos cada uno
+          value.forEach(v => formData.append(`${key}[]`, v))
+        } else {
+          formData.append(key, value as string)
+        }
+      }
+    })
+
     const response = await fetch(this.apiUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(caseData),
+      body: formData,
+      // No establecer Content-Type header para FormData, el navegador lo hará con el boundary correcto
     })
     
     if (!response.ok) {
-      throw new Error('Error al crear el caso')
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.error || 'Error al crear el caso')
     }
     return await response.json()
   }

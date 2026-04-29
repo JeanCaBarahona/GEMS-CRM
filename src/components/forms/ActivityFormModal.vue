@@ -101,14 +101,14 @@
                   <CustomSelect
                     v-model="form.clientId"
                     :options="[
-                      { value: '', label: 'Interno GEMS' },
+                      { value: '', label: 'Interno' },
                       ...clients.map(client => ({ value: client._id, label: client.name }))
                     ]"
                   />
                 </div>
                 <div class="space-y-2">
                   <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Equipo Responsable</label>
-                  <div class="bg-slate-50/50 border border-slate-200 rounded-2xl p-3 shadow-inner h-[210px] flex flex-col overflow-hidden">
+                  <div class="bg-slate-50/50 border border-slate-200 rounded-2xl p-3 shadow-inner h-[320px] flex flex-col overflow-hidden">
                     <AssignedUsersSelector
                       v-model="form.assignedTo"
                       :teamMembers="teamMembers"

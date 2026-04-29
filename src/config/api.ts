@@ -1,7 +1,9 @@
 // Configuración automática de API según el ambiente
 const getBaseURL = (): string => {
-  const azureURL = 'https://crmcustomertouch.azurewebsites.net/api'
-  return azureURL
+  const devURL = 'https://crmbackendct.azurewebsites.net/api'
+  const prodURL = 'https://crmbackendct.azurewebsites.net/api'
+  
+  return prodURL
 }
 
 // Función para obtener timeout personalizado

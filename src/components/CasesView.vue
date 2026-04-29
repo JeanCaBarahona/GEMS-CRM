@@ -352,18 +352,26 @@
             <template v-if="isEditingWikiItem">
               <div class="bg-slate-50/50 rounded-2xl p-6 border border-slate-100">
                 <div class="flex gap-4 mb-4 pb-4 border-b border-slate-100">
-                  <button @click="insertText('**negrita**')" class="text-xs font-bold text-slate-400 hover:text-slate-900">Negrita</button>
-                  <button @click="insertText('*cursiva*')" class="text-xs font-bold text-slate-400 hover:text-slate-900">Cursiva</button>
+                  <button @click="wrapSelection('**')" class="text-xs font-bold text-slate-400 hover:text-slate-900">Negrita</button>
+                  <button @click="wrapSelection('*')" class="text-xs font-bold text-slate-400 hover:text-slate-900">Cursiva</button>
                   <button @click="insertText('# ')" class="text-xs font-bold text-slate-400 hover:text-slate-900">Título</button>
                   <button @click="insertText('```\n\n```')" class="text-xs font-bold text-slate-400 hover:text-slate-900">Bloque Código</button>
                 </div>
                 <textarea 
                   v-model="selectedWiki.contenido" 
+                  ref="wikiEditor"
                   rows="20" 
                   class="w-full bg-transparent border-none outline-none focus:ring-0 text-sm leading-relaxed text-slate-700 font-medium resize-none"
                   placeholder="Comienza a escribir tu documentación..."
                 ></textarea>
                 <div class="flex justify-end gap-3 mt-6 pt-6 border-t border-slate-100">
+                  <div class="mr-auto">
+                    <label class="cursor-pointer px-4 py-2 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-lg hover:bg-slate-200 transition-all flex items-center gap-2">
+                      <i class="fas fa-paperclip"></i>
+                      Adjuntar archivos
+                      <input type="file" multiple class="hidden" @change="(e: any) => selectedWiki!.archivos = [...(selectedWiki!.archivos || []), ...Array.from(e.target.files)]">
+                    </label>
+                  </div>
                   <button @click="isEditingWikiItem = false" class="px-4 py-2 text-xs font-bold text-slate-400 hover:text-slate-900">Cancelar</button>
                   <button @click="handleUpdateWiki" class="px-6 py-2 bg-slate-900 text-white text-xs font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all">Guardar página</button>
                 </div>
@@ -376,6 +384,27 @@
                 </div>
               </div>
               <div v-else class="text-sm text-slate-700 leading-loose font-medium document-content" v-html="formatWikiContent(selectedWiki.contenido)"></div>
+              
+              <!-- Attached Files Section -->
+              <div v-if="selectedWiki.archivos && selectedWiki.archivos.length > 0" class="mt-12 pt-8 border-t border-slate-100">
+                <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-4">Archivos Adjuntos</p>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <a v-for="(file, idx) in selectedWiki.archivos" :key="idx" 
+                     :href="file.url" 
+                     target="_blank" 
+                     download
+                     class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center gap-3 hover:bg-white hover:shadow-md transition-all cursor-pointer no-underline group"
+                  >
+                    <div class="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:border-primary-200">
+                      <i :class="getFileIcon(file.nombre)" class="text-lg text-slate-400 group-hover:text-primary-500"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <p class="text-xs font-bold text-slate-800 truncate m-0">{{ file.nombre }}</p>
+                      <p class="text-[9px] text-slate-400 font-medium m-0 uppercase tracking-tighter">Descargar</p>
+                    </div>
+                  </a>
+                </div>
+              </div>
               
               <!-- Placeholder for empty content -->
               <div v-if="!selectedWiki.contenido" @click="isEditingWikiItem = true" class="py-20 border-2 border-dashed border-slate-50 rounded-3xl flex flex-col items-center justify-center text-slate-200 hover:border-slate-100 hover:text-slate-300 transition-all cursor-pointer">
@@ -480,6 +509,11 @@
                   <div class="space-y-1">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Resumen Ejecutivo</label>
                     <input v-model="newWiki.descripcion" placeholder="¿De qué trata este artículo?" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium outline-none">
+                  </div>
+
+                  <div class="space-y-1">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Adjuntos (Opcional)</label>
+                    <input type="file" multiple @change="(e: any) => newWiki.archivos = Array.from(e.target.files)" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl text-xs font-medium outline-none">
                   </div>
 
                   <div class="space-y-1">
@@ -721,9 +755,13 @@ const insertText = (text: string) => {
   if (!wikiEditor.value) return
   const start = wikiEditor.value.selectionStart
   const end = wikiEditor.value.selectionEnd
-  const content = selectedCase.value?.wikiContent || ''
-  if (selectedCase.value) {
+  
+  if (viewMode.value === 'cases' && selectedCase.value) {
+    const content = selectedCase.value.wikiContent || ''
     selectedCase.value.wikiContent = content.substring(0, start) + text + content.substring(end)
+  } else if (viewMode.value === 'wiki' && selectedWiki.value) {
+    const content = selectedWiki.value.contenido || ''
+    selectedWiki.value.contenido = content.substring(0, start) + text + content.substring(end)
   }
 }
 
@@ -731,10 +769,15 @@ const wrapSelection = (symbol: string) => {
   if (!wikiEditor.value) return
   const start = wikiEditor.value.selectionStart
   const end = wikiEditor.value.selectionEnd
-  const content = selectedCase.value?.wikiContent || ''
-  const selection = content.substring(start, end)
-  if (selectedCase.value) {
+  
+  if (viewMode.value === 'cases' && selectedCase.value) {
+    const content = selectedCase.value.wikiContent || ''
+    const selection = content.substring(start, end)
     selectedCase.value.wikiContent = content.substring(0, start) + symbol + selection + symbol + content.substring(end)
+  } else if (viewMode.value === 'wiki' && selectedWiki.value) {
+    const content = selectedWiki.value.contenido || ''
+    const selection = content.substring(start, end)
+    selectedWiki.value.contenido = content.substring(0, start) + symbol + selection + symbol + content.substring(end)
   }
 }
 

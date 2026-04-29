@@ -42,22 +42,44 @@ class WikiService {
   }
 
   async create(data: Partial<WikiArticle>): Promise<WikiArticle> {
+    const formData = new FormData()
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        if (Array.isArray(value)) {
+          value.forEach(v => formData.append(`${key}[]`, v))
+        } else {
+          formData.append(key, value as any)
+        }
+      }
+    })
+
     const response = await fetch(this.apiUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      body: formData,
     })
-    if (!response.ok) throw new Error('Error al crear el artículo')
+    
+    if (!response.ok) throw new Error('Error al crear artículo')
     return await response.json()
   }
 
   async update(id: string, data: Partial<WikiArticle>): Promise<WikiArticle> {
+    const formData = new FormData()
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        if (Array.isArray(value)) {
+          value.forEach(v => formData.append(`${key}[]`, v))
+        } else {
+          formData.append(key, value as any)
+        }
+      }
+    })
+
     const response = await fetch(`${this.apiUrl}/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      body: formData,
     })
-    if (!response.ok) throw new Error('Error al actualizar el artículo')
+    
+    if (!response.ok) throw new Error('Error al actualizar artículo')
     return await response.json()
   }
 

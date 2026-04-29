@@ -1,9 +1,7 @@
 // Configuración automática de API según el ambiente
 const getBaseURL = (): string => {
-  const devURL = 'https://gems-crm-backend.onrender.com/api'
-  const prodURL = 'https://gems-crm-backend.onrender.com/api'
-  
-  return prodURL
+  const azureURL = 'https://crmcustomertouch.azurewebsites.net/api'
+  return azureURL
 }
 
 // Función para obtener timeout personalizado

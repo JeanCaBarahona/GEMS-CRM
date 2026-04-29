@@ -1,7 +1,7 @@
 // Configuración automática de API según el ambiente
 const getBaseURL = (): string => {
-  const devURL = 'https://crmbackendct.azurewebsites.net/api'
-  const prodURL = 'https://crmbackendct.azurewebsites.net/api'
+  const devURL = 'https://gems-crm-backend.onrender.com/api'
+  const prodURL = 'https://gems-crm-backend.onrender.com/api'
   
   return prodURL
 }

@@ -120,7 +120,7 @@
       <template v-if="viewMode === 'cases'">
         <div v-if="selectedCase" class="max-w-4xl mx-auto px-6 md:px-12 py-10 animate-fade-in">
           <!-- Page Cover -->
-          <div class="h-40 md:h-52 w-full rounded-2xl mb-8 overflow-hidden relative group">
+          <div class="h-40 md:h-52 w-full rounded-2xl mb-8 overflow-hidden relative group no-print">
             <div :class="getCoverGradient(selectedCase.prioridad)" class="absolute inset-0 opacity-80"></div>
             <div class="absolute inset-0 flex items-center justify-center">
               <i :class="getCaseIcon(selectedCase.tipo)" class="text-white/20 text-7xl md:text-9xl"></i>
@@ -143,7 +143,7 @@
             </h1>
             
             <!-- Metadata Grid -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 border-y border-slate-100 py-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 border-y border-slate-100 py-6 no-print">
               <div class="space-y-1">
                 <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado</p>
                 <div class="flex items-center gap-2">
@@ -174,7 +174,7 @@
           </div>
 
           <!-- Document Content Tabs -->
-          <div class="mb-8 flex gap-6 border-b border-slate-100">
+          <div class="mb-8 flex gap-6 border-b border-slate-100 no-print">
             <button 
               v-for="tab in tabs" :key="tab.id" 
               @click="activeViewTab = tab.id"
@@ -481,6 +481,11 @@
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Descripción Breve</label>
                     <textarea v-model="newCase.descripcion" rows="3" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium outline-none focus:bg-white"></textarea>
                   </div>
+
+                  <div class="space-y-1">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Adjuntos (Opcional)</label>
+                    <input type="file" multiple @change="(e: any) => newCase.archivos = Array.from(e.target.files)" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl text-xs font-medium outline-none">
+                  </div>
                 </div>
              </template>
 
@@ -592,8 +597,8 @@ const wikiTagsRaw = ref('')
 const wikiEditor = ref<HTMLTextAreaElement | null>(null)
 
 // Form State
-const newCase = ref({ titulo: '', tipo: 'seguimiento' as any, prioridad: 'media' as any, descripcion: '', cliente_id: '', categoria: '', tags: [] as string[] })
-const newWiki = ref<Partial<WikiArticle>>({ titulo: '', categoria: 'proceso', contenido: '', descripcion: '', tags: [] })
+const newCase = ref({ titulo: '', tipo: 'seguimiento' as any, prioridad: 'media' as any, descripcion: '', cliente_id: '', categoria: '', tags: [] as string[], archivos: [] as File[] })
+const newWiki = ref<Partial<WikiArticle> & { archivos?: File[] }>({ titulo: '', categoria: 'proceso', contenido: '', descripcion: '', tags: [], archivos: [] })
 const newLog = ref({ que_se_hizo: '', sentimiento: '😐' as any })
 
 // Grouping Logic
@@ -822,19 +827,32 @@ watch(viewMode, () => { searchTerm.value = ''; expandedGroups.value = [] })
 .prose-xs { font-size: 0.75rem; line-height: 1.6; }
 
 @media print {
-  aside, .no-print, button, .actions-overlay {
+  aside, .no-print, button, .actions-overlay, .tabs-header, .metadata-grid, .cover-image, .page-header-actions {
     display: none !important;
   }
   main {
     margin: 0 !important;
-    padding: 0 !important;
+    padding: 2cm !important;
     width: 100% !important;
+    background: white !important;
   }
   .max-w-4xl {
     max-width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
   }
-  .rounded-2xl {
-    border-radius: 0 !important;
+  h1 {
+    font-size: 24pt !important;
+    margin-top: 0 !important;
+  }
+  .document-content {
+    font-size: 11pt !important;
+    line-height: 1.6 !important;
+    color: black !important;
+  }
+  /* Show header emoji/icon in print */
+  .text-6xl {
+    font-size: 40pt !important;
   }
 }
 </style>

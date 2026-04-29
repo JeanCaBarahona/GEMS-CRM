@@ -343,10 +343,34 @@
               </h1>
               <p class="text-sm text-slate-500 font-medium leading-relaxed mb-6">{{ selectedWiki.descripcion }}</p>
               
-              <div class="flex items-center gap-4 text-[10px] font-bold text-slate-400 border-t border-slate-100 pt-4">
-                <span :class="getWikiCatClass(selectedWiki.categoria)" class="px-2 py-0.5 rounded-md uppercase tracking-tighter">{{ selectedWiki.categoria }}</span>
-                <span>Actualizado {{ formatDateRelative(selectedWiki.updatedAt) }}</span>
-                <span class="flex items-center gap-1"><i class="fas fa-eye"></i> {{ selectedWiki.vistas || 0 }}</span>
+              <!-- Metadata Grid Wiki -->
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-6 border-y border-slate-100 py-6 mb-8 no-print">
+                <div class="space-y-1">
+                  <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Categoría</p>
+                  <span :class="getWikiCatClass(selectedWiki.categoria)" class="px-2 py-0.5 rounded-md text-[10px] font-bold inline-block uppercase">
+                    {{ selectedWiki.categoria }}
+                  </span>
+                </div>
+                <div class="space-y-1">
+                  <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Vistas</p>
+                  <div class="flex items-center gap-1.5 text-slate-700 font-bold text-xs">
+                    <i class="fas fa-eye text-slate-400"></i>
+                    {{ selectedWiki.vistas || 0 }}
+                  </div>
+                </div>
+                <div class="space-y-1">
+                  <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Autor</p>
+                  <div class="flex items-center gap-1.5">
+                    <div class="w-4 h-4 rounded bg-slate-100 flex items-center justify-center text-[8px] font-bold text-slate-500 uppercase">
+                      {{ selectedWiki.autor?.name?.charAt(0) || 'S' }}
+                    </div>
+                    <span class="text-xs font-medium text-slate-700">{{ selectedWiki.autor?.name || 'Sistema' }}</span>
+                  </div>
+                </div>
+                <div class="space-y-1">
+                  <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Actualizado</p>
+                  <span class="text-xs font-medium text-slate-500">{{ formatDateRelative(selectedWiki.updatedAt) }}</span>
+                </div>
               </div>
             </div>
 

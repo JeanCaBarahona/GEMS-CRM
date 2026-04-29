@@ -46,7 +46,7 @@ class WikiService {
     Object.entries(data).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         if (Array.isArray(value)) {
-          value.forEach(v => formData.append(`${key}[]`, v))
+          value.forEach(v => formData.append(key, v))
         } else {
           formData.append(key, value as any)
         }
@@ -67,7 +67,7 @@ class WikiService {
     Object.entries(data).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         if (Array.isArray(value)) {
-          value.forEach(v => formData.append(`${key}[]`, v))
+          value.forEach(v => formData.append(key, v))
         } else {
           formData.append(key, value as any)
         }

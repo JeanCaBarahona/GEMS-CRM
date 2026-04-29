@@ -130,8 +130,8 @@ class CasesService {
     Object.entries(caseData).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         if (Array.isArray(value)) {
-          // Si es un array (como tags), agregamos cada uno
-          value.forEach(v => formData.append(`${key}[]`, v))
+          // Para Multer, enviamos múltiples veces con la misma llave (sin [])
+          value.forEach(v => formData.append(key, v))
         } else {
           formData.append(key, value as string)
         }

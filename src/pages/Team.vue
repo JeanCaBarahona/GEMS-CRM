@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-[#F8FAFC] p-8 font-['Inter',sans-serif]">
+  <div class="min-h-screen bg-[#F8FAFC] p-8 pb-24 font-['Inter',sans-serif]">
     <!-- Top Bar Controls -->
     <div class="flex flex-col md:flex-row md:items-center justify-end gap-6 mb-10">
       

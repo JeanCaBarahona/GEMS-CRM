@@ -103,77 +103,82 @@
     </div>
 
     <!-- Team List View (Premium & Clean) -->
-    <div class="space-y-4">
+    <div class="space-y-2">
+      <!-- Header de Tabla Compacta -->
+      <div class="px-8 py-3 flex items-center gap-6 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 mb-2">
+        <div class="min-w-[280px]">Colaborador</div>
+        <div class="w-24 text-center">Rol</div>
+        <div class="flex-1">Departamento</div>
+        <div class="hidden xl:block w-32">Último Acceso</div>
+        <div class="w-32 text-right">Acciones</div>
+      </div>
+
       <div 
         v-for="member in filteredMembers" 
         :key="member._id"
-        class="group bg-white border border-slate-100 rounded-[2rem] p-4 px-8 shadow-sm hover:shadow-xl hover:shadow-violet-200/30 hover:-translate-y-1 transition-all duration-300 flex items-center justify-between gap-6"
+        class="group bg-white border border-slate-100 rounded-2xl p-2 px-6 shadow-sm hover:shadow-md hover:border-violet-200 transition-all duration-200 flex items-center justify-between gap-6"
       >
         <!-- Left: Basic Info & Avatar -->
-        <div class="flex items-center gap-6 min-w-[300px]">
+        <div class="flex items-center gap-4 min-w-[280px]">
            <div class="relative">
-              <UserAvatar :name="member.name" :photo="member.photo" size="lg" class="w-14 h-14 rounded-2xl shadow-inner" />
-            <!-- Indicator Leader -->
-            <div v-if="member.departmentRole === 'leader'" class="absolute -top-1.5 -right-1.5 w-6 h-6 bg-amber-400 border-2 border-white rounded-full flex items-center justify-center shadow-md" title="Líder de Departamento">
-              <i class="fas fa-crown text-white" style="font-size: 7px"></i>
+              <UserAvatar :name="member.name" :photo="member.photo" size="sm" class="w-10 h-10 rounded-xl shadow-inner" />
+            <div v-if="member.departmentRole === 'leader'" class="absolute -top-1 -right-1 w-5 h-5 bg-amber-400 border-2 border-white rounded-full flex items-center justify-center shadow-sm">
+              <i class="fas fa-crown text-white" style="font-size: 6px"></i>
             </div>
-            <div v-if="member.isActive" class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full"></div>
            </div>
-           <div>
-              <h3 class="text-sm font-black text-slate-800 tracking-tight group-hover:text-violet-600 transition-colors">{{ member.name }}</h3>
-              <p class="text-[11px] font-medium text-slate-400">{{ member.email }}</p>
+           <div class="min-w-0">
+              <h3 class="text-xs font-bold text-slate-800 truncate">{{ member.name }}</h3>
+              <p class="text-[10px] font-medium text-slate-400 truncate">{{ member.email }}</p>
            </div>
         </div>
 
         <!-- Center: Role & Department -->
-        <div class="flex items-center gap-12 flex-1">
+        <div class="flex items-center gap-8 flex-1">
            <div class="w-24">
-              <span :class="getRoleBadgeClass(member.role)" class="px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest block text-center">
+              <span :class="getRoleBadgeClass(member.role)" class="px-2 py-0.5 rounded-lg text-[7px] font-black uppercase tracking-widest block text-center">
                 {{ getRoleDisplayName(member.role) }}
               </span>
            </div>
            
            <div class="flex-1">
-              <p class="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-0.5">Departamento</p>
-              <p class="text-[11px] font-bold text-slate-600 uppercase">{{ member.department || 'General' }}</p>
+              <p class="text-[10px] font-bold text-slate-600 uppercase truncate">{{ member.department || 'General' }}</p>
            </div>
 
-           <div class="hidden xl:block">
-              <p class="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-0.5">Último Acceso</p>
-              <p class="text-[11px] font-bold text-slate-500">{{ formatDate(member.lastLogin) }}</p>
+           <div class="hidden xl:block w-32">
+              <p class="text-[10px] font-bold text-slate-500">{{ formatDate(member.lastLogin) }}</p>
            </div>
         </div>
 
         <!-- Right: Actions -->
-        <div class="flex items-center gap-2">
+        <div class="flex items-center justify-end gap-1 w-32">
            <button 
              @click="editMember(member)" 
-             class="w-10 h-10 bg-slate-50 hover:bg-violet-100 text-slate-400 hover:text-violet-600 rounded-xl flex items-center justify-center transition-all"
-             title="Editar Colaborador"
+             class="w-8 h-8 bg-slate-50 hover:bg-violet-100 text-slate-400 hover:text-violet-600 rounded-lg flex items-center justify-center transition-all"
            >
-             <i class="fas fa-edit text-xs"></i>
+             <i class="fas fa-edit text-[10px]"></i>
            </button>
            <button 
              @click="toggleMemberStatus(member)" 
              :class="member.isActive ? 'hover:bg-rose-100 text-slate-400 hover:text-rose-600' : 'hover:bg-emerald-100 text-slate-400 hover:text-emerald-600'" 
-             class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center transition-all"
-             :title="member.isActive ? 'Desactivar' : 'Activar'"
+             class="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center transition-all"
            >
-             <i :class="member.isActive ? 'fas fa-user-slash' : 'fas fa-user-check'" class="text-xs"></i>
+             <i :class="member.isActive ? 'fas fa-user-slash' : 'fas fa-user-check'" class="text-[10px]"></i>
            </button>
            <button 
              v-if="authStore.user?.role === 'admin'"
              @click="permanentDeleteMember(member)" 
-             class="w-10 h-10 bg-slate-50 hover:bg-red-600 text-slate-400 hover:text-white rounded-xl flex items-center justify-center transition-all"
-             title="Eliminar Permanentemente"
+             class="w-8 h-8 bg-slate-50 hover:bg-red-600 text-slate-400 hover:text-white rounded-lg flex items-center justify-center transition-all"
            >
-             <i class="fas fa-trash-alt text-xs"></i>
+             <i class="fas fa-trash-alt text-[10px]"></i>
            </button>
         </div>
       </div>
-
-      <!-- Empty State -->
     </div>
+      <!-- Empty State -->
+      <div v-if="filteredMembers.length === 0" class="py-20 text-center bg-white border border-slate-100 rounded-3xl">
+        <i class="fas fa-users text-4xl text-slate-100 mb-4"></i>
+        <p class="text-sm font-bold text-slate-400">No se encontraron miembros</p>
+      </div>
     
     <!-- Pagination Controls (Premium) -->
     <div v-if="pagination.pages > 1" class="mt-12 flex items-center justify-center gap-2">

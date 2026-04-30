@@ -724,7 +724,12 @@ const handleCreateCase = async () => {
 
 const saveWiki = async () => {
   if (!selectedCase.value?._id) return; showLoading('Guardando...'); try {
-    const updated = await casesService.updateCase(selectedCase.value._id, { wikiContent: selectedCase.value.wikiContent }); const idx = cases.value.findIndex(c => c._id === updated._id); if (idx !== -1) cases.value[idx] = updated; isEditingWiki.value = false; showSuccess('Éxito', 'Documentación actualizada.')
+    const updated = await casesService.updateCase(selectedCase.value._id, { wikiContent: selectedCase.value.wikiContent });
+    const idx = cases.value.findIndex(c => c._id === updated._id);
+    if (idx !== -1) cases.value[idx] = updated;
+    selectedCase.value = updated; // Actualizar referencia local
+    isEditingWiki.value = false;
+    showSuccess('Éxito', 'Documentación actualizada.')
   } catch (err: any) { showError('Error', err.message) } finally { closeLoading() }
 }
 
@@ -738,7 +743,12 @@ const handleCreateWiki = async () => {
 
 const handleUpdateWiki = async () => {
   if (!selectedWiki.value?._id) return; showLoading('Actualizando...'); try {
-    const updated = await wikiService.update(selectedWiki.value._id, selectedWiki.value); const idx = wikiArticles.value.findIndex(w => w._id === updated._id); if (idx !== -1) wikiArticles.value[idx] = updated; isEditingWikiItem.value = false; showSuccess('Éxito', 'Wiki actualizada.')
+    const updated = await wikiService.update(selectedWiki.value._id, selectedWiki.value);
+    const idx = wikiArticles.value.findIndex(w => w._id === updated._id);
+    if (idx !== -1) wikiArticles.value[idx] = updated;
+    selectedWiki.value = updated; // Actualizar referencia local
+    isEditingWikiItem.value = false;
+    showSuccess('Éxito', 'Wiki actualizada.')
   } catch (err: any) { showError('Error', err.message) } finally { closeLoading() }
 }
 

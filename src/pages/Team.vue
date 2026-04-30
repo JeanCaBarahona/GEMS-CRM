@@ -23,18 +23,28 @@
     </div>
 
     <!-- Department Leaders Overview -->
-    <div class="grid grid-cols-3 gap-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <div
-        v-for="dept in ['TI', 'Comercial', 'Marketing']"
+        v-for="dept in ['TI', 'Comercial', 'Marketing', 'Customer Success']"
         :key="dept"
         class="bg-white border border-slate-100 rounded-[2rem] p-5 shadow-sm hover:shadow-md transition-all"
       >
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-3">
             <div class="w-9 h-9 rounded-xl flex items-center justify-center"
-              :class="dept === 'TI' ? 'bg-indigo-50 text-indigo-500' : dept === 'Comercial' ? 'bg-emerald-50 text-emerald-500' : 'bg-orange-50 text-orange-500'"
+              :class="{
+                'bg-indigo-50 text-indigo-500': dept === 'TI',
+                'bg-emerald-50 text-emerald-500': dept === 'Comercial',
+                'bg-orange-50 text-orange-500': dept === 'Marketing',
+                'bg-blue-50 text-blue-500': dept === 'Customer Success'
+              }"
             >
-              <i :class="dept === 'TI' ? 'fas fa-laptop-code' : dept === 'Comercial' ? 'fas fa-handshake' : 'fas fa-bullhorn'"></i>
+              <i :class="{
+                'fas fa-laptop-code': dept === 'TI',
+                'fas fa-handshake': dept === 'Comercial',
+                'fas fa-bullhorn': dept === 'Marketing',
+                'fas fa-headset': dept === 'Customer Success'
+              }"></i>
             </div>
             <span class="text-xs font-black text-slate-700 uppercase tracking-widest">{{ dept }}</span>
           </div>
@@ -243,6 +253,7 @@
                          <option value="TI">TI</option>
                          <option value="Comercial">Comercial</option>
                          <option value="Marketing">Marketing</option>
+                         <option value="Customer Success">Customer Success</option>
                        </select>
                     </div>
                     <!-- Rol dentro del departamento -->

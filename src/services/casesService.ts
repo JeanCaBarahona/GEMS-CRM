@@ -128,13 +128,18 @@ class CasesService {
     const formData = new FormData()
     
     Object.entries(caseData).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        if (Array.isArray(value)) {
-          // Para Multer, enviamos múltiples veces con la misma llave (sin [])
-          value.forEach(v => formData.append(key, v))
-        } else {
-          formData.append(key, value as string)
-        }
+      if (value === undefined || value === null) return
+      
+      if (key === 'archivos' && Array.isArray(value)) {
+        value.forEach(v => {
+          if (v instanceof File || v instanceof Blob) formData.append('archivos', v)
+        })
+      } else if ((key === 'asignado_a' || key === 'cliente_id') && typeof value === 'object') {
+        if ((value as any)._id) formData.append(key, (value as any)._id)
+      } else if (Array.isArray(value)) {
+        value.forEach(v => formData.append(key, v))
+      } else if (typeof value !== 'object' || value instanceof File || value instanceof Blob) {
+        formData.append(key, value as any)
       }
     })
 
@@ -153,12 +158,27 @@ class CasesService {
 
   // Actualizar caso
   async updateCase(id: string, caseData: Partial<Case>): Promise<Case> {
+    const formData = new FormData()
+    
+    Object.entries(caseData).forEach(([key, value]) => {
+      if (value === undefined || value === null) return
+      
+      if (key === 'archivos' && Array.isArray(value)) {
+        value.forEach(v => {
+          if (v instanceof File || v instanceof Blob) formData.append('archivos', v)
+        })
+      } else if ((key === 'asignado_a' || key === 'cliente_id') && typeof value === 'object') {
+        if ((value as any)._id) formData.append(key, (value as any)._id)
+      } else if (Array.isArray(value)) {
+        value.forEach(v => formData.append(key, v))
+      } else if (typeof value !== 'object' || value instanceof File || value instanceof Blob) {
+        formData.append(key, value as any)
+      }
+    })
+
     const response = await fetch(`${this.apiUrl}/${id}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(caseData),
+      body: formData,
     })
     
     if (!response.ok) {

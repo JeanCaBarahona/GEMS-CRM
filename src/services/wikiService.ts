@@ -44,12 +44,18 @@ class WikiService {
   async create(data: Partial<WikiArticle>): Promise<WikiArticle> {
     const formData = new FormData()
     Object.entries(data).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        if (Array.isArray(value)) {
-          value.forEach(v => formData.append(key, v))
-        } else {
-          formData.append(key, value as any)
-        }
+      if (value === undefined || value === null) return
+      
+      if (key === 'archivos' && Array.isArray(value)) {
+        value.forEach(v => {
+          if (v instanceof File || v instanceof Blob) formData.append('archivos', v)
+        })
+      } else if (key === 'autor' && typeof value === 'object') {
+        if ((value as any)._id) formData.append('autor', (value as any)._id)
+      } else if (Array.isArray(value)) {
+        value.forEach(v => formData.append(key, v))
+      } else if (typeof value !== 'object' || value instanceof File || value instanceof Blob) {
+        formData.append(key, value as any)
       }
     })
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-12 animate-fade-in">
     <!-- Header with Breadcrumbs & Title -->
     <div class="mb-8 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
       <div>
@@ -109,7 +109,7 @@
               </thead>
               <tbody class="divide-y divide-slate-50">
                 <tr 
-                  v-for="client in filteredClients" 
+                  v-for="client in paginatedClients" 
                   :key="client._id"
                   class="hover:bg-slate-50/80 transition-all group"
                 >
@@ -170,10 +170,44 @@
             </table>
           </div>
 
+          <!-- Pagination Control -->
+          <div v-if="filteredClients.length > itemsPerPage" class="px-8 py-4 bg-slate-50/50 border-t border-slate-50 flex items-center justify-between">
+            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              Mostrando {{ (currentPage - 1) * itemsPerPage + 1 }} - {{ Math.min(currentPage * itemsPerPage, filteredClients.length) }} de {{ filteredClients.length }}
+            </span>
+            <div class="flex items-center gap-1">
+              <button 
+                @click="currentPage--" 
+                :disabled="currentPage === 1"
+                class="p-2 text-slate-400 hover:text-primary-500 disabled:opacity-30 transition-colors"
+              >
+                <i class="fas fa-chevron-left text-xs"></i>
+              </button>
+              <div class="flex items-center gap-1">
+                <button 
+                  v-for="page in totalPages" 
+                  :key="page"
+                  @click="currentPage = page"
+                  :class="[currentPage === page ? 'bg-primary-500 text-white shadow-md shadow-primary-500/20' : 'text-slate-400 hover:bg-slate-100']"
+                  class="w-8 h-8 rounded-lg text-[10px] font-black transition-all"
+                >
+                  {{ page }}
+                </button>
+              </div>
+              <button 
+                @click="currentPage++" 
+                :disabled="currentPage === totalPages"
+                class="p-2 text-slate-400 hover:text-primary-500 disabled:opacity-30 transition-colors"
+              >
+                <i class="fas fa-chevron-right text-xs"></i>
+              </button>
+            </div>
+          </div>
+
           <!-- Mobile Card View -->
           <div class="md:hidden p-4 space-y-4">
             <div 
-              v-for="client in filteredClients" 
+              v-for="client in paginatedClients" 
               :key="client._id"
               class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-all active:scale-[0.98]"
             >
@@ -331,6 +365,12 @@ const sortBy = ref('name')
 const editingClient = ref<Client | null>(null)
 const clientToDelete = ref<Client | null>(null)
 
+// Pagination
+const currentPage = ref(1)
+const itemsPerPage = ref(10)
+
+const totalPages = computed(() => Math.ceil(filteredClients.value.length / itemsPerPage.value))
+
 const form = ref<ClientForm>({
   name: '',
   email: '',
@@ -367,6 +407,18 @@ const filteredClients = computed(() => {
         return 0
     }
   })
+})
+
+const paginatedClients = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
+  return filteredClients.value.slice(start, end)
+})
+
+// Reset pagination on search
+import { watch } from 'vue'
+watch([searchTerm, sortBy, activeTab], () => {
+  currentPage.value = 1
 })
 
 const resetForm = () => {

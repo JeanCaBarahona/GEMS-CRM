@@ -61,6 +61,7 @@
         </div>
       </div>
     </div>
+
     <!-- Main Content Area -->
     <div class="space-y-4 pb-20">
       <div v-if="activeTab === 'prospectos'" class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden p-8">
@@ -251,67 +252,6 @@
        >
          <i class="fas fa-chevron-right text-sm"></i>
        </button>
-    </div>
-v>
-
-          <!-- Mobile Card View -->
-          <div class="md:hidden p-4 space-y-4">
-            <div 
-              v-for="client in paginatedClients" 
-              :key="client._id"
-              class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-all active:scale-[0.98]"
-            >
-              <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-50">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center text-primary-600 font-black text-sm">
-                    {{ client.name.charAt(0).toUpperCase() }}
-                  </div>
-                  <div>
-                    <h3 class="text-slate-900 font-bold text-sm">{{ client.name }}</h3>
-                    <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">{{ client.company }}</p>
-                  </div>
-                </div>
-                <div class="flex gap-2">
-                  <PermissionGuard :permissions="['edit-clients']" :fallback="false">
-                    <button @click="editClient(client)" class="w-8 h-8 flex items-center justify-center text-slate-400 bg-slate-50 rounded-lg"><PencilIcon class="w-4 h-4" /></button>
-                  </PermissionGuard>
-                </div>
-              </div>
-              
-              <div class="space-y-2 mb-4">
-                <div class="flex items-center gap-2 text-xs text-slate-600 font-medium">
-                  <i class="fas fa-envelope text-slate-300 w-4"></i> {{ client.email }}
-                </div>
-                <div class="flex items-center gap-2 text-xs text-slate-600 font-medium">
-                  <i class="fas fa-phone text-slate-300 w-4"></i> {{ client.phone }}
-                </div>
-              </div>
-
-              <router-link :to="`/clients/${client._id}`" class="block w-full text-center py-2.5 bg-primary-50 text-primary-700 text-xs font-black uppercase tracking-widest rounded-xl transition-all active:bg-primary-100">
-                Ver Expediente
-              </router-link>
-            </div>
-          </div>
-          
-          <!-- Empty State -->
-          <div v-if="filteredClients.length === 0" class="flex-1 flex flex-col items-center justify-center p-20 text-center">
-            <div class="w-24 h-24 bg-slate-50 rounded-[2.5rem] flex items-center justify-center mb-6 text-slate-200">
-              <UserGroupIcon class="w-12 h-12" />
-            </div>
-            <h3 class="text-xl font-black text-slate-900 mb-2">
-              {{ searchTerm ? 'Sin coincidencias' : 'Directorio vacío' }}
-            </h3>
-            <p class="text-slate-400 text-sm font-medium max-w-xs mx-auto mb-8">
-              {{ searchTerm ? 'No encontramos ningún cliente que coincida con tu búsqueda. Intenta con otros términos.' : 'Aún no tienes clientes registrados en la plataforma. Comienza a construir tu base de contactos.' }}
-            </p>
-            <button v-if="!searchTerm" @click="showModal = true; editingClient = null; resetForm()" class="btn-primary">
-              <PlusIcon class="w-5 h-5" />
-              Añadir Primer Cliente
-            </button>
-            <button v-else @click="searchTerm = ''" class="btn-secondary btn-sm">Limpiar Búsqueda</button>
-          </div>
-        </div>
-      </div>
     </div>
     
     <!-- Create/Edit Modal -->

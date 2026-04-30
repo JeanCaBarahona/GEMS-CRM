@@ -102,8 +102,8 @@
        </div>
     </div>
 
-    <!-- Team List View (Premium & Clean) -->
-    <div class="space-y-2">
+    <!-- Team List View (Compact & Efficient) -->
+    <div class="space-y-2 pb-20">
       <!-- Header de Tabla Compacta -->
       <div class="px-8 py-3 flex items-center gap-6 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 mb-2">
         <div class="min-w-[280px]">Colaborador</div>

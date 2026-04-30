@@ -1,105 +1,93 @@
 <template>
   <div class="min-h-screen bg-[#F8FAFC] p-8 pb-24 font-['Inter',sans-serif]">
-    <!-- Header -->
-    <div class="mb-10 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-      <div>
-        <h1 class="text-4xl font-black text-slate-900 tracking-tight">Equipo</h1>
-        <p class="text-slate-400 text-sm font-medium">Gestión de usuarios y colaboradores del sistema.</p>
-      </div>
-      
-      <div class="flex items-center gap-3">
-        <!-- Stats Mini (Integrated) -->
-        <div class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-100 rounded-2xl shadow-sm">
-           <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
-           <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">{{ activeMembers }} Activos</span>
+    <!-- Top Controls & Departments (Minimalist) -->
+    <div class="flex flex-col gap-6 mb-8">
+      <!-- Departments Mini-Overview -->
+      <div class="flex flex-wrap items-center gap-3">
+        <div
+          v-for="dept in ['TI', 'Comercial', 'Marketing', 'Customer Success']"
+          :key="dept"
+          class="bg-white border border-slate-100 rounded-2xl px-4 py-2.5 flex items-center gap-3 shadow-sm hover:shadow-md transition-all group"
+        >
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center text-xs"
+            :class="{
+              'bg-indigo-50 text-indigo-500': dept === 'TI',
+              'bg-emerald-50 text-emerald-500': dept === 'Comercial',
+              'bg-orange-50 text-orange-500': dept === 'Marketing',
+              'bg-blue-50 text-blue-500': dept === 'Customer Success'
+            }"
+          >
+            <i :class="{
+              'fas fa-laptop-code': dept === 'TI',
+              'fas fa-handshake': dept === 'Comercial',
+              'fas fa-bullhorn': dept === 'Marketing',
+              'fas fa-headset': dept === 'Customer Success'
+            }"></i>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">{{ dept }}</span>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold text-slate-700 leading-none">
+                {{ teamStore.members.filter(m => m.department === dept).length }}
+              </span>
+              <!-- Mini Leaders Avatars -->
+              <div class="flex -space-x-2 ml-1">
+                <div 
+                  v-for="leader in teamStore.members.filter(m => m.department === dept && m.departmentRole === 'leader').slice(0, 3)"
+                  :key="leader._id"
+                  class="w-4 h-4 rounded-full bg-amber-400 border-2 border-white flex items-center justify-center text-[6px] font-black text-white shadow-sm"
+                  :title="leader.name"
+                >
+                  {{ leader.name?.charAt(0) }}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <PermissionGuard :permissions="['create-team']" :fallback="false">
-          <button 
-            @click="showCreateModal = true"
-            class="w-10 h-10 bg-violet-600 hover:bg-violet-700 text-white rounded-xl shadow-lg shadow-violet-200 transition-all active:scale-95 flex items-center justify-center"
-            title="Agregar Miembro"
-          >
-            <i class="fas fa-plus text-xs"></i>
-          </button>
-        </PermissionGuard>
-      </div>
-    </div>
-
-    <!-- Department Leaders Overview -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-      <div
-        v-for="dept in ['TI', 'Comercial', 'Marketing', 'Customer Success']"
-        :key="dept"
-        class="bg-white border border-slate-100 rounded-[2rem] p-5 shadow-sm hover:shadow-md transition-all"
-      >
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl flex items-center justify-center"
-              :class="{
-                'bg-indigo-50 text-indigo-500': dept === 'TI',
-                'bg-emerald-50 text-emerald-500': dept === 'Comercial',
-                'bg-orange-50 text-orange-500': dept === 'Marketing',
-                'bg-blue-50 text-blue-500': dept === 'Customer Success'
-              }"
+        <!-- Add & Stats (Floating right on desktop) -->
+        <div class="md:ml-auto flex items-center gap-2">
+           <div class="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-100 rounded-xl shadow-sm">
+             <div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+             <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">{{ activeMembers }} Activos</span>
+           </div>
+           <PermissionGuard :permissions="['create-team']" :fallback="false">
+            <button 
+              @click="showCreateModal = true"
+              class="w-9 h-9 bg-violet-600 hover:bg-violet-700 text-white rounded-xl shadow-lg shadow-violet-200 transition-all active:scale-95 flex items-center justify-center"
             >
-              <i :class="{
-                'fas fa-laptop-code': dept === 'TI',
-                'fas fa-handshake': dept === 'Comercial',
-                'fas fa-bullhorn': dept === 'Marketing',
-                'fas fa-headset': dept === 'Customer Success'
-              }"></i>
-            </div>
-            <span class="text-xs font-black text-slate-700 uppercase tracking-widest">{{ dept }}</span>
-          </div>
-          <span class="text-[10px] font-black text-slate-400">
-            {{ teamStore.members.filter(m => m.department === dept).length }}
-          </span>
-        </div>
-        <!-- Leaders -->
-        <div class="space-y-2">
-          <div
-            v-for="leader in teamStore.members.filter(m => m.department === dept && m.departmentRole === 'leader')"
-            :key="leader._id"
-            class="flex items-center gap-2 p-2 bg-amber-50 border border-amber-100 rounded-xl"
-          >
-            <div class="w-7 h-7 bg-amber-400 rounded-full flex items-center justify-center text-[9px] font-black text-white">
-              {{ leader.name?.charAt(0) }}
-            </div>
-            <div class="flex-1 min-w-0">
-              <p class="text-[11px] font-black text-slate-700 truncate">{{ leader.name }}</p>
-            </div>
-            <i class="fas fa-crown text-amber-400 text-[10px]"></i>
-          </div>
+              <i class="fas fa-plus text-xs"></i>
+            </button>
+          </PermissionGuard>
         </div>
       </div>
-    </div>
 
-    <!-- Filters & Search (More Compact) -->
-    <div class="bg-white/80 backdrop-blur-xl border border-slate-100 rounded-[2rem] p-3 mb-16 shadow-xl shadow-slate-200/40 flex flex-col md:flex-row items-center gap-4">
-       <div class="flex-1 relative group w-full">
-          <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs group-focus-within:text-violet-500 transition-colors"></i>
-          <input 
-            v-model="searchQuery" 
-            placeholder="Buscar por nombre, email o departamento..."
-            class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border-none rounded-xl text-xs font-medium focus:ring-4 focus:ring-violet-500/5 transition-all outline-none"
-          >
-       </div>
-       
-       <div class="flex items-center gap-3 w-full md:w-auto">
-          <select v-model="selectedRole" class="px-4 py-2.5 bg-slate-50 border-none rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 outline-none focus:ring-4 focus:ring-violet-500/5 transition-all cursor-pointer">
-             <option value="">Todos los Roles</option>
-             <option v-for="role in allAvailableRoles" :key="role._id || role.name" :value="role.name">
-                {{ getRoleDisplayName(role.name) }}
-             </option>
-          </select>
+      <!-- Filters & Search (Ultra-Compact) -->
+      <div class="bg-white border border-slate-100 rounded-2xl p-2 shadow-sm flex flex-col md:flex-row items-center gap-3">
+         <div class="flex-1 relative group w-full">
+            <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] group-focus-within:text-violet-500 transition-colors"></i>
+            <input 
+              v-model="searchQuery" 
+              placeholder="Buscar colaborador..."
+              class="w-full pl-9 pr-4 py-2 bg-slate-50 border-none rounded-xl text-[11px] font-medium focus:ring-4 focus:ring-violet-500/5 transition-all outline-none"
+            >
+         </div>
+         
+         <div class="flex items-center gap-2 w-full md:w-auto">
+            <select v-model="selectedRole" class="px-4 py-2 bg-slate-50 border-none rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500 outline-none focus:ring-4 focus:ring-violet-500/5 transition-all cursor-pointer">
+               <option value="">Roles</option>
+               <option v-for="role in allAvailableRoles" :key="role._id || role.name" :value="role.name">
+                  {{ getRoleDisplayName(role.name) }}
+               </option>
+            </select>
 
-          <select v-model="selectedStatus" class="px-4 py-2.5 bg-slate-50 border-none rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 outline-none focus:ring-4 focus:ring-violet-500/5 transition-all cursor-pointer">
-             <option value="">Estado</option>
-             <option value="true">Activos</option>
-             <option value="false">Inactivos</option>
-          </select>
-       </div>
+            <select v-model="selectedStatus" class="px-4 py-2 bg-slate-50 border-none rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500 outline-none focus:ring-4 focus:ring-violet-500/5 transition-all cursor-pointer">
+               <option value="">Estado</option>
+               <option value="true">Activos</option>
+               <option value="false">Inactivos</option>
+            </select>
+         </div>
+      </div>
     </div>
 
     <!-- Team List View (Compact & Efficient) -->

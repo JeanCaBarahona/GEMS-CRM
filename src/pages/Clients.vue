@@ -1,17 +1,10 @@
 <template>
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-12 animate-fade-in">
-    <!-- Header with Breadcrumbs & Title -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-40 animate-fade-in">
+    <!-- Header with Title -->
     <div class="mb-8 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
       <div>
-        <div class="flex items-center gap-2 text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2">
-          <i class="fas fa-home"></i>
-          <i class="fas fa-chevron-right text-[8px]"></i>
-          <span>Comercial</span>
-          <i class="fas fa-chevron-right text-[8px]"></i>
-          <span class="text-primary-500">Clientes</span>
-        </div>
-        <h1 class="text-3xl font-black text-slate-900 tracking-tight">Gestión de Clientes</h1>
-        <p class="text-slate-400 text-sm font-medium">Directorio centralizado de contactos y empresas.</p>
+        <h1 class="text-4xl font-black text-slate-900 tracking-tight">Clientes</h1>
+        <p class="text-slate-400 text-sm font-medium">Gestiona tus contactos y relaciones comerciales.</p>
       </div>
       
       <PermissionGuard :permissions="['create-clients']" :fallback="false">
@@ -20,7 +13,7 @@
           class="btn-primary"
         >
           <PlusIcon class="w-5 h-5" />
-          Nuevo Cliente
+          Añadir Cliente
         </button>
       </PermissionGuard>
     </div>
@@ -68,14 +61,13 @@
         </div>
       </div>
     </div>
-
     <!-- Main Content Area -->
-    <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden flex flex-col min-h-[400px]">
-      <div v-if="activeTab === 'prospectos'" class="flex-1 overflow-y-auto bg-slate-50 p-8">
+    <div class="space-y-4 pb-20">
+      <div v-if="activeTab === 'prospectos'" class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden p-8">
         <ProspectAIForm />
       </div>
           
-      <div v-else class="flex-1 flex flex-col relative">
+      <div v-else class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden flex flex-col min-h-[400px] relative">
         <div v-if="loading" class="flex items-center justify-center absolute inset-0 z-10 bg-white/60 backdrop-blur-[2px]">
           <div class="flex flex-col items-center gap-3">
             <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-500"></div>
@@ -113,7 +105,7 @@
                   :key="client._id"
                   class="hover:bg-slate-50/80 transition-all group"
                 >
-                  <td class="px-8 py-5 whitespace-nowrap">
+                  <td class="px-8 py-6 whitespace-nowrap">
                     <div class="flex items-center gap-4">
                       <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-50 to-primary-100/50 flex items-center justify-center text-primary-600 font-black text-sm shadow-sm ring-1 ring-primary-100">
                         {{ client.name.charAt(0).toUpperCase() }}
@@ -124,13 +116,13 @@
                       </div>
                     </div>
                   </td>
-                  <td class="px-8 py-5 whitespace-nowrap">
+                  <td class="px-8 py-6 whitespace-nowrap">
                     <div class="flex items-center gap-2">
                       <div class="w-2 h-2 rounded-full bg-slate-200"></div>
                       <span class="text-slate-700 text-xs font-black">{{ client.company }}</span>
                     </div>
                   </td>
-                  <td class="px-8 py-5 whitespace-nowrap">
+                  <td class="px-8 py-6 whitespace-nowrap">
                     <div class="space-y-1">
                       <div class="text-slate-600 text-[11px] font-bold flex items-center gap-2">
                         <i class="fas fa-envelope text-slate-300 w-3 text-center"></i> 
@@ -142,13 +134,13 @@
                       </div>
                     </div>
                   </td>
-                  <td class="px-8 py-5 whitespace-nowrap">
+                  <td class="px-8 py-6 whitespace-nowrap">
                     <div class="flex flex-col items-center">
                       <span class="text-slate-700 text-xs font-bold">{{ formatDate(client.createdAt) }}</span>
                       <span class="text-slate-400 text-[9px] font-bold uppercase tracking-widest">Confirmado</span>
                     </div>
                   </td>
-                  <td class="px-8 py-5 whitespace-nowrap text-right">
+                  <td class="px-8 py-6 whitespace-nowrap text-right">
                     <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
                       <router-link :to="`/clients/${client._id}`" class="p-2 text-slate-400 hover:text-primary-500 hover:bg-primary-50 rounded-xl transition-all" title="Ver Perfil">
                         <i class="fas fa-arrow-right text-sm"></i>
@@ -170,39 +162,97 @@
             </table>
           </div>
 
-          <!-- Pagination Control -->
-          <div v-if="filteredClients.length > itemsPerPage" class="px-8 py-4 bg-slate-50/50 border-t border-slate-50 flex items-center justify-between">
-            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-              Mostrando {{ (currentPage - 1) * itemsPerPage + 1 }} - {{ Math.min(currentPage * itemsPerPage, filteredClients.length) }} de {{ filteredClients.length }}
-            </span>
-            <div class="flex items-center gap-1">
-              <button 
-                @click="currentPage--" 
-                :disabled="currentPage === 1"
-                class="p-2 text-slate-400 hover:text-primary-500 disabled:opacity-30 transition-colors"
-              >
-                <i class="fas fa-chevron-left text-xs"></i>
-              </button>
-              <div class="flex items-center gap-1">
-                <button 
-                  v-for="page in totalPages" 
-                  :key="page"
-                  @click="currentPage = page"
-                  :class="[currentPage === page ? 'bg-primary-500 text-white shadow-md shadow-primary-500/20' : 'text-slate-400 hover:bg-slate-100']"
-                  class="w-8 h-8 rounded-lg text-[10px] font-black transition-all"
-                >
-                  {{ page }}
-                </button>
+          <!-- Mobile Card View -->
+          <div class="md:hidden p-4 space-y-4">
+            <div 
+              v-for="client in paginatedClients" 
+              :key="client._id"
+              class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-all active:scale-[0.98]"
+            >
+              <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-50">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center text-primary-600 font-black text-sm">
+                    {{ client.name.charAt(0).toUpperCase() }}
+                  </div>
+                  <div>
+                    <h3 class="text-slate-900 font-bold text-sm">{{ client.name }}</h3>
+                    <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">{{ client.company }}</p>
+                  </div>
+                </div>
+                <div class="flex gap-2">
+                  <PermissionGuard :permissions="['edit-clients']" :fallback="false">
+                    <button @click="editClient(client)" class="w-8 h-8 flex items-center justify-center text-slate-400 bg-slate-50 rounded-lg"><PencilIcon class="w-4 h-4" /></button>
+                  </PermissionGuard>
+                </div>
               </div>
-              <button 
-                @click="currentPage++" 
-                :disabled="currentPage === totalPages"
-                class="p-2 text-slate-400 hover:text-primary-500 disabled:opacity-30 transition-colors"
-              >
-                <i class="fas fa-chevron-right text-xs"></i>
-              </button>
+              
+              <div class="space-y-2 mb-4">
+                <div class="flex items-center gap-2 text-xs text-slate-600 font-medium">
+                  <i class="fas fa-envelope text-slate-300 w-4"></i> {{ client.email }}
+                </div>
+                <div class="flex items-center gap-2 text-xs text-slate-600 font-medium">
+                  <i class="fas fa-phone text-slate-300 w-4"></i> {{ client.phone }}
+                </div>
+              </div>
+
+              <router-link :to="`/clients/${client._id}`" class="block w-full text-center py-2.5 bg-primary-50 text-primary-700 text-xs font-black uppercase tracking-widest rounded-xl transition-all active:bg-primary-100">
+                Ver Expediente
+              </router-link>
             </div>
           </div>
+          
+          <!-- Empty State -->
+          <div v-if="filteredClients.length === 0" class="flex-1 flex flex-col items-center justify-center p-20 text-center">
+            <div class="w-24 h-24 bg-slate-50 rounded-[2.5rem] flex items-center justify-center mb-6 text-slate-200">
+              <UserGroupIcon class="w-12 h-12" />
+            </div>
+            <h3 class="text-xl font-black text-slate-900 mb-2">
+              {{ searchTerm ? 'Sin coincidencias' : 'Directorio vacío' }}
+            </h3>
+            <p class="text-slate-400 text-sm font-medium max-w-xs mx-auto mb-8">
+              {{ searchTerm ? 'No encontramos ningún cliente que coincida con tu búsqueda. Intenta con otros términos.' : 'Aún no tienes clientes registrados en la plataforma. Comienza a construir tu base de contactos.' }}
+            </p>
+            <button v-if="!searchTerm" @click="showModal = true; editingClient = null; resetForm()" class="btn-primary">
+              <PlusIcon class="w-5 h-5" />
+              Añadir Primer Cliente
+            </button>
+            <button v-else @click="searchTerm = ''" class="btn-secondary btn-sm">Limpiar Búsqueda</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination Controls (Premium Style - Outside) -->
+    <div v-if="totalPages > 1" class="mt-12 flex items-center justify-center gap-3">
+       <button 
+         @click="currentPage--" 
+         :disabled="currentPage === 1"
+         class="w-12 h-12 bg-white border border-slate-100 rounded-2xl flex items-center justify-center text-slate-400 hover:text-primary-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm shadow-slate-200/50"
+       >
+         <i class="fas fa-chevron-left text-sm"></i>
+       </button>
+       
+       <div class="flex items-center gap-2 bg-white border border-slate-100 p-2 rounded-2xl shadow-sm shadow-slate-200/50">
+          <button 
+            v-for="page in totalPages" 
+            :key="page"
+            @click="currentPage = page"
+            :class="currentPage === page ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'text-slate-400 hover:bg-slate-50'"
+            class="w-10 h-10 rounded-xl text-xs font-black transition-all"
+          >
+            {{ page }}
+          </button>
+       </div>
+
+       <button 
+         @click="currentPage++" 
+         :disabled="currentPage === totalPages"
+         class="w-12 h-12 bg-white border border-slate-100 rounded-2xl flex items-center justify-center text-slate-400 hover:text-primary-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm shadow-slate-200/50"
+       >
+         <i class="fas fa-chevron-right text-sm"></i>
+       </button>
+    </div>
+v>
 
           <!-- Mobile Card View -->
           <div class="md:hidden p-4 space-y-4">

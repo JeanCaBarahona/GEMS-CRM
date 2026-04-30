@@ -1,11 +1,15 @@
 <template>
   <div class="min-h-screen bg-[#F8FAFC] p-8 pb-24 font-['Inter',sans-serif]">
-    <!-- Top Bar Controls -->
-    <div class="flex flex-col md:flex-row md:items-center justify-end gap-6 mb-10">
+    <!-- Header -->
+    <div class="mb-10 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+      <div>
+        <h1 class="text-4xl font-black text-slate-900 tracking-tight">Equipo</h1>
+        <p class="text-slate-400 text-sm font-medium">Gestión de usuarios y colaboradores del sistema.</p>
+      </div>
       
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-3">
         <!-- Stats Mini (Integrated) -->
-        <div class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-100 rounded-2xl shadow-sm">
+        <div class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-100 rounded-2xl shadow-sm">
            <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">{{ activeMembers }} Activos</span>
         </div>
@@ -13,17 +17,17 @@
         <PermissionGuard :permissions="['create-team']" :fallback="false">
           <button 
             @click="showCreateModal = true"
-            class="px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl text-sm font-black uppercase tracking-widest shadow-lg shadow-violet-200 transition-all active:scale-95 flex items-center gap-2"
+            class="w-10 h-10 bg-violet-600 hover:bg-violet-700 text-white rounded-xl shadow-lg shadow-violet-200 transition-all active:scale-95 flex items-center justify-center"
+            title="Agregar Miembro"
           >
-            <i class="fas fa-plus"></i>
-            Agregar Miembro
+            <i class="fas fa-plus text-xs"></i>
           </button>
         </PermissionGuard>
       </div>
     </div>
 
     <!-- Department Leaders Overview -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
       <div
         v-for="dept in ['TI', 'Comercial', 'Marketing', 'Customer Success']"
         :key="dept"
@@ -49,7 +53,7 @@
             <span class="text-xs font-black text-slate-700 uppercase tracking-widest">{{ dept }}</span>
           </div>
           <span class="text-[10px] font-black text-slate-400">
-            {{ teamStore.members.filter(m => m.department === dept).length }} miembros
+            {{ teamStore.members.filter(m => m.department === dept).length }}
           </span>
         </div>
         <!-- Leaders -->
@@ -67,34 +71,30 @@
             </div>
             <i class="fas fa-crown text-amber-400 text-[10px]"></i>
           </div>
-          <p v-if="!teamStore.members.filter(m => m.department === dept && (m as any).departmentRole === 'leader').length"
-            class="text-[10px] text-slate-400 italic text-center py-1">
-            Sin líder asignado
-          </p>
         </div>
       </div>
     </div>
 
-    <!-- Filters & Search (Premium Glass) -->
-    <div class="bg-white/80 backdrop-blur-xl border border-slate-100 rounded-[2.5rem] p-6 mb-10 shadow-xl shadow-slate-200/50 flex flex-col md:flex-row items-center gap-6">
+    <!-- Filters & Search (More Compact) -->
+    <div class="bg-white/80 backdrop-blur-xl border border-slate-100 rounded-[2rem] p-3 mb-16 shadow-xl shadow-slate-200/40 flex flex-col md:flex-row items-center gap-4">
        <div class="flex-1 relative group w-full">
-          <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-violet-500 transition-colors"></i>
+          <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs group-focus-within:text-violet-500 transition-colors"></i>
           <input 
             v-model="searchQuery" 
             placeholder="Buscar por nombre, email o departamento..."
-            class="w-full pl-12 pr-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-medium focus:ring-4 focus:ring-violet-500/5 transition-all outline-none"
+            class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border-none rounded-xl text-xs font-medium focus:ring-4 focus:ring-violet-500/5 transition-all outline-none"
           >
        </div>
        
-       <div class="flex items-center gap-4 w-full md:w-auto">
-          <select v-model="selectedRole" class="px-6 py-4 bg-slate-50 border-none rounded-2xl text-xs font-black uppercase tracking-widest text-slate-500 outline-none focus:ring-4 focus:ring-violet-500/5 transition-all cursor-pointer">
+       <div class="flex items-center gap-3 w-full md:w-auto">
+          <select v-model="selectedRole" class="px-4 py-2.5 bg-slate-50 border-none rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 outline-none focus:ring-4 focus:ring-violet-500/5 transition-all cursor-pointer">
              <option value="">Todos los Roles</option>
              <option v-for="role in allAvailableRoles" :key="role._id || role.name" :value="role.name">
                 {{ getRoleDisplayName(role.name) }}
              </option>
           </select>
 
-          <select v-model="selectedStatus" class="px-6 py-4 bg-slate-50 border-none rounded-2xl text-xs font-black uppercase tracking-widest text-slate-500 outline-none focus:ring-4 focus:ring-violet-500/5 transition-all cursor-pointer">
+          <select v-model="selectedStatus" class="px-4 py-2.5 bg-slate-50 border-none rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 outline-none focus:ring-4 focus:ring-violet-500/5 transition-all cursor-pointer">
              <option value="">Estado</option>
              <option value="true">Activos</option>
              <option value="false">Inactivos</option>

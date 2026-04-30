@@ -365,7 +365,11 @@
                   <button @click="insertText('# ')" class="text-xs font-bold text-slate-400 hover:text-slate-900">Título</button>
                   <button @click="insertText('```\n\n```')" class="text-xs font-bold text-slate-400 hover:text-slate-900">Bloque Código</button>
                 </div>
+                <div v-if="wikiPreviewMode" class="w-full min-h-[400px] p-6 bg-white rounded-xl border border-slate-200 overflow-y-auto mb-4">
+                   <div v-html="formatWikiContent(selectedWiki.contenido)" class="text-sm text-slate-700 leading-loose font-medium document-content"></div>
+                </div>
                 <textarea 
+                  v-else
                   v-model="selectedWiki.contenido" 
                   ref="wikiEditor"
                   rows="20" 
@@ -373,7 +377,11 @@
                   placeholder="Comienza a escribir tu documentación..."
                 ></textarea>
                 <div class="flex justify-end gap-3 mt-6 pt-6 border-t border-slate-100">
-                  <div class="mr-auto">
+                  <div class="mr-auto flex gap-2">
+                    <button @click="wikiPreviewMode = !wikiPreviewMode" class="px-4 py-2 bg-slate-100 text-slate-600 text-[10px] font-bold rounded-lg hover:bg-slate-200 transition-all flex items-center gap-2">
+                      <i :class="wikiPreviewMode ? 'fas fa-edit' : 'fas fa-eye'"></i>
+                      {{ wikiPreviewMode ? 'Volver a Editar' : 'Vista Previa' }}
+                    </button>
                     <label class="cursor-pointer px-4 py-2 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-lg hover:bg-slate-200 transition-all flex items-center gap-2">
                       <i class="fas fa-paperclip"></i>
                       Adjuntar archivos
@@ -442,8 +450,12 @@
           
           <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-[#FBFBFA]">
             <div>
-              <h3 class="text-lg font-bold text-slate-900 leading-none mb-1">{{ viewMode === 'cases' ? 'Nuevo Proyecto de Caso' : 'Nuevo Artículo Wiki' }}</h3>
-              <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Crear nueva página en {{ viewMode }}</p>
+              <h3 class="text-lg font-bold text-slate-900 leading-none mb-1">
+                {{ modalMode === 'create' ? (viewMode === 'cases' ? 'Nuevo Proyecto' : 'Nuevo Artículo') : (viewMode === 'cases' ? 'Editar Proyecto' : 'Editar Artículo') }}
+              </h3>
+              <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                {{ modalMode === 'create' ? 'Crear nueva página en' : 'Actualizar página en' }} {{ viewMode }}
+              </p>
             </div>
             <button @click="showCreateModal = false" class="w-8 h-8 hover:bg-slate-200 rounded-lg flex items-center justify-center text-slate-400 transition-colors"><i class="fas fa-times"></i></button>
           </div>
@@ -546,8 +558,16 @@
                   </div>
 
                   <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Contenido Técnico</label>
-                    <textarea v-model="newWiki.contenido" rows="10" placeholder="Pega el código o escribe el proceso..." class="w-full p-5 bg-[#1E1E1E] text-emerald-400 font-mono text-xs rounded-xl border-none outline-none"></textarea>
+                    <div class="flex items-center justify-between pl-1">
+                      <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Contenido Técnico</label>
+                      <button @click="wikiPreviewMode = !wikiPreviewMode" class="text-[9px] font-bold text-primary-500 hover:text-primary-600 transition-colors">
+                        {{ wikiPreviewMode ? 'Volver al Editor' : 'Ver Vista Previa' }}
+                      </button>
+                    </div>
+                    <div v-if="wikiPreviewMode" class="w-full min-h-[300px] p-5 bg-white border border-slate-100 rounded-xl overflow-y-auto">
+                      <div v-html="formatWikiContent(newWiki.contenido)" class="text-xs text-slate-700 leading-relaxed font-medium"></div>
+                    </div>
+                    <textarea v-else v-model="newWiki.contenido" rows="10" placeholder="Pega el código o escribe el proceso..." class="w-full p-5 bg-[#1E1E1E] text-emerald-400 font-mono text-xs rounded-xl border-none outline-none"></textarea>
                   </div>
                 </div>
              </template>
@@ -555,7 +575,12 @@
 
           <div class="p-6 bg-[#FBFBFA] border-t border-slate-100 flex gap-4">
              <button @click="showCreateModal = false" class="flex-1 py-3 text-xs font-bold text-slate-500 hover:bg-slate-200/50 rounded-xl transition-all">Cerrar</button>
-             <button @click="viewMode === 'cases' ? handleCreateCase() : handleCreateWiki()" class="flex-1 py-3 bg-slate-900 text-white text-xs font-bold rounded-xl shadow-xl hover:bg-slate-800 transition-all active:scale-[0.98]">Publicar Página</button>
+             <button 
+               @click="modalMode === 'create' ? (viewMode === 'cases' ? handleCreateCase() : handleCreateWiki()) : (viewMode === 'cases' ? handleUpdateCase() : handleUpdateWiki())" 
+               class="flex-1 py-3 bg-slate-900 text-white text-xs font-bold rounded-xl shadow-xl hover:bg-slate-800 transition-all active:scale-[0.98]"
+             >
+               {{ modalMode === 'create' ? 'Publicar Página' : 'Guardar Cambios' }}
+             </button>
           </div>
        </div>
     </div>
@@ -619,6 +644,8 @@ const showCreateModal = ref(false)
 const showAddDailyLog = ref(false)
 const wikiTagsRaw = ref('')
 const wikiEditor = ref<HTMLTextAreaElement | null>(null)
+const wikiPreviewMode = ref(false)
+const modalMode = ref<'create' | 'edit'>('create')
 
 // Form State
 const newCase = ref({ titulo: '', tipo: 'seguimiento' as any, prioridad: 'media' as any, descripcion: '', cliente_id: '', categoria: '', tags: [] as string[], archivos: [] as File[] })
@@ -697,7 +724,15 @@ const toggleGroup = (name: string) => {
 }
 
 const openCreateModal = () => {
+  modalMode.value = 'create'
+  resetForm()
   showCreateModal.value = true
+}
+
+const resetForm = () => {
+  newCase.value = { titulo: '', tipo: 'seguimiento', prioridad: 'media', descripcion: '', cliente_id: '', categoria: '', tags: [], archivos: [] }
+  newWiki.value = { titulo: '', categoria: 'proceso', contenido: '', descripcion: '', tags: [], archivos: [] }
+  wikiTagsRaw.value = ''
 }
 
 const openCreateWiki = () => {
@@ -820,7 +855,25 @@ const wrapSelection = (symbol: string) => {
   }
 }
 
-const openEditCase = () => { /* Logic to open full editor or inline */ }
+const openEditCase = () => {
+  if (!selectedCase.value) return
+  modalMode.value = 'edit'
+  newCase.value = { ...selectedCase.value, archivos: [] } // No enviamos archivos previos por ahora
+  showCreateModal.value = true
+}
+
+const handleUpdateCase = async () => {
+  if (!selectedCase.value?._id) return
+  showLoading('Actualizando caso...')
+  try {
+    const updated = await casesService.updateCase(selectedCase.value._id, newCase.value as any)
+    const idx = cases.value.findIndex(c => c._id === updated._id)
+    if (idx !== -1) cases.value[idx] = updated
+    selectedCase.value = updated
+    showCreateModal.value = false
+    showSuccess('Éxito', 'Caso actualizado correctamente.')
+  } catch (err: any) { showError('Error', err.message) } finally { closeLoading() }
+}
 const deleteCurrentCase = async () => {
   if (!selectedCase.value?._id) return
   const result = await confirmDelete(selectedCase.value.titulo)

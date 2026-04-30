@@ -74,6 +74,14 @@
          </div>
          
          <div class="flex items-center gap-2 w-full md:w-auto">
+            <select v-model="selectedDepartment" class="px-4 py-2 bg-slate-50 border-none rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500 outline-none focus:ring-4 focus:ring-violet-500/5 transition-all cursor-pointer">
+               <option value="">Departamentos</option>
+               <option value="TI">TI</option>
+               <option value="Comercial">Comercial</option>
+               <option value="Marketing">Marketing</option>
+               <option value="Customer Success">Customer Success</option>
+            </select>
+
             <select v-model="selectedRole" class="px-4 py-2 bg-slate-50 border-none rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500 outline-none focus:ring-4 focus:ring-violet-500/5 transition-all cursor-pointer">
                <option value="">Roles</option>
                <option v-for="role in allAvailableRoles" :key="role._id || role.name" :value="role.name">
@@ -308,6 +316,7 @@ const { confirmDelete, showSuccess, showError } = useNotifications()
 const searchQuery = ref('')
 const selectedRole = ref('')
 const selectedStatus = ref('')
+const selectedDepartment = ref('')
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
 const isSubmitting = ref(false)
@@ -375,6 +384,10 @@ const filteredMembers = computed(() => {
   if (selectedStatus.value) {
     const isActive = selectedStatus.value === 'true'
     filtered = filtered.filter(member => member.isActive === isActive)
+  }
+
+  if (selectedDepartment.value) {
+    filtered = filtered.filter(member => member.department === selectedDepartment.value)
   }
 
   return filtered.sort((a,b) => (a.isActive === b.isActive) ? 0 : a.isActive ? -1 : 1)

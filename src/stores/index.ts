@@ -635,6 +635,30 @@ export const useTeamStore = defineStore('team', {
       }
     },
     
+    async updateMemberPassword(memberId: string, password: string) {
+      this.loading = true
+      try {
+        const response = await axios.patch(`${API_BASE_URL}/team/${memberId}/password`, { password }, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        })
+        
+        if (response.data.success) {
+          this.error = null
+          return true
+        } else {
+          throw new Error(response.data.message || 'Error updating password')
+        }
+      } catch (error: any) {
+        this.error = error.response?.data?.message || error.message || 'Error updating password'
+        console.error('Error updating password:', error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+    
     async deleteMember(memberId: string) {
       this.loading = true
       try {

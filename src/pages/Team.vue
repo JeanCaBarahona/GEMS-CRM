@@ -231,9 +231,11 @@
                       <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Correo Electrónico</label>
                       <input v-model="formData.email" type="email" required class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm focus:ring-4 focus:ring-violet-500/5 outline-none transition-all">
                    </div>
-                   <div v-if="showCreateModal" class="space-y-2">
-                      <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Contraseña Temporal</label>
-                      <input v-model="formData.password" type="password" required class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm focus:ring-4 focus:ring-violet-500/5 outline-none transition-all">
+                   <div v-if="showCreateModal || (showEditModal && authStore.user?.role === 'admin')" class="space-y-2">
+                      <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">
+                        {{ showCreateModal ? 'Contraseña Temporal' : 'Cambiar Contraseña (Opcional)' }}
+                      </label>
+                      <input v-model="formData.password" type="password" :required="showCreateModal" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm focus:ring-4 focus:ring-violet-500/5 outline-none transition-all">
                    </div>
                 </div>
 
@@ -466,6 +468,17 @@ const submitForm = async () => {
     } else if (editingMember.value) {
       const { password, ...updateData } = formData
       await teamStore.updateMember(editingMember.value._id!, updateData)
+      
+      // Si se proporcionó una contraseña y el usuario es admin, actualizarla
+      if (password && authStore.user?.role === 'admin') {
+        if (password.length < 6) {
+          showError('Validación', 'La nueva contraseña debe tener al menos 6 caracteres')
+          isSubmitting.value = false
+          return
+        }
+        await teamStore.updateMemberPassword(editingMember.value._id!, password)
+        showSuccess('Contraseña', 'La contraseña ha sido actualizada correctamente')
+      }
     }
     closeModal()
   } catch (error: any) {

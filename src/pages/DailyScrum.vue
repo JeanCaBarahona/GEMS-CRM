@@ -240,13 +240,14 @@ const authStore = useAuthStore()
 const API_URL = API_CONFIG.BASE_URL.replace('/api', '')
 
 const dailyTasks = computed(() => {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  
   return props.activities.filter((t: any) => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
     const updated = new Date(t.updatedAt)
     const hasActive = t.activeSessions && t.activeSessions.length > 0
-    const isTodayOrActive = updated >= today || hasActive
+    const isInProgress = t.status === 'in-progress'
+    const isTodayOrActive = updated >= today || hasActive || isInProgress
     
     // Filtrar si el asignado es un cliente
     const isAssignedToClient = Array.isArray(t.assignedTo) && t.assignedTo.some((u: any) => {

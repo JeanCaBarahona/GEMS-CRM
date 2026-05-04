@@ -2622,16 +2622,34 @@ const filteredActivities = computed(() => {
     filtered = filtered.filter(activity => activity.status === selectedStatus.value)
   }
 
-  // Filtro por rango de fechas
-  if (startDate.value) {
-    const start = new Date(startDate.value)
-    start.setHours(0, 0, 0, 0)
-    filtered = filtered.filter(a => new Date(a.date) >= start)
-  }
-  if (endDate.value) {
-    const end = new Date(endDate.value)
-    end.setHours(23, 59, 59, 999)
-    filtered = filtered.filter(a => new Date(a.date) <= end)
+  // Filtro por rango de fechas (Mejorado: detecta solapamiento)
+  if (startDate.value || endDate.value) {
+    const filterStart = startDate.value ? new Date(startDate.value) : new Date(0);
+    if (startDate.value) filterStart.setHours(0, 0, 0, 0);
+    
+    const filterEnd = endDate.value ? new Date(endDate.value) : new Date(8640000000000000);
+    if (endDate.value) filterEnd.setHours(23, 59, 59, 999);
+
+    const today = new Date();
+
+    filtered = filtered.filter(a => {
+      const taskStart = new Date(a.date);
+      // Si no hay dueDate, asumimos que dura el mismo día que empezó
+      const taskEnd = a.dueDate ? new Date(a.dueDate) : new Date(a.date);
+      
+      // Ajustar horas para comparación de días completos
+      taskStart.setHours(0,0,0,0);
+      taskEnd.setHours(23,59,59,999);
+
+      // Una tarea es relevante si hay intersección entre [taskStart, taskEnd] y [filterStart, filterEnd]
+      const overlaps = taskStart <= filterEnd && taskEnd >= filterStart;
+      
+      // O si está en progreso actualmente y el rango incluye hoy
+      const isTodayInRange = today >= filterStart && today <= filterEnd;
+      const isActiveNow = a.status === 'in-progress' && isTodayInRange;
+
+      return overlaps || isActiveNow;
+    });
   }
 
   // Filtrar por cliente

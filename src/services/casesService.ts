@@ -254,7 +254,7 @@ class CasesService {
   }
 
   // Agregar comentario
-  async addComment(caseId: string, comment: Partial<CaseComment>): Promise<CaseComment> {
+  async addComment(caseId: string, comment: Partial<CaseComment>): Promise<Case> {
     const response = await fetch(`${this.apiUrl}/${caseId}/comments`, {
       method: 'POST',
       headers: {
@@ -265,6 +265,22 @@ class CasesService {
     
     if (!response.ok) {
       throw new Error('Error al agregar el comentario')
+    }
+    return await response.json()
+  }
+
+  // Agregar log diario
+  async addDailyLog(caseId: string, logData: Partial<CaseDailyLog>): Promise<Case> {
+    const response = await fetch(`${this.apiUrl}/${caseId}/daily-logs`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(logData),
+    })
+    
+    if (!response.ok) {
+      throw new Error('Error al agregar el seguimiento diario')
     }
     return await response.json()
   }

@@ -797,13 +797,19 @@ const handleAddDailyLog = async () => {
   if (!selectedCase.value?._id || !newLog.value.que_se_hizo) return
   showLoading('Registrando...')
   try {
-    const updated = await casesService.addComment(selectedCase.value._id, { 
-      comentario: newLog.value.que_se_hizo, 
-      tipo: 'actualizacion',
-      autor: authStore.user?.name || 'Sistema'
-    } as any)
-    // Update local state (assuming addComment returns the updated case or we need to reload)
-    await loadData()
+    const updated = await casesService.addDailyLog(selectedCase.value._id, { 
+      que_se_hizo: newLog.value.que_se_hizo, 
+      sentimiento: newLog.value.sentimiento,
+      autor: authStore.user?._id
+    })
+    
+    // Actualizar el caso seleccionado con los nuevos logs
+    selectedCase.value = updated
+    
+    // También actualizar en la lista general
+    const idx = cases.value.findIndex(c => c._id === updated._id)
+    if (idx !== -1) cases.value[idx] = updated
+    
     showAddDailyLog.value = false
     newLog.value = { que_se_hizo: '', sentimiento: '😐' }
     showSuccess('Registrado', 'Actividad añadida correctamente.')

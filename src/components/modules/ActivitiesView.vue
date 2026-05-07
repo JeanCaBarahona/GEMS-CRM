@@ -943,7 +943,7 @@
     <!-- Tablero Kanban -->
     <div
       v-else-if="currentView === 'kanban'"
-      class="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4"
+      class="grid grid-cols-1 gap-2 sm:gap-3 md:grid-cols-2 lg:grid-cols-4"
     >
       <!-- Columna Pendiente -->
       <div class="bg-gradient-to-b from-slate-50/50 to-white border border-slate-200/60 rounded-xl p-3 sm:p-4 w-full snap-start flex flex-col h-full shadow-sm">
@@ -959,7 +959,7 @@
         
         <div 
           :class="[
-            'flex flex-col gap-3 flex-1 overflow-y-auto overflow-x-visible px-3 pb-6 transition-all duration-300 min-h-0 content-start custom-scrollbar-slim',
+            'flex flex-col gap-3 flex-1 overflow-y-auto overflow-x-visible px-1.5 pb-6 transition-all duration-300 min-h-0 content-start custom-scrollbar-slim',
             isDragging && draggedActivity?.status !== 'pending' ? 'ring-2 ring-amber-400/50 rounded-lg bg-amber-50/50' : ''
           ]"
           @drop="onDrop($event, 'pending')"
@@ -1059,6 +1059,17 @@
                       <div @click.stop="editingPercentageId = activity._id!" class="flex items-center gap-1 text-[9px] font-black text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-100 cursor-pointer hover:bg-white hover:border-amber-300 transition-all">
                         <span class="text-amber-600">{{ Math.min(activity.completionPercentage || 0, 100) }}%</span>
                       </div>
+                      
+                      <!-- Popover de edición de porcentaje -->
+                      <div v-if="editingPercentageId === activity._id" class="absolute bottom-full left-0 mb-2 z-50 bg-white rounded-lg shadow-xl border border-slate-200 p-2 flex items-center gap-2 animate-scale-up origin-bottom-left" @click.stop>
+                        <input v-model="activity.completionPercentage" type="number" min="0" max="100" class="w-16 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold focus:bg-white transition-all" @keyup.enter="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null">
+                        <button @click.stop="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null" class="p-1 bg-amber-600 text-white rounded hover:bg-amber-700 transition-colors">
+                          <i class="fas fa-check text-[8px]"></i>
+                        </button>
+                        <button @click="editingPercentageId = null" class="p-1 bg-slate-100 text-slate-500 rounded hover:bg-slate-200 transition-colors">
+                          <i class="fas fa-times text-[8px]"></i>
+                        </button>
+                      </div>
                     </div>
                   </div>
                   
@@ -1127,7 +1138,7 @@
         
         <div 
           :class="[
-            'flex flex-col gap-3 flex-1 overflow-y-auto overflow-x-visible px-3 pb-6 transition-all duration-300 min-h-0 content-start custom-scrollbar-slim',
+            'flex flex-col gap-3 flex-1 overflow-y-auto overflow-x-visible px-1.5 pb-6 transition-all duration-300 min-h-0 content-start custom-scrollbar-slim',
             isDragging && draggedActivity?.status !== 'in-progress' ? 'ring-2 ring-blue-400/50 rounded-lg bg-blue-50/50' : ''
           ]"
           @drop="onDrop($event, 'in-progress')"
@@ -1228,6 +1239,17 @@
                       <div @click.stop="editingPercentageId = activity._id!" class="flex items-center gap-1 text-[9px] font-black text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-100 cursor-pointer hover:bg-white hover:border-blue-300 transition-all">
                         <span :class="activity.status === 'overdue' ? 'text-red-600' : 'text-blue-600'">{{ Math.min(activity.completionPercentage || 0, 100) }}%</span>
                       </div>
+
+                      <!-- Popover de edición de porcentaje -->
+                      <div v-if="editingPercentageId === activity._id" class="absolute bottom-full left-0 mb-2 z-50 bg-white rounded-lg shadow-xl border border-slate-200 p-2 flex items-center gap-2 animate-scale-up origin-bottom-left" @click.stop>
+                        <input v-model="activity.completionPercentage" type="number" min="0" max="100" class="w-16 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold focus:bg-white transition-all" @keyup.enter="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null">
+                        <button @click.stop="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null" class="p-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+                          <i class="fas fa-check text-[8px]"></i>
+                        </button>
+                        <button @click="editingPercentageId = null" class="p-1 bg-slate-100 text-slate-500 rounded hover:bg-slate-200 transition-colors">
+                          <i class="fas fa-times text-[8px]"></i>
+                        </button>
+                      </div>
                     </div>
                   </div>
                   
@@ -1295,7 +1317,7 @@
         
         <div 
           :class="[
-            'flex flex-col gap-3 flex-1 overflow-y-auto overflow-x-visible px-3 pb-6 transition-all duration-300 min-h-0 content-start custom-scrollbar-slim',
+            'flex flex-col gap-3 flex-1 overflow-y-auto overflow-x-visible px-1.5 pb-6 transition-all duration-300 min-h-0 content-start custom-scrollbar-slim',
             isDragging && draggedActivity?.status !== 'completed' ? 'ring-2 ring-emerald-400/50 rounded-lg bg-emerald-50/50' : ''
           ]"
           @drop="onDrop($event, 'completed')"
@@ -1433,7 +1455,7 @@
         
         <div 
           :class="[
-            'flex flex-col gap-3 flex-1 overflow-y-auto overflow-x-visible px-3 pb-6 transition-all duration-300 min-h-0 content-start custom-scrollbar-slim',
+            'flex flex-col gap-3 flex-1 overflow-y-auto overflow-x-visible px-1.5 pb-6 transition-all duration-300 min-h-0 content-start custom-scrollbar-slim',
             isDragging && draggedActivity?.status !== 'overdue' ? 'ring-2 ring-red-400/50 rounded-lg bg-red-50/50' : ''
           ]"
           @drop="onDrop($event, 'overdue')"
@@ -1529,6 +1551,17 @@
                     <div class="relative">
                       <div @click.stop="editingPercentageId = activity._id!" class="flex items-center gap-1 text-[9px] font-black text-red-600 bg-red-50 px-2 py-1 rounded border border-red-100 cursor-pointer hover:bg-white hover:border-red-300 transition-all">
                         <span>{{ Math.min(activity.completionPercentage || 0, 100) }}%</span>
+                      </div>
+
+                      <!-- Popover de edición de porcentaje -->
+                      <div v-if="editingPercentageId === activity._id" class="absolute bottom-full left-0 mb-2 z-50 bg-white rounded-lg shadow-xl border border-slate-200 p-2 flex items-center gap-2 animate-scale-up origin-bottom-left" @click.stop>
+                        <input v-model="activity.completionPercentage" type="number" min="0" max="100" class="w-16 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold focus:bg-white transition-all" @keyup.enter="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null">
+                        <button @click.stop="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null" class="p-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors">
+                          <i class="fas fa-check text-[8px]"></i>
+                        </button>
+                        <button @click="editingPercentageId = null" class="p-1 bg-slate-100 text-slate-500 rounded hover:bg-slate-200 transition-colors">
+                          <i class="fas fa-times text-[8px]"></i>
+                        </button>
                       </div>
                     </div>
                   </div>

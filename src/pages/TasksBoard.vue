@@ -175,7 +175,7 @@
         <div
           v-for="column in columns"
           :key="column.id"
-          class="bg-slate-50/50 backdrop-blur-sm rounded-[2rem] p-3 border border-slate-200/60 w-96 flex-shrink-0 flex flex-col max-h-[calc(100vh-280px)]"
+          class="bg-slate-50/50 backdrop-blur-sm rounded-[2rem] p-1.5 border border-slate-200/60 w-[420px] flex-shrink-0 flex flex-col max-h-[calc(100vh-280px)]"
         >
           <!-- Column Header -->
           <div class="flex items-center justify-between mb-6 px-1">
@@ -196,7 +196,7 @@
 
           <!-- Tasks List -->
           <div 
-            class="space-y-4 flex-1 overflow-y-auto custom-scrollbar pr-1 min-h-[150px]"
+            class="space-y-3 flex-1 overflow-y-auto custom-scrollbar px-2 pb-6 min-h-[150px]"
             @drop="onDrop($event, column.id)"
             @dragover.prevent
             @dragenter.prevent

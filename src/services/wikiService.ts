@@ -18,6 +18,7 @@ export interface WikiArticle {
     tipo: string
   }>
   vistas?: number
+  linkedTickets?: any[]
   createdAt?: Date
   updatedAt?: Date
 }
@@ -94,6 +95,26 @@ class WikiService {
       method: 'DELETE'
     })
     if (!response.ok) throw new Error('Error al eliminar el artículo')
+  }
+
+  // Vincular ticket
+  async linkTicket(wikiId: string, ticketId: string): Promise<WikiArticle> {
+    const response = await fetch(`${this.apiUrl}/${wikiId}/tickets`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ticketId })
+    })
+    if (!response.ok) throw new Error('Error al vincular el ticket')
+    return await response.json()
+  }
+
+  // Desvincular ticket
+  async unlinkTicket(wikiId: string, ticketId: string): Promise<WikiArticle> {
+    const response = await fetch(`${this.apiUrl}/${wikiId}/tickets/${ticketId}`, {
+      method: 'DELETE'
+    })
+    if (!response.ok) throw new Error('Error al desvincular el ticket')
+    return await response.json()
   }
 }
 

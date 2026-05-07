@@ -56,6 +56,7 @@ export interface Case {
   wikiContent?: string
   metodologia?: string
   dailyLogs: CaseDailyLog[]
+  linkedTickets?: any[]
   createdAt: Date
   updatedAt: Date
 }
@@ -387,6 +388,26 @@ class CasesService {
       case 'cerrado': return 'text-gray-600 bg-gray-100'
       default: return 'text-gray-600 bg-gray-100'
     }
+  }
+
+  // Vincular ticket
+  async linkTicket(caseId: string, ticketId: string): Promise<Case> {
+    const response = await fetch(`${this.apiUrl}/${caseId}/tickets`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ticketId })
+    })
+    if (!response.ok) throw new Error('Error al vincular el ticket')
+    return await response.json()
+  }
+
+  // Desvincular ticket
+  async unlinkTicket(caseId: string, ticketId: string): Promise<Case> {
+    const response = await fetch(`${this.apiUrl}/${caseId}/tickets/${ticketId}`, {
+      method: 'DELETE'
+    })
+    if (!response.ok) throw new Error('Error al desvincular el ticket')
+    return await response.json()
   }
 }
 

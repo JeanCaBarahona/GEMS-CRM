@@ -274,6 +274,46 @@
                   </div>
                </div>
             </div>
+
+            <!-- Linked Tickets Section -->
+            <div v-if="activeViewTab === 'tickets'" class="animate-content-in space-y-6">
+               <div class="flex items-center justify-between">
+                 <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest m-0">Tickets Vinculados</h3>
+                 <button @click="openLinkTicketModal" class="px-4 py-1.5 bg-primary-600 text-white text-[10px] font-bold rounded-lg shadow-md hover:bg-primary-700 transition-all flex items-center gap-2">
+                   <i class="fas fa-link"></i>
+                   Vincular Ticket
+                 </button>
+               </div>
+               
+               <div v-if="selectedCase.linkedTickets?.length" class="space-y-3">
+                 <div v-for="ticket in selectedCase.linkedTickets" :key="ticket._id" class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between group hover:shadow-md transition-all">
+                   <div class="flex items-center gap-4">
+                     <div class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-primary-50 group-hover:text-primary-600 transition-all">
+                       <i class="fas fa-ticket-alt"></i>
+                     </div>
+                     <div>
+                       <div class="flex items-center gap-2 mb-1">
+                         <span class="text-[10px] font-black text-slate-400">#{{ ticket.ticketNumber || ticket._id?.slice(-6).toUpperCase() }}</span>
+                         <span :class="getTicketStatusClass(ticket.status)" class="px-1.5 py-0.5 rounded text-[8px] font-black uppercase">{{ ticket.status }}</span>
+                       </div>
+                       <p class="text-sm font-bold text-slate-800 m-0">{{ ticket.subject || ticket.titulo }}</p>
+                     </div>
+                   </div>
+                   <div class="flex items-center gap-2">
+                     <button @click="goToTicket(ticket._id)" class="p-2 text-slate-400 hover:text-primary-600 transition-all" title="Ver Ticket">
+                       <i class="fas fa-external-link-alt"></i>
+                     </button>
+                     <button @click="handleUnlinkTicket(ticket._id)" class="p-2 text-slate-400 hover:text-rose-500 transition-all" title="Desvincular">
+                       <i class="fas fa-unlink"></i>
+                     </button>
+                   </div>
+                 </div>
+               </div>
+               <div v-else class="py-12 bg-slate-50 rounded-3xl border border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400">
+                 <i class="fas fa-link text-3xl mb-3 opacity-20"></i>
+                 <p class="text-xs font-bold uppercase tracking-widest">No hay tickets vinculados</p>
+               </div>
+            </div>
           </div>
         </div>
 
@@ -347,9 +387,12 @@
               </div>
               <div class="space-y-1 text-right">
                 <div class="flex gap-2 justify-end">
-                  <button v-if="!isEditingWikiItem" @click="isEditingWikiItem = true" class="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-all" title="Editar"><i class="fas fa-edit text-xs"></i></button>
-                  <button v-if="!isEditingWikiItem" @click="exportToPDF" class="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-all" title="Exportar PDF"><i class="fas fa-file-pdf text-xs"></i></button>
-                  <button v-if="!isEditingWikiItem" @click="deleteWikiItem" class="p-2 hover:bg-rose-50 text-rose-300 rounded-lg transition-all" title="Eliminar"><i class="fas fa-trash text-xs"></i></button>
+                  <button v-if="!isEditingWikiItem" @click="isEditingWikiItem = true" class="px-4 py-1.5 bg-slate-900 text-white rounded-lg text-[10px] font-bold hover:bg-slate-800 transition-all flex items-center gap-2">
+                    <i class="fas fa-edit"></i>
+                    Editar
+                  </button>
+                  <button v-if="!isEditingWikiItem" @click="exportToPDF" class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 transition-all" title="Exportar PDF"><i class="fas fa-file-pdf"></i></button>
+                  <button v-if="!isEditingWikiItem" @click="deleteWikiItem" class="p-1.5 hover:bg-rose-50 text-rose-300 rounded-lg transition-all" title="Eliminar"><i class="fas fa-trash"></i></button>
                 </div>
               </div>
             </div>
@@ -421,12 +464,65 @@
                   </a>
                 </div>
               </div>
+
+              <!-- Wiki Linked Tickets -->
+              <div v-if="!isEditingWikiItem" class="mt-12 pt-8 border-t border-slate-100">
+                <div class="flex items-center justify-between mb-6">
+                  <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Tickets Relacionados</p>
+                  <button @click="openLinkTicketModal" class="text-[10px] font-bold text-primary-500 hover:text-primary-600">
+                    <i class="fas fa-plus mr-1"></i> Vincular otro
+                  </button>
+                </div>
+                <div v-if="selectedWiki.linkedTickets?.length" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div v-for="ticket in selectedWiki.linkedTickets" :key="ticket._id" class="p-4 bg-white border border-slate-100 rounded-2xl flex items-center justify-between group hover:border-primary-200 transition-all">
+                    <div class="min-w-0 flex-1">
+                      <div class="flex items-center gap-2 mb-1">
+                        <span class="text-[9px] font-black text-slate-400">#{{ ticket.ticketNumber || ticket._id?.slice(-6).toUpperCase() }}</span>
+                        <span :class="getTicketStatusClass(ticket.status)" class="px-1.5 py-0.5 rounded text-[8px] font-black uppercase">{{ ticket.status }}</span>
+                      </div>
+                      <p class="text-xs font-bold text-slate-800 truncate m-0">{{ ticket.subject || ticket.titulo }}</p>
+                    </div>
+                    <div class="flex gap-1 ml-4">
+                      <button @click="goToTicket(ticket._id)" class="p-2 text-slate-300 hover:text-primary-500 transition-all"><i class="fas fa-external-link-alt"></i></button>
+                      <button @click="handleUnlinkTicket(ticket._id)" class="p-2 text-slate-300 hover:text-rose-500 transition-all"><i class="fas fa-unlink"></i></button>
+                    </div>
+                  </div>
+                </div>
+                <div v-else class="py-12 bg-slate-50 rounded-3xl border border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-300">
+                   <p class="text-[10px] font-bold uppercase tracking-widest">Sin tickets vinculados</p>
+                </div>
+              </div>
               
               <!-- Placeholder for empty content -->
               <div v-if="!selectedWiki.contenido" @click="isEditingWikiItem = true" class="py-20 border-2 border-dashed border-slate-50 rounded-3xl flex flex-col items-center justify-center text-slate-200 hover:border-slate-100 hover:text-slate-300 transition-all cursor-pointer">
                 <p class="text-xs font-bold uppercase tracking-widest">Esta página está vacía. Pulsa para editar.</p>
               </div>
             </template>
+
+            <!-- Wiki Linked Tickets -->
+            <div v-if="!isEditingWikiItem && selectedWiki.linkedTickets?.length" class="mt-12 pt-8 border-t border-slate-100">
+              <div class="flex items-center justify-between mb-6">
+                <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Tickets Relacionados</p>
+                <button @click="openLinkTicketModal" class="text-[10px] font-bold text-primary-500 hover:text-primary-600">
+                  <i class="fas fa-plus mr-1"></i> Vincular otro
+                </button>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div v-for="ticket in selectedWiki.linkedTickets" :key="ticket._id" class="p-4 bg-white border border-slate-100 rounded-2xl flex items-center justify-between group hover:border-primary-200 transition-all">
+                  <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="text-[9px] font-black text-slate-400">#{{ ticket.ticketNumber || ticket._id?.slice(-6).toUpperCase() }}</span>
+                      <span :class="getTicketStatusClass(ticket.status)" class="px-1.5 py-0.5 rounded text-[8px] font-black uppercase">{{ ticket.status }}</span>
+                    </div>
+                    <p class="text-xs font-bold text-slate-800 truncate m-0">{{ ticket.subject || ticket.titulo }}</p>
+                  </div>
+                  <div class="flex gap-1 ml-4">
+                    <button @click="goToTicket(ticket._id)" class="p-2 text-slate-300 hover:text-primary-500 transition-all"><i class="fas fa-external-link-alt"></i></button>
+                    <button @click="handleUnlinkTicket(ticket._id)" class="p-2 text-slate-300 hover:text-rose-500 transition-all"><i class="fas fa-unlink"></i></button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -498,6 +594,36 @@
                   </div>
 
                   <div class="space-y-1">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Vincular Ticket (Opcional)</label>
+                    <div class="flex gap-2">
+                      <div class="flex-1 relative">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-xs"></i>
+                        <input 
+                          v-model="creationTicketSearch" 
+                          placeholder="Buscar ticket por título o #ID..." 
+                          class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold outline-none focus:bg-white transition-all"
+                          @input="handleCreationTicketSearch"
+                        >
+                        <!-- Results Dropdown -->
+                        <div v-if="creationTicketResults.length" class="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-40 overflow-y-auto">
+                          <button 
+                            v-for="t in creationTicketResults" :key="t._id"
+                            @click="selectTicketForCreation(t)"
+                            class="w-full text-left px-4 py-2 hover:bg-slate-50 border-b border-slate-50 last:border-none flex items-center justify-between"
+                          >
+                            <span class="text-[10px] font-bold text-slate-700 truncate mr-2">{{ t.subject || t.titulo }}</span>
+                            <span class="text-[9px] font-black text-slate-300">#{{ t.ticketNumber || t._id.slice(-4) }}</span>
+                          </button>
+                        </div>
+                      </div>
+                      <div v-if="newCase.linkedTicketId" class="px-4 py-3 bg-primary-50 text-primary-600 rounded-xl text-[10px] font-black flex items-center gap-2">
+                        VINCULADO
+                        <button @click="newCase.linkedTicketId = ''; creationTicketSearch = ''"><i class="fas fa-times"></i></button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="space-y-1">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Descripción Breve</label>
                     <textarea v-model="newCase.descripcion" rows="3" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium outline-none focus:bg-white"></textarea>
                   </div>
@@ -544,6 +670,36 @@
                   <div class="space-y-1">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Resumen Ejecutivo</label>
                     <input v-model="newWiki.descripcion" placeholder="¿De qué trata este artículo?" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium outline-none">
+                  </div>
+
+                  <div class="space-y-1">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Vincular Ticket (Opcional)</label>
+                    <div class="flex gap-2">
+                      <div class="flex-1 relative">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-xs"></i>
+                        <input 
+                          v-model="creationTicketSearch" 
+                          placeholder="Buscar ticket por título o #ID..." 
+                          class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold outline-none focus:bg-white transition-all"
+                          @input="handleCreationTicketSearch"
+                        >
+                        <!-- Results Dropdown -->
+                        <div v-if="creationTicketResults.length" class="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-40 overflow-y-auto">
+                          <button 
+                            v-for="t in creationTicketResults" :key="t._id"
+                            @click="selectTicketForCreation(t)"
+                            class="w-full text-left px-4 py-2 hover:bg-slate-50 border-b border-slate-50 last:border-none flex items-center justify-between"
+                          >
+                            <span class="text-[10px] font-bold text-slate-700 truncate mr-2">{{ t.subject || t.titulo }}</span>
+                            <span class="text-[9px] font-black text-slate-300">#{{ t.ticketNumber || t._id.slice(-4) }}</span>
+                          </button>
+                        </div>
+                      </div>
+                      <div v-if="newWiki.linkedTicketId" class="px-4 py-3 bg-primary-50 text-primary-600 rounded-xl text-[10px] font-black flex items-center gap-2">
+                        VINCULADO
+                        <button @click="newWiki.linkedTicketId = ''; creationTicketSearch = ''"><i class="fas fa-times"></i></button>
+                      </div>
+                    </div>
                   </div>
 
                   <div class="space-y-1">
@@ -608,6 +764,78 @@
           </div>
        </div>
     </div>
+
+     <!-- Modal Vincular Ticket -->
+     <div v-if="showLinkModal" class="fixed inset-0 z-[110] flex items-center justify-center p-4 animate-fade-in">
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showLinkModal = false"></div>
+        <div class="relative bg-white w-full max-w-xl rounded-3xl shadow-2xl p-0 overflow-hidden border border-slate-200 animate-scale-up">
+           <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+             <div>
+               <h3 class="text-lg font-bold text-slate-900">Vincular Ticket</h3>
+               <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Búsqueda inteligente de incidencias</p>
+             </div>
+             <button @click="showLinkModal = false" class="w-8 h-8 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-400"><i class="fas fa-times"></i></button>
+           </div>
+           
+           <div class="p-6 space-y-4">
+             <!-- Search & Filters -->
+             <div class="flex gap-2">
+               <div class="flex-1 relative">
+                 <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-sm"></i>
+                 <input 
+                   v-model="ticketSearchQuery" 
+                   placeholder="Buscar por ID, título o descripción..." 
+                   class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium outline-none focus:bg-white focus:ring-2 focus:ring-primary-500/10 transition-all"
+                   @input="handleTicketSearch"
+                 >
+               </div>
+               <select v-model="ticketFilterStatus" class="px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none" @change="handleTicketSearch">
+                 <option value="">Todos</option>
+                 <option value="open">Abiertos</option>
+                 <option value="waiting">Esperando</option>
+                 <option value="solved">Resueltos</option>
+               </select>
+             </div>
+
+             <!-- Results List -->
+             <div class="max-h-[400px] overflow-y-auto custom-scrollbar-slim space-y-2 pr-2">
+               <div v-if="isSearchingTickets" class="py-12 flex flex-col items-center gap-3 text-slate-300">
+                 <i class="fas fa-circle-notch fa-spin text-2xl"></i>
+                 <p class="text-xs font-bold uppercase tracking-widest">Buscando lo más acertado...</p>
+               </div>
+               <template v-else>
+                 <div 
+                   v-for="ticket in rankedTickets" :key="ticket._id"
+                   @click="handleLinkTicket(ticket)"
+                   class="p-4 bg-slate-50 hover:bg-white border border-transparent hover:border-primary-200 rounded-2xl cursor-pointer transition-all flex items-center justify-between group"
+                 >
+                   <div class="min-w-0 flex-1">
+                     <div class="flex items-center gap-2 mb-1">
+                       <span class="text-[9px] font-black text-slate-400 group-hover:text-primary-500">#{{ ticket.ticketNumber || ticket._id.slice(-6).toUpperCase() }}</span>
+                       <span :class="getTicketStatusClass(ticket.status)" class="px-1.5 py-0.5 rounded text-[8px] font-black uppercase">{{ ticket.status }}</span>
+                       <span v-if="ticket.score > 80" class="text-[8px] font-bold text-emerald-500 bg-emerald-50 px-1 rounded">ALTA COINCIDENCIA</span>
+                     </div>
+                     <p class="text-sm font-bold text-slate-800 m-0 truncate">{{ ticket.subject || ticket.titulo }}</p>
+                     <p class="text-[10px] text-slate-500 truncate m-0 opacity-60">{{ ticket.description || 'Sin descripción' }}</p>
+                   </div>
+                   <div class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                     <div class="w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center">
+                       <i class="fas fa-plus text-xs"></i>
+                     </div>
+                   </div>
+                 </div>
+                 <div v-if="!rankedTickets.length" class="py-12 text-center text-slate-300">
+                   <p class="text-xs font-bold uppercase tracking-widest">No se encontraron tickets</p>
+                 </div>
+               </template>
+             </div>
+           </div>
+           
+           <div class="p-4 bg-slate-50 border-t border-slate-100 text-center">
+             <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Selecciona un ticket para vincularlo inmediatamente</p>
+           </div>
+        </div>
+     </div>
   </div>
 </template>
 
@@ -647,9 +875,22 @@ const wikiEditor = ref<HTMLTextAreaElement | null>(null)
 const wikiPreviewMode = ref(false)
 const modalMode = ref<'create' | 'edit'>('create')
 
+// Ticket Linking State
+import { ticketService } from '../services/ticketService'
+const showLinkModal = ref(false)
+const ticketSearchQuery = ref('')
+const ticketFilterStatus = ref('')
+const isSearchingTickets = ref(false)
+const availableTickets = ref<any[]>([])
+const rankedTickets = ref<any[]>([])
+
+// Creation Linking State
+const creationTicketSearch = ref('')
+const creationTicketResults = ref<any[]>([])
+
 // Form State
-const newCase = ref({ titulo: '', tipo: 'seguimiento' as any, prioridad: 'media' as any, descripcion: '', cliente_id: '', categoria: '', tags: [] as string[], archivos: [] as File[] })
-const newWiki = ref<Partial<WikiArticle> & { archivos?: File[] }>({ titulo: '', categoria: 'proceso', contenido: '', descripcion: '', tags: [], archivos: [] })
+const newCase = ref({ titulo: '', tipo: 'seguimiento' as any, prioridad: 'media' as any, descripcion: '', cliente_id: '', categoria: '', tags: [] as string[], archivos: [] as File[], linkedTicketId: '' })
+const newWiki = ref<Partial<WikiArticle> & { archivos?: File[], linkedTicketId?: string }>({ titulo: '', categoria: 'proceso', contenido: '', descripcion: '', tags: [], archivos: [], linkedTicketId: '' })
 const newLog = ref({ que_se_hizo: '', sentimiento: '😐' as any })
 
 // Grouping Logic
@@ -687,6 +928,7 @@ const groupedWiki = computed(() => {
 
 const tabs = computed(() => [
   { id: 'wiki', label: 'Documentación', icon: 'fas fa-book-open' },
+  { id: 'tickets', label: 'Tickets', icon: 'fas fa-ticket-alt', count: selectedCase.value?.linkedTickets?.length },
   { id: 'dailies', label: 'Actividad', icon: 'fas fa-history', count: selectedCase.value?.dailyLogs?.length },
   { id: 'files', label: 'Adjuntos', icon: 'fas fa-paperclip', count: selectedCase.value?.archivos?.length }
 ])
@@ -730,9 +972,11 @@ const openCreateModal = () => {
 }
 
 const resetForm = () => {
-  newCase.value = { titulo: '', tipo: 'seguimiento', prioridad: 'media', descripcion: '', cliente_id: '', categoria: '', tags: [], archivos: [] }
-  newWiki.value = { titulo: '', categoria: 'proceso', contenido: '', descripcion: '', tags: [], archivos: [] }
+  newCase.value = { titulo: '', tipo: 'seguimiento', prioridad: 'media', descripcion: '', cliente_id: '', categoria: '', tags: [], archivos: [], linkedTicketId: '' }
+  newWiki.value = { titulo: '', categoria: 'proceso', contenido: '', descripcion: '', tags: [], archivos: [], linkedTicketId: '' }
   wikiTagsRaw.value = ''
+  creationTicketSearch.value = ''
+  creationTicketResults.value = []
 }
 
 const openCreateWiki = () => {
@@ -741,7 +985,40 @@ const openCreateWiki = () => {
 }
 
 const exportToPDF = () => {
-  window.print()
+  const content = viewMode.value === 'cases' ? selectedCase.value?.wikiContent : selectedWiki.value?.contenido
+  const title = viewMode.value === 'cases' ? selectedCase.value?.titulo : selectedWiki.value?.titulo
+  
+  if (!content) return showError('Error', 'No hay contenido para exportar.')
+
+  const printWindow = window.open('', '_blank')
+  if (!printWindow) return
+
+  const html = `
+    <html>
+      <head>
+        <title>${title}</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+        <style>
+          body { font-family: 'Inter', sans-serif; padding: 40px; color: #1e293b; line-height: 1.6; }
+          h1 { font-size: 24px; margin-bottom: 8px; color: #0f172a; }
+          .metadata { font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: bold; margin-bottom: 30px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; }
+          .content { font-size: 14px; white-space: pre-wrap; }
+          @media print { body { padding: 0; } }
+        </style>
+      </head>
+      <body>
+        <h1>${title}</h1>
+        <div class="metadata">Documento Generado por GEMS CRM • ${new Date().toLocaleDateString()}</div>
+        <div class="content">${content}</div>
+      </body>
+    </html>
+  `
+  printWindow.document.write(html)
+  printWindow.document.close()
+  setTimeout(() => {
+    printWindow.print()
+    printWindow.close()
+  }, 500)
 }
 
 const selectCase = (c: Case) => {
@@ -753,7 +1030,14 @@ const selectCase = (c: Case) => {
 const handleCreateCase = async () => {
   if (!newCase.value.titulo) return showError('Requerido', 'El título es obligatorio.')
   showLoading('Creando página...'); try {
-    const created = await casesService.createCase(newCase.value); cases.value.unshift(created); selectedCase.value = created; showCreateModal.value = false; showSuccess('¡Éxito!', 'Proyecto creado.')
+    let created = await casesService.createCase(newCase.value);
+    
+    // Link ticket if selected
+    if (newCase.value.linkedTicketId) {
+      created = await casesService.linkTicket(created._id!, newCase.value.linkedTicketId)
+    }
+    
+    cases.value.unshift(created); selectedCase.value = created; showCreateModal.value = false; showSuccess('¡Éxito!', 'Proyecto creado.')
   } catch (err: any) { showError('Error', err.message) } finally { closeLoading() }
 }
 
@@ -772,7 +1056,14 @@ const handleCreateWiki = async () => {
   if (!newWiki.value.titulo) return showError('Requerido', 'El título es obligatorio.')
   newWiki.value.tags = wikiTagsRaw.value.split(',').map(t => t.trim()).filter(t => t)
   showLoading('Publicando...'); try {
-    const created = await wikiService.create(newWiki.value); wikiArticles.value.unshift(created); selectedWiki.value = created; showCreateModal.value = false; showSuccess('¡Éxito!', 'Artículo publicado.')
+    let created = await wikiService.create(newWiki.value);
+    
+    // Link ticket if selected
+    if (newWiki.value.linkedTicketId) {
+      created = await wikiService.linkTicket(created._id!, newWiki.value.linkedTicketId)
+    }
+    
+    wikiArticles.value.unshift(created); selectedWiki.value = created; showCreateModal.value = false; showSuccess('¡Éxito!', 'Artículo publicado.')
   } catch (err: any) { showError('Error', err.message) } finally { closeLoading() }
 }
 
@@ -908,6 +1199,143 @@ const uploadFilesToCase = async (e: any) => {
     showSuccess('Éxito', 'Archivos añadidos correctamente.')
   } catch (err: any) { showError('Error', err.message) } finally { closeLoading() }
 }
+// Ticket Linking Logic (The "Mas Acertado" Search)
+const openLinkTicketModal = async () => {
+  showLinkModal.value = true
+  isSearchingTickets.value = true
+  try {
+    const response = await ticketService.getAll({ limit: 50 })
+    availableTickets.value = response.data
+    handleTicketSearch()
+  } catch (err) { showError('Error', 'No se pudieron cargar tickets') }
+  finally { isSearchingTickets.value = false }
+}
+
+const handleTicketSearch = () => {
+  const query = ticketSearchQuery.value.toLowerCase()
+  const status = ticketFilterStatus.value
+  
+  const filtered = availableTickets.value.filter(t => {
+    const matchStatus = !status || t.status === status
+    const matchText = !query || 
+      t.subject?.toLowerCase().includes(query) || 
+      t.titulo?.toLowerCase().includes(query) || 
+      t.ticketNumber?.toLowerCase().includes(query) ||
+      t._id.toLowerCase().includes(query)
+    return matchStatus && matchText
+  })
+
+  // Ranking logic ("Lo más acertado")
+  rankedTickets.value = filtered.map(t => {
+    let score = 0
+    const subject = (t.subject || t.titulo || '').toLowerCase()
+    const tNum = (t.ticketNumber || '').toLowerCase()
+    
+    if (query) {
+      if (tNum === query || t._id.toLowerCase() === query) score += 100 // Exact match ID/Number
+      else if (tNum.includes(query)) score += 50
+      
+      if (subject === query) score += 80 // Exact title match
+      else if (subject.startsWith(query)) score += 40
+      else if (subject.includes(query)) score += 20
+      
+      if (t.description?.toLowerCase().includes(query)) score += 10
+    } else {
+      score = t.status === 'open' ? 10 : 0 // Default ranking
+    }
+    
+    return { ...t, score }
+  }).sort((a, b) => b.score - a.score)
+}
+
+const handleLinkTicket = async (ticket: any) => {
+  const targetId = viewMode.value === 'cases' ? selectedCase.value?._id : selectedWiki.value?._id
+  if (!targetId) return
+
+  showLoading('Vinculando...')
+  try {
+    let updated
+    if (viewMode.value === 'cases') {
+      updated = await casesService.linkTicket(targetId, ticket._id)
+      selectedCase.value = updated
+      const idx = cases.value.findIndex(c => c._id === updated._id)
+      if (idx !== -1) cases.value[idx] = updated
+    } else {
+      updated = await wikiService.linkTicket(targetId, ticket._id)
+      selectedWiki.value = updated
+      const idx = wikiArticles.value.findIndex(w => w._id === updated._id)
+      if (idx !== -1) wikiArticles.value[idx] = updated
+    }
+    showLinkModal.value = false
+    showSuccess('Vinculado', 'Ticket asociado correctamente')
+  } catch (err: any) { showError('Error', err.message) }
+  finally { closeLoading() }
+}
+
+const handleUnlinkTicket = async (ticketId: string) => {
+  const targetId = viewMode.value === 'cases' ? selectedCase.value?._id : selectedWiki.value?._id
+  if (!targetId) return
+
+  const result = await confirmDelete('vínculo con este ticket')
+  if (!result.isConfirmed) return
+
+  showLoading('Desvinculando...')
+  try {
+    let updated
+    if (viewMode.value === 'cases') {
+      updated = await casesService.unlinkTicket(targetId, ticketId)
+      selectedCase.value = updated
+      const idx = cases.value.findIndex(c => c._id === updated._id)
+      if (idx !== -1) cases.value[idx] = updated
+    } else {
+      updated = await wikiService.unlinkTicket(targetId, ticketId)
+      selectedWiki.value = updated
+      const idx = wikiArticles.value.findIndex(w => w._id === updated._id)
+      if (idx !== -1) wikiArticles.value[idx] = updated
+    }
+    showSuccess('Desvinculado', 'Vínculo eliminado')
+  } catch (err: any) { showError('Error', err.message) }
+  finally { closeLoading() }
+}
+
+const getTicketStatusClass = (status: string) => {
+  const classes: Record<string, string> = {
+    open: 'bg-emerald-500/10 text-emerald-600',
+    waiting: 'bg-amber-500/10 text-amber-600',
+    solved: 'bg-blue-500/10 text-blue-600',
+    closed: 'bg-slate-500/10 text-slate-600'
+  }
+  return classes[status] || classes.open
+}
+
+const goToTicket = (id: string) => window.open(`/tickets?id=${id}`, '_blank')
+
+const handleCreationTicketSearch = async () => {
+  if (creationTicketSearch.value.length < 2) {
+    creationTicketResults.value = []
+    return
+  }
+  try {
+    const response = await ticketService.getAll({ limit: 10 })
+    const query = creationTicketSearch.value.toLowerCase()
+    creationTicketResults.value = response.data.filter((t: any) => 
+      t.subject?.toLowerCase().includes(query) || 
+      t.ticketNumber?.toLowerCase().includes(query) ||
+      t._id.toLowerCase().includes(query)
+    )
+  } catch (err) { console.error(err) }
+}
+
+const selectTicketForCreation = (ticket: any) => {
+  if (viewMode.value === 'cases') {
+    newCase.value.linkedTicketId = ticket._id
+  } else {
+    newWiki.value.linkedTicketId = ticket._id
+  }
+  creationTicketSearch.value = ticket.subject || ticket.titulo
+  creationTicketResults.value = []
+}
+
 onMounted(() => loadData())
 watch(viewMode, () => { searchTerm.value = ''; expandedGroups.value = [] })
 </script>

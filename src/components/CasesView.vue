@@ -499,30 +499,6 @@
               </div>
             </template>
 
-            <!-- Wiki Linked Tickets -->
-            <div v-if="!isEditingWikiItem && selectedWiki.linkedTickets?.length" class="mt-12 pt-8 border-t border-slate-100">
-              <div class="flex items-center justify-between mb-6">
-                <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Tickets Relacionados</p>
-                <button @click="openLinkTicketModal" class="text-[10px] font-bold text-primary-500 hover:text-primary-600">
-                  <i class="fas fa-plus mr-1"></i> Vincular otro
-                </button>
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div v-for="ticket in selectedWiki.linkedTickets" :key="ticket._id" class="p-4 bg-white border border-slate-100 rounded-2xl flex items-center justify-between group hover:border-primary-200 transition-all">
-                  <div class="min-w-0 flex-1">
-                    <div class="flex items-center gap-2 mb-1">
-                      <span class="text-[9px] font-black text-slate-400">#{{ ticket.ticketNumber || ticket._id?.slice(-6).toUpperCase() }}</span>
-                      <span :class="getTicketStatusClass(ticket.status)" class="px-1.5 py-0.5 rounded text-[8px] font-black uppercase">{{ ticket.status }}</span>
-                    </div>
-                    <p class="text-xs font-bold text-slate-800 truncate m-0">{{ ticket.subject || ticket.titulo }}</p>
-                  </div>
-                  <div class="flex gap-1 ml-4">
-                    <button @click="goToTicket(ticket._id)" class="p-2 text-slate-300 hover:text-primary-500 transition-all"><i class="fas fa-external-link-alt"></i></button>
-                    <button @click="handleUnlinkTicket(ticket._id)" class="p-2 text-slate-300 hover:text-rose-500 transition-all"><i class="fas fa-unlink"></i></button>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 

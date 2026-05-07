@@ -117,12 +117,12 @@
           </div>
 
           <!-- Column Cards Container -->
-          <div class="flex-1 overflow-y-auto px-4 pb-4 space-y-4 custom-scrollbar-slim">
+          <div class="flex-1 overflow-y-auto overflow-x-visible px-6 pb-6 space-y-4 custom-scrollbar-slim">
             <div 
               v-for="ticket in getTicketsByStatus(col.id)" 
               :key="ticket._id"
               @click="openTicketDetail(ticket)"
-            class="bg-white rounded-2xl p-4 border border-slate-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.04)] hover:shadow-xl hover:border-primary-300/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer group relative overflow-hidden flex flex-col gap-3"
+            class="bg-white rounded-2xl p-4 border border-slate-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] hover:border-primary-300/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer group relative flex flex-col gap-3"
             >
               <!-- Priority indicator & Number -->
               <div class="flex items-center justify-between">

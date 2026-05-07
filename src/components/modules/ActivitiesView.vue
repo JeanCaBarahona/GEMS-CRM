@@ -848,7 +848,7 @@
         
         <div 
           :class="[
-            'flex flex-col gap-2.5 flex-1 overflow-y-auto overflow-x-hidden pr-1 sm:pr-2 transition-all duration-300 min-h-0 content-start',
+            'flex flex-col gap-3 flex-1 overflow-y-auto overflow-x-visible px-4 pb-6 transition-all duration-300 min-h-0 content-start custom-scrollbar-slim',
             isDragging && draggedActivity?.status !== 'pending' ? 'ring-2 ring-amber-400/50 rounded-lg bg-amber-50/50' : ''
           ]"
           @drop="onDrop($event, 'pending')"
@@ -858,7 +858,7 @@
           <div
             v-for="activity in pendingActivities"
             :key="activity._id"
-            class="bg-white rounded-xl p-3 border border-slate-100 hover:border-amber-400/50 hover:shadow-xl hover:-translate-y-0.5 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.04)] transition-all duration-300 group cursor-move overflow-hidden flex flex-col justify-between h-[145px] relative shrink-0"
+            class="bg-white rounded-xl p-3 border border-slate-100 hover:border-amber-400/50 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.07)] hover:-translate-y-1 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.04)] transition-all duration-300 group cursor-move flex flex-col justify-between h-[145px] relative shrink-0"
             draggable="true"
             @dragstart="onDragStart($event, activity)"
             @dragend="onDragEnd"
@@ -992,7 +992,7 @@
         
         <div 
           :class="[
-            'flex flex-col gap-2.5 flex-1 overflow-y-auto overflow-x-hidden pr-1 sm:pr-2 transition-all duration-300 min-h-0 content-start',
+            'flex flex-col gap-3 flex-1 overflow-y-auto overflow-x-visible px-5 pb-6 transition-all duration-300 min-h-0 content-start custom-scrollbar-slim',
             isDragging && draggedActivity?.status !== 'in-progress' ? 'ring-2 ring-blue-400/50 rounded-lg bg-blue-50/50' : ''
           ]"
           @drop="onDrop($event, 'in-progress')"
@@ -1002,7 +1002,7 @@
           <div
             v-for="activity in inProgressActivities"
             :key="activity._id"
-            class="bg-white rounded-xl p-3 border border-slate-200 hover:border-blue-400 hover:shadow-xl hover:-translate-y-0.5 hover:scale-[1.01] shadow-sm transition-all duration-300 group cursor-move overflow-hidden flex flex-col justify-between h-[145px] relative shrink-0"
+            class="bg-white rounded-xl p-3 border border-slate-200 hover:border-blue-400 hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.12)] hover:-translate-y-1 shadow-sm transition-all duration-300 group cursor-move flex flex-col justify-between h-[145px] relative shrink-0"
             draggable="true"
             @dragstart="onDragStart($event, activity)"
             @dragend="onDragEnd"
@@ -1135,7 +1135,7 @@
         
         <div 
           :class="[
-            'flex flex-col gap-2.5 flex-1 overflow-y-auto overflow-x-hidden pr-1 sm:pr-2 transition-all duration-300 min-h-0 content-start',
+            'flex flex-col gap-3 flex-1 overflow-y-auto overflow-x-visible px-5 pb-6 transition-all duration-300 min-h-0 content-start custom-scrollbar-slim',
             isDragging && draggedActivity?.status !== 'completed' ? 'ring-2 ring-emerald-400/50 rounded-lg bg-emerald-50/50' : ''
           ]"
           @drop="onDrop($event, 'completed')"
@@ -1145,7 +1145,7 @@
           <div
             v-for="activity in completedActivities"
             :key="activity._id"
-            class="bg-white rounded-xl p-3 border border-slate-200 hover:border-emerald-400 hover:shadow-xl hover:-translate-y-0.5 hover:scale-[1.01] shadow-sm transition-all duration-300 group cursor-move overflow-hidden flex flex-col justify-between h-[145px] relative shrink-0 opacity-80 hover:opacity-100"
+            class="bg-white rounded-xl p-3 border border-slate-200 hover:border-emerald-400 hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.12)] hover:-translate-y-1 shadow-sm transition-all duration-300 group cursor-move flex flex-col justify-between h-[145px] relative shrink-0 opacity-80 hover:opacity-100"
             draggable="true"
             @dragstart="onDragStart($event, activity)"
             @dragend="onDragEnd"
@@ -1244,7 +1244,7 @@
         
         <div 
           :class="[
-            'flex flex-col gap-2.5 flex-1 overflow-y-auto overflow-x-hidden pr-1 sm:pr-2 transition-all duration-300 min-h-0 content-start',
+            'flex flex-col gap-3 flex-1 overflow-y-auto overflow-x-visible px-5 pb-6 transition-all duration-300 min-h-0 content-start custom-scrollbar-slim',
             isDragging && draggedActivity?.status !== 'overdue' ? 'ring-2 ring-red-400/50 rounded-lg bg-red-100/50' : ''
           ]"
           @drop="onDrop($event, 'overdue')"
@@ -1254,7 +1254,7 @@
           <div
             v-for="activity in overdueActivities"
             :key="activity._id"
-            class="bg-white rounded-xl p-3 border border-red-200 hover:border-red-500 hover:shadow-xl hover:-translate-y-0.5 hover:scale-[1.01] shadow-sm transition-all duration-300 group cursor-move overflow-hidden flex flex-col justify-between h-[145px] relative shrink-0"
+            class="bg-white rounded-xl p-3 border border-red-200 hover:border-red-500 hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.12)] hover:-translate-y-1 shadow-sm transition-all duration-300 group cursor-move flex flex-col justify-between h-[145px] relative shrink-0"
             draggable="true"
             @dragstart="onDragStart($event, activity)"
             @dragend="onDragEnd"

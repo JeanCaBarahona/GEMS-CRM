@@ -65,6 +65,50 @@
       </div>
     </div>
 
+    <!-- Action Bar -->
+    <div class="px-5 py-3 border-b border-slate-100 flex items-center gap-2 overflow-x-auto custom-scrollbar bg-white">
+      <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap mr-1">Atacar:</span>
+      <button
+        @click="openOutreach('email')"
+        class="px-3 py-1.5 bg-violet-50 hover:bg-violet-100 text-violet-700 border border-violet-200 rounded-lg text-[10px] font-black flex items-center gap-1.5 whitespace-nowrap transition-all"
+      >
+        <i class="fas fa-envelope text-[10px]"></i>
+        Email
+      </button>
+      <button
+        @click="openOutreach('whatsapp')"
+        class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-[10px] font-black flex items-center gap-1.5 whitespace-nowrap transition-all"
+      >
+        <i class="fab fa-whatsapp text-[12px]"></i>
+        WhatsApp
+      </button>
+      <button
+        @click="openOutreach('call')"
+        class="px-3 py-1.5 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 border border-cyan-200 rounded-lg text-[10px] font-black flex items-center gap-1.5 whitespace-nowrap transition-all"
+      >
+        <i class="fas fa-phone text-[10px]"></i>
+        Script llamada
+      </button>
+      <div class="w-px h-5 bg-slate-200 mx-1"></div>
+      <button
+        @click="convertToClient"
+        :disabled="converting"
+        class="px-3 py-1.5 bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white border border-emerald-600 rounded-lg text-[10px] font-black flex items-center gap-1.5 whitespace-nowrap transition-all shadow-sm disabled:opacity-60"
+      >
+        <i :class="['fas', converting ? 'fa-circle-notch fa-spin' : 'fa-trophy', 'text-[10px]']"></i>
+        {{ prospect.status === 'ganado' ? 'Convertir a cliente' : 'Cerrar como ganado' }}
+      </button>
+    </div>
+
+    <ProspectOutreachModal
+      v-if="outreachOpen"
+      :is-open="outreachOpen"
+      :prospect="prospect"
+      :channel="outreachChannel"
+      @close="outreachOpen = false"
+      @updated="onOutreachUpdated"
+    />
+
     <!-- Messages -->
     <div ref="messagesContainer" class="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-4 bg-slate-50/30">
       <div v-if="!prospect.messages?.length" class="text-center py-12">
@@ -181,14 +225,18 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { format, formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import { prospectService } from '@/services/prospectService'
+import { clientService } from '@/services/clientService'
 import type { Prospect, ProspectStatus } from '@/types/prospect'
 import { PROSPECT_STATUSES } from '@/types/prospect'
 import { useNotifications } from '@/composables/useNotifications'
+import type { OutreachChannel } from '@/services/prospectOutreach'
+import ProspectOutreachModal from './ProspectOutreachModal.vue'
 
 interface Props {
   prospect: Prospect
@@ -201,11 +249,15 @@ const emit = defineEmits<{
   delete: [prospect: Prospect]
 }>()
 
-const { showSuccess, showError } = useNotifications()
+const { showSuccess, showError, confirmDelete } = useNotifications()
+const router = useRouter()
 
 const newMessage = ref('')
 const aiThinking = ref(false)
 const messagesContainer = ref<HTMLElement | null>(null)
+const outreachOpen = ref(false)
+const outreachChannel = ref<OutreachChannel>('email')
+const converting = ref(false)
 
 marked.setOptions({ breaks: true, gfm: true })
 
@@ -349,6 +401,55 @@ const copyMessage = async (content: string) => {
     showSuccess('Copiado al portapapeles')
   } catch {
     showError('No se pudo copiar')
+  }
+}
+
+const openOutreach = (channel: OutreachChannel) => {
+  outreachChannel.value = channel
+  outreachOpen.value = true
+}
+
+const onOutreachUpdated = (updated: Prospect) => {
+  emit('updated', updated)
+}
+
+const convertToClient = async () => {
+  if (converting.value) return
+  const result = await confirmDelete(
+    `¿Convertir "${props.prospect.prospectName}" en cliente activo? El prospecto quedará marcado como "Ganado".`
+  )
+  if (!result.isConfirmed) return
+
+  converting.value = true
+  try {
+    const fallbackEmail = `${props.prospect._id}@prospecto-pendiente.local`
+    const created = await clientService.create({
+      name: props.prospect.contactName?.trim() || props.prospect.prospectName,
+      email: props.prospect.contactEmail?.trim() || fallbackEmail,
+      phone: props.prospect.contactPhone?.trim() || '',
+      company: props.prospect.company?.trim() || '',
+      status: 'active',
+      address: '',
+    } as any)
+
+    prospectService.setStatus(props.prospect._id, 'ganado')
+    const updated = { ...props.prospect, status: 'ganado' as ProspectStatus }
+    emit('updated', updated)
+
+    // Registra la conversión en el historial del prospect
+    await prospectService.sendMessage(props.prospect._id, {
+      role: 'user',
+      content: `🏆 **Convertido a cliente** — Ficha creada en /clients/${(created as any)._id}`,
+    })
+
+    showSuccess('Cliente creado correctamente')
+    if ((created as any)._id) {
+      router.push(`/clients/${(created as any)._id}`)
+    }
+  } catch (err: any) {
+    showError(err?.message || 'No se pudo convertir a cliente')
+  } finally {
+    converting.value = false
   }
 }
 </script>

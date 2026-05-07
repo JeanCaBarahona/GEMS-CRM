@@ -23,6 +23,8 @@ export interface Ticket {
   tags?: string[];
   attachments?: string[];
   comments: TicketComment[];
+  linkedCases?: any[];
+  linkedWikiArticles?: any[];
   resolvedAt?: string;
   createdAt?: string;
   updatedAt?: string;

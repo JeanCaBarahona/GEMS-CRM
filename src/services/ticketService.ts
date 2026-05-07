@@ -92,13 +92,30 @@ class TicketService {
     }
   }
 
+  // Update ticket properties
+  async updateTicket(id: string, data: Partial<Ticket>): Promise<Ticket> {
+    try {
+      const response = await fetch(`${this.baseUrl}${this.endpoint}/${id}`, {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+        body: JSON.stringify(data),
+      });
+      const result = await response.json();
+      if (!result.success) throw new Error(result.message || 'No se pudo actualizar el ticket');
+      return result.data;
+    } catch (error) {
+      console.error('Error updating ticket:', error);
+      throw new Error('Error al actualizar el ticket');
+    }
+  }
+
   // Update ticket status
-  async updateStatus(id: string, status: string): Promise<Ticket> {
+  async updateStatus(id: string, status: string, assignedTo?: string): Promise<Ticket> {
     try {
       const response = await fetch(`${this.baseUrl}${this.endpoint}/${id}/status`, {
         method: 'PATCH',
         headers: this.getHeaders(),
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, assignedTo }),
       });
       const result = await response.json();
       if (!result.success) throw new Error(result.message || 'No se pudo actualizar el estado');

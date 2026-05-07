@@ -58,6 +58,8 @@ export interface Activity {
   estimatedTime?: string
   createdBy?: string // ID del usuario que creó la actividad
   createdByUser?: TeamMember // Datos del usuario que creó (populated)
+  linkedCases?: any[]
+  linkedWikiArticles?: any[]
   createdAt?: string
   updatedAt?: string
 }

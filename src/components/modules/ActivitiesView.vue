@@ -653,6 +653,71 @@
             </button>
           </div>
 
+          <!-- Recursos Vinculados (Trazabilidad) -->
+          <div class="border-t border-slate-200 pt-5">
+            <div class="flex items-center justify-between mb-3">
+              <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Recursos Vinculados</label>
+              <div class="flex gap-1.5">
+                <button 
+                  @click="openCaseLinkingModal"
+                  class="text-[10px] font-black uppercase tracking-wider px-2 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded border border-indigo-100 transition-colors"
+                >
+                  + Caso
+                </button>
+                <button 
+                  @click="openWikiLinkingModal"
+                  class="text-[10px] font-black uppercase tracking-wider px-2 py-1 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded border border-emerald-100 transition-colors"
+                >
+                  + Wiki
+                </button>
+              </div>
+            </div>
+
+            <!-- Lista de Recursos -->
+            <div v-if="(selectedTask.linkedCases?.length || 0) + (selectedTask.linkedWikiArticles?.length || 0) > 0" class="space-y-2">
+              <!-- Casos -->
+              <div v-for="c in selectedTask.linkedCases" :key="c._id" class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-lg group">
+                <div class="w-8 h-8 bg-indigo-100 rounded flex items-center justify-center text-indigo-600 shrink-0">
+                  <i class="fas fa-briefcase text-xs"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-xs font-bold text-slate-800 truncate">{{ c.title }}</div>
+                  <div class="text-[10px] text-slate-500 font-medium">{{ c.caseNumber }} • {{ c.status }}</div>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button @click="openResource(c, 'case')" class="p-1.5 text-indigo-400 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-all" title="Ver caso">
+                    <i class="fas fa-external-link-alt text-xs"></i>
+                  </button>
+                  <button @click="unlinkCase(c._id)" class="p-1.5 text-slate-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-all" title="Desvincular">
+                    <i class="fas fa-unlink text-xs"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Wiki -->
+              <div v-for="a in selectedTask.linkedWikiArticles" :key="a._id" class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-lg group">
+                <div class="w-8 h-8 bg-emerald-100 rounded flex items-center justify-center text-emerald-600 shrink-0">
+                  <i class="fas fa-book text-xs"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-xs font-bold text-slate-800 truncate">{{ a.title }}</div>
+                  <div class="text-[10px] text-slate-500 font-medium">{{ a.category }}</div>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button @click="openResource(a)" class="p-1.5 text-emerald-400 hover:text-emerald-600 opacity-0 group-hover:opacity-100 transition-all" title="Ver wiki">
+                    <i class="fas fa-external-link-alt text-xs"></i>
+                  </button>
+                  <button @click="unlinkWiki(a._id)" class="p-1.5 text-slate-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-all" title="Desvincular">
+                    <i class="fas fa-unlink text-xs"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div v-else class="text-center py-4 bg-slate-50/50 border border-dashed border-slate-200 rounded-lg">
+              <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Sin recursos vinculados</p>
+            </div>
+          </div>
+
           <!-- Comentarios -->
           <div class="border-t border-slate-200 pt-5">
             <label class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3 block">Comentarios</label>
@@ -2316,6 +2381,87 @@
         </div>
       </div>
     </Teleport>
+
+    <!-- Modales de Vinculación -->
+    <Teleport to="body">
+      <!-- Vincular Caso -->
+      <div v-if="showCaseLinkingModal" class="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 animate-scale-up">
+          <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 rounded-t-2xl">
+            <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">Vincular Caso Técnico</h3>
+            <button @click="showCaseLinkingModal = false" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+          </div>
+          <div class="p-4">
+            <div class="relative mb-4">
+              <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+              <input 
+                v-model="caseSearchQuery" 
+                type="text" 
+                placeholder="Buscar por número o título..." 
+                class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+              />
+            </div>
+            <div class="max-h-60 overflow-y-auto space-y-2 custom-scrollbar-slim">
+              <div v-if="linkingLoading" class="text-center py-4"><i class="fas fa-spinner fa-spin text-indigo-500"></i></div>
+              <div 
+                v-for="c in filteredCasesForLinking" 
+                :key="c._id"
+                @click="linkCase(c)"
+                class="p-3 bg-white border border-slate-100 rounded-xl hover:border-indigo-500 hover:bg-indigo-50/30 cursor-pointer transition-all flex items-center gap-3"
+              >
+                <div class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 font-bold text-[10px]">
+                  {{ c.caseNumber?.slice(-3) }}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-xs font-bold text-slate-800 truncate">{{ c.title }}</div>
+                  <div class="text-[10px] text-slate-500">{{ c.status }} • {{ c.priority }}</div>
+                </div>
+                <i class="fas fa-plus text-indigo-400 text-xs"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vincular Wiki -->
+      <div v-if="showWikiLinkingModal" class="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 animate-scale-up">
+          <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 rounded-t-2xl">
+            <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">Vincular Documentación</h3>
+            <button @click="showWikiLinkingModal = false" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+          </div>
+          <div class="p-4">
+            <div class="relative mb-4">
+              <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+              <input 
+                v-model="wikiSearchQuery" 
+                type="text" 
+                placeholder="Buscar por título o categoría..." 
+                class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+              />
+            </div>
+            <div class="max-h-60 overflow-y-auto space-y-2 custom-scrollbar-slim">
+              <div v-if="linkingLoading" class="text-center py-4"><i class="fas fa-spinner fa-spin text-emerald-500"></i></div>
+              <div 
+                v-for="a in filteredWikiForLinking" 
+                :key="a._id"
+                @click="linkWiki(a)"
+                class="p-3 bg-white border border-slate-100 rounded-xl hover:border-emerald-500 hover:bg-emerald-50/30 cursor-pointer transition-all flex items-center gap-3"
+              >
+                <div class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600">
+                  <i class="fas fa-book text-xs"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-xs font-bold text-slate-800 truncate">{{ a.title }}</div>
+                  <div class="text-[10px] text-slate-500">{{ a.category }}</div>
+                </div>
+                <i class="fas fa-plus text-emerald-400 text-xs"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -2332,6 +2478,8 @@ import { useTasksStore } from '../../stores/tasks'
 import { useGitHubStore } from '../../stores/github'
 import { API_CONFIG } from '../../config/api'
 import type { Client, TeamMember } from '../../types'
+import { casesService } from '../../services/casesService'
+import { wikiService } from '../../services/wikiService'
 import ActivityFormModal from '../forms/ActivityFormModal.vue'
 import AssignActivityModal from '../modals/AssignActivityModal.vue'
 import CustomSelect from '../ui/CustomSelect.vue'
@@ -2488,6 +2636,34 @@ const showQuickTaskModal = ref(false)
 const selectedDateForQuickTask = ref<Date | null>(null)
 const showActivityDetailModal = ref(false)
 const selectedActivity = ref<ActivityData | null>(null)
+
+// Trazabilidad (Vinculación de Casos y Wiki)
+const showCaseLinkingModal = ref(false)
+const showWikiLinkingModal = ref(false)
+const casesList = ref<any[]>([])
+const wikiList = ref<any[]>([])
+const caseSearchQuery = ref('')
+const wikiSearchQuery = ref('')
+const linkingLoading = ref(false)
+
+const filteredCasesForLinking = computed(() => {
+  if (!caseSearchQuery.value) return casesList.value
+  const q = caseSearchQuery.value.toLowerCase()
+  return casesList.value.filter(c => 
+    c.caseNumber?.toLowerCase().includes(q) || 
+    c.title?.toLowerCase().includes(q) ||
+    c.subject?.toLowerCase().includes(q)
+  )
+})
+
+const filteredWikiForLinking = computed(() => {
+  if (!wikiSearchQuery.value) return wikiList.value
+  const q = wikiSearchQuery.value.toLowerCase()
+  return wikiList.value.filter(a => 
+    a.title?.toLowerCase().includes(q) || 
+    a.category?.toLowerCase().includes(q)
+  )
+})
 
 // Computed
 const filteredMembersByDept = computed(() => {
@@ -4496,6 +4672,111 @@ const showEditTaskModal = () => {
   showCreateTaskModal.value = true
   isEditingTask.value = true
   editingTaskId.value = selectedTask.value._id
+}
+
+// Métodos de Vinculación de Recursos
+const openCaseLinkingModal = async () => {
+  showCaseLinkingModal.value = true
+  linkingLoading.value = true
+  try {
+    casesList.value = await casesService.getAll()
+  } catch (error) {
+    showError('Error al cargar casos')
+  } finally {
+    linkingLoading.value = false
+  }
+}
+
+const openWikiLinkingModal = async () => {
+  showWikiLinkingModal.value = true
+  linkingLoading.value = true
+  try {
+    wikiList.value = await wikiService.getAll()
+  } catch (error) {
+    showError('Error al cargar wiki')
+  } finally {
+    linkingLoading.value = false
+  }
+}
+
+const linkCase = async (caseObj: any) => {
+  if (!selectedTask.value) return
+  
+  const currentCases = selectedTask.value.linkedCases || []
+  if (currentCases.some((c: any) => c._id === caseObj._id)) {
+    toast('Este caso ya está vinculado', 'info')
+    return
+  }
+
+  try {
+    const updated = await tasksStore.updateTask(selectedTask.value._id, {
+      linkedCases: [...currentCases, caseObj]
+    })
+    selectedTask.value = updated
+    toast('Caso vinculado exitosamente', 'success')
+    showCaseLinkingModal.value = false
+  } catch (error) {
+    showError('Error al vincular caso')
+  }
+}
+
+const linkWiki = async (wikiObj: any) => {
+  if (!selectedTask.value) return
+  
+  const currentArticles = selectedTask.value.linkedWikiArticles || []
+  if (currentArticles.some((a: any) => a._id === wikiObj._id)) {
+    toast('Este artículo ya está vinculado', 'info')
+    return
+  }
+
+  try {
+    const updated = await tasksStore.updateTask(selectedTask.value._id, {
+      linkedWikiArticles: [...currentArticles, wikiObj]
+    })
+    selectedTask.value = updated
+    toast('Artículo vinculado exitosamente', 'success')
+    showWikiLinkingModal.value = false
+  } catch (error) {
+    showError('Error al vincular artículo')
+  }
+}
+
+const unlinkCase = async (caseId: string) => {
+  if (!selectedTask.value) return
+  
+  try {
+    const currentCases = selectedTask.value.linkedCases || []
+    const updated = await tasksStore.updateTask(selectedTask.value._id, {
+      linkedCases: currentCases.filter((c: any) => c._id !== caseId)
+    })
+    selectedTask.value = updated
+    toast('Caso desvinculado', 'success')
+  } catch (error) {
+    showError('Error al desvincular caso')
+  }
+}
+
+const unlinkWiki = async (wikiId: string) => {
+  if (!selectedTask.value) return
+  
+  try {
+    const currentArticles = selectedTask.value.linkedWikiArticles || []
+    const updated = await tasksStore.updateTask(selectedTask.value._id, {
+      linkedWikiArticles: currentArticles.filter((a: any) => a._id !== wikiId)
+    })
+    selectedTask.value = updated
+    toast('Artículo desvinculado', 'success')
+  } catch (error) {
+    showError('Error al desvincular artículo')
+  }
+}
+
+const openResource = (item: any, type?: string) => {
+  if (type === 'case' || item.caseNumber) {
+    window.open(`/cases?id=${item._id}`, '_blank')
+  } else {
+    window.open(`/wiki?id=${item._id}`, '_blank')
+  }
 }
 
 const editTaskFromCard = (task: any) => {

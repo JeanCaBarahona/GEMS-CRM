@@ -360,7 +360,12 @@ const sendComment = async () => {
     const response = await ticketService.addComment(selectedTicket.value._id, formData)
     
     if (response) {
-      // Re-fetch ticket to get updated comments with author info
+      // If client responds to a waiting ticket, move it to open
+      if (selectedTicket.value.status === 'waiting') {
+        await ticketService.updateStatus(selectedTicket.value._id, 'open')
+      }
+      
+      // Re-fetch ticket to get updated comments and status
       const updatedTicket = await ticketService.getById(selectedTicket.value._id)
       if (updatedTicket) {
         selectedTicket.value = updatedTicket
@@ -424,11 +429,9 @@ const getPriorityClass = (priority: string) => {
 
 const getStatusColor = (status: string) => {
     const colors = {
-        'new': 'bg-primary-500',
         'open': 'bg-emerald-500',
         'waiting': 'bg-amber-500',
-        'resolved': 'bg-slate-300',
-        'closed': 'bg-slate-900'
+        'resolved': 'bg-slate-300'
     }
     return colors[status as keyof typeof colors] || 'bg-slate-300'
 }

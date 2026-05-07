@@ -78,6 +78,8 @@ export interface Task {
     pr?: string
     lastSync?: Date
   }
+  linkedCases?: any[]
+  linkedWikiArticles?: any[]
   dueDate?: Date
   completedAt?: Date
   createdAt: Date

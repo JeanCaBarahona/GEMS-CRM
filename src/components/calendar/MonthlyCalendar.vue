@@ -1,24 +1,24 @@
 <template>
-  <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+  <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
     <!-- Header del calendario -->
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center justify-between mb-4">
       <div class="flex items-center gap-4">
         <button
           @click="previousMonth"
-          class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+          class="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
         >
-          <i class="fas fa-chevron-left"></i>
+          <i class="fas fa-chevron-left text-xs"></i>
         </button>
         
-        <h2 class="text-2xl font-black text-slate-800">
+        <h2 class="text-lg font-black text-slate-800 tracking-tight">
           {{ currentMonthName }} {{ currentYear }}
         </h2>
         
         <button
           @click="nextMonth"
-          class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+          class="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
         >
-          <i class="fas fa-chevron-right"></i>
+          <i class="fas fa-chevron-right text-xs"></i>
         </button>
       </div>
       
@@ -26,19 +26,19 @@
         <!-- Botón para ir al mes actual -->
         <button
           @click="goToCurrentMonth"
-          class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors text-sm font-bold shadow-sm flex items-center"
+          class="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-all text-xs font-bold shadow-sm flex items-center"
         >
-          <i class="fas fa-calendar-day mr-2"></i>
+          <i class="fas fa-calendar-day mr-2 text-[10px]"></i>
           Hoy
         </button>
         
         <!-- Botón para alternar vista -->
         <button
           @click="toggleView"
-          class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-bold shadow-sm flex items-center"
+          class="px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all text-xs font-bold shadow-sm flex items-center"
         >
-          <i class="fas fa-eye mr-2"></i>
-          {{ showTasks ? 'Ocultar Tareas' : 'Ver Tareas' }}
+          <i class="fas fa-eye mr-2 text-[10px]"></i>
+          {{ showTasks ? 'Ocultar' : 'Ver' }}
         </button>
       </div>
     </div>
@@ -48,7 +48,7 @@
       <div
         v-for="day in weekDays"
         :key="day"
-        class="p-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200"
+        class="p-2 text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] border-b border-slate-100"
       >
         {{ day }}
       </div>
@@ -59,52 +59,90 @@
       <div
         v-for="(day, index) in calendarDays"
         :key="index"
-        class="min-h-[120px] border border-slate-200 rounded-lg p-2 relative transition-colors"
-        :class="getDayClasses(day)"
+        class="min-h-[120px] border border-slate-200 rounded-lg p-2 relative transition-all duration-300"
+        :class="[
+          getDayClasses(day),
+          (day.date.getDay() === 0 || day.date.getDay() === 6) ? 'bg-slate-50/50' : ''
+        ]"
       >
         <!-- Número del día -->
-        <div class="flex justify-between items-start mb-2">
+        <div class="flex justify-between items-center mb-1">
           <span
-            class="text-sm"
-            :class="day.isCurrentMonth ? 'text-slate-800 font-bold' : 'text-slate-400 font-medium'"
+            class="text-[11px]"
+            :class="day.isCurrentMonth ? 'text-slate-800 font-black' : 'text-slate-300 font-bold'"
           >
             {{ day.date.getDate() }}
           </span>
           
-          <!-- Indicador de día actual -->
-          <div
-            v-if="isToday(day.date)"
-            class="w-2 h-2 bg-blue-500 rounded-full"
-          ></div>
+          <div class="flex items-center gap-1.5">
+            <!-- Botón agregar minimalista -->
+            <button
+              v-if="day.isCurrentMonth"
+              @click.stop="addQuickTask(day.date)"
+              class="w-5 h-5 flex items-center justify-center rounded-md text-slate-300 hover:text-primary-600 hover:bg-primary-50 transition-all opacity-0 group-hover:opacity-100"
+              title="Agregar tarea"
+            >
+              <i class="fas fa-plus text-[8px]"></i>
+            </button>
+
+            <!-- Indicador de hoy -->
+            <div
+              v-if="isToday(day.date)"
+              class="w-1.5 h-1.5 bg-primary-500 rounded-full"
+            ></div>
+          </div>
         </div>
 
         <!-- Tareas del día -->
-        <div v-if="showTasks && day.isCurrentMonth" class="space-y-1">
+        <div v-if="showTasks && day.isCurrentMonth" class="space-y-0.5">
           <div
-            v-for="activity in getActivitiesForDay(day.date)"
+            v-for="activity in getActivitiesForDay(day.date).slice(0, 3)"
             :key="activity._id"
-            class="px-2 py-1 rounded text-xs cursor-pointer shadow-sm border"
+            class="px-1.5 py-0.5 rounded-md text-[9px] cursor-pointer border-l-2 hover:translate-x-0.5 transition-all duration-200 group/task truncate"
             :class="getActivityClasses(activity)"
-            @click="viewActivity(activity)"
-            :title="`${activity.title} - ${getClientName(activity.clientId)}`"
+            @dblclick="viewActivity(activity)"
+            :title="`${activity.title} - ${getAssignedToName(activity)} (Doble clic para abrir)`"
           >
-            <div class="truncate font-bold">{{ activity.title }}</div>
-            <div class="flex items-center gap-1 text-[10px] mt-0.5 font-medium opacity-90">
-              <i class="fas fa-user"></i>
-              <span>{{ getAssignedToName(activity) }}</span>
-            </div>
+            <span class="font-black truncate block">{{ activity.title }}</span>
           </div>
           
-          <!-- Botón para agregar tarea rápida -->
-          <button
-            v-if="day.isCurrentMonth"
-            @click="addQuickTask(day.date)"
-            class="w-full mt-1 py-1 text-xs text-slate-400 hover:text-primary-600 hover:bg-primary-50 font-bold rounded border border-dashed border-slate-300 hover:border-primary-300 transition-all duration-200"
-            title="Agregar tarea rápida"
+          <!-- Indicador de más tareas con Popover -->
+          <div 
+            v-if="getActivitiesForDay(day.date).length > 3"
+            class="mt-1"
           >
-            <i class="fas fa-plus mr-1"></i>
-            Agregar
-          </button>
+            <button 
+              @click.stop="expandedDay = day.date"
+              class="text-[8px] font-black text-primary-600 hover:text-primary-700 pl-1.5 py-0.5 uppercase tracking-tighter hover:bg-primary-50 rounded transition-colors w-full text-left"
+            >
+              +{{ getActivitiesForDay(day.date).length - 3 }} más
+            </button>
+          </div>
+        </div>
+
+        <!-- Popover de "Ver más" -->
+        <div 
+          v-if="expandedDay && expandedDay.getTime() === day.date.getTime()"
+          class="absolute inset-0 z-[60] bg-white shadow-2xl rounded-xl border border-primary-200 p-2 flex flex-col animate-in zoom-in-95 duration-200"
+        >
+          <div class="flex items-center justify-between mb-2 border-b border-slate-100 pb-1">
+            <span class="text-[10px] font-black text-slate-800 uppercase tracking-widest">{{ day.date.getDate() }} {{ currentMonthName }}</span>
+            <button @click.stop="expandedDay = null" class="text-slate-400 hover:text-rose-500 transition-colors">
+              <i class="fas fa-times text-[10px]"></i>
+            </button>
+          </div>
+          <div class="flex-1 overflow-y-auto space-y-1 custom-scrollbar-slim pr-1">
+            <div
+              v-for="activity in getActivitiesForDay(day.date)"
+              :key="'exp-' + activity._id"
+              class="px-1.5 py-1 rounded-md text-[9px] cursor-pointer border-l-2 hover:bg-slate-50 transition-all truncate"
+              :class="getActivityClasses(activity)"
+              @dblclick="viewActivity(activity); expandedDay = null"
+              :title="activity.title"
+            >
+              <span class="font-black truncate block">{{ activity.title }}</span>
+            </div>
+          </div>
         </div>
 
         <!-- Contador de tareas cuando no se muestran -->
@@ -162,6 +200,7 @@ const emit = defineEmits<{
 // Reactive data
 const currentDate = ref(new Date())
 const showTasks = ref(true)
+const expandedDay = ref<Date | null>(null)
 
 // Computed
 const currentYear = computed(() => currentDate.value.getFullYear())
@@ -232,45 +271,61 @@ const isToday = (date: Date): boolean => {
 }
 
 const getDayClasses = (day: any) => {
-  const classes = []
+  const classes = ['group transition-all duration-300']
   
   if (!day.isCurrentMonth) {
-    classes.push('opacity-50 bg-slate-50 border-transparent')
+    classes.push('opacity-30 bg-slate-50/50 border-slate-100')
   } else {
     classes.push('bg-white')
   }
   
   if (isToday(day.date)) {
-    classes.push('ring-2 ring-primary-500 ring-inset border-transparent')
+    classes.push('ring-1 ring-primary-400 ring-inset border-primary-100 bg-primary-50/10')
   } else if (day.isCurrentMonth) {
-    classes.push('hover:border-primary-200 hover:shadow-sm')
+    classes.push('hover:bg-slate-50/50 hover:border-slate-300')
   }
   
   return classes.join(' ')
 }
 
 const getActivitiesForDay = (date: Date): Activity[] => {
+  const dayOfWeek = date.getDay()
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
+  
+  // Si es fin de semana, no mostramos tareas laborales
+  if (isWeekend) return []
+
   return props.activities.filter(activity => {
-    const activityDate = new Date(activity.date)
-    return activityDate.toDateString() === date.toDateString()
+    // Fecha de inicio (normalizada a las 00:00)
+    const startDate = new Date(activity.date)
+    startDate.setHours(0, 0, 0, 0)
+    
+    // Fecha de fin (si no existe, usamos la de inicio)
+    const endDate = activity.dueDate ? new Date(activity.dueDate) : new Date(activity.date)
+    endDate.setHours(23, 59, 59, 999)
+    
+    // La actividad debe estar en el rango y el día actual debe ser laborable
+    return date >= startDate && date <= endDate
   })
 }
 
 const getActivityClasses = (activity: Activity) => {
-  const baseClasses = 'transition-colors text-white'
+  const baseClasses = 'bg-white'
   
   switch (activity.status) {
     case 'pending':
       const isOverdue = new Date(activity.dueDate || activity.date) < new Date()
       return isOverdue 
-        ? `${baseClasses} bg-orange-500 hover:bg-orange-600 border-orange-600`
-        : `${baseClasses} bg-amber-500 hover:bg-amber-600 border-amber-600`
+        ? `${baseClasses} border-rose-500 text-rose-700 hover:bg-rose-50`
+        : `${baseClasses} border-amber-500 text-amber-700 hover:bg-amber-50`
+    case 'in-progress':
+      return `${baseClasses} border-blue-500 text-blue-700 hover:bg-blue-50`
     case 'completed':
-      return `${baseClasses} bg-emerald-500 hover:bg-emerald-600 border-emerald-600`
+      return `${baseClasses} border-emerald-500 text-emerald-700 hover:bg-emerald-50`
     case 'cancelled':
-      return `${baseClasses} bg-rose-500 hover:bg-rose-600 border-rose-600`
+      return `${baseClasses} border-slate-300 text-slate-500 hover:bg-slate-50`
     default:
-      return `${baseClasses} bg-slate-500 hover:bg-slate-600 border-slate-600`
+      return `${baseClasses} border-slate-400 text-slate-600 hover:bg-slate-50`
   }
 }
 
@@ -322,8 +377,30 @@ const viewActivity = (activity: Activity) => {
 }
 
 /* Hover effects para las tareas */
-.cursor-pointer:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+/* Personalización de scrollbar para el popover */
+.custom-scrollbar-slim::-webkit-scrollbar {
+  width: 3px;
+}
+
+.custom-scrollbar-slim::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar-slim::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 10px;
+}
+
+.custom-scrollbar-slim::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out;
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 </style>

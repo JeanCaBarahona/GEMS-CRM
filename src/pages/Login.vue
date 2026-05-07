@@ -45,67 +45,67 @@
     </div>
 
     <!-- Right Side: Login Form -->
-    <div class="w-full lg:w-[40%] flex items-center justify-center p-6 lg:p-12 relative z-40 bg-white lg:bg-transparent">
-      <div class="w-full max-w-[420px] animate-fade-in">
+    <div class="w-full lg:w-[40%] flex items-center justify-center p-4 sm:p-6 lg:p-8 relative z-40 bg-white lg:bg-transparent overflow-y-auto">
+      <div class="w-full max-w-[515px] animate-fade-in py-4 flex flex-col justify-center min-h-full">
         
         <!-- Login Card -->
-        <div class="bg-white p-10 lg:p-14 rounded-[3.5rem] shadow-[0_40px_80px_-15px_rgba(0,0,0,0.12)] border border-slate-50 relative overflow-hidden">
+        <div class="bg-white p-6 sm:p-8 lg:p-12 rounded-[2rem] sm:rounded-[3.5rem] shadow-[0_40px_80px_-15px_rgba(0,0,0,0.12)] border border-slate-50 relative overflow-hidden my-auto">
           <!-- Decorative Glow -->
           <div class="absolute -top-24 -right-24 w-48 h-48 bg-primary-500/5 blur-2xl rounded-full"></div>
           
           <!-- Logo & Header -->
-          <div class="flex flex-col items-center mb-14 relative z-10">
-            <div class="flex items-center justify-center h-20 overflow-hidden mb-4">
-              <img :src="logoCT" alt="CRM Logo" class="h-32 w-auto object-contain scale-110" />
+          <div class="flex flex-col items-center mb-6 sm:mb-8 relative z-10">
+            <div class="flex items-center justify-center h-16 sm:h-20 overflow-hidden mb-2 sm:mb-3">
+              <img :src="logoCT" alt="CRM Logo" class="h-20 sm:h-28 w-auto object-contain scale-110" />
             </div>
             <div class="flex items-center gap-3">
-              <div class="h-px w-6 bg-slate-100"></div>
-              <p class="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] opacity-80">Portal de Acceso</p>
-              <div class="h-px w-6 bg-slate-100"></div>
+              <div class="h-px w-4 sm:w-6 bg-slate-100"></div>
+              <p class="text-slate-400 text-[8px] sm:text-[9px] font-black uppercase tracking-[0.3em] opacity-80">Portal de Acceso</p>
+              <div class="h-px w-4 sm:w-6 bg-slate-100"></div>
             </div>
           </div>
 
           <!-- Error message -->
-          <div v-if="error" class="mb-10 p-5 bg-rose-50 border border-rose-100 rounded-3xl flex items-start gap-4 animate-shake relative z-10">
-            <i class="fas fa-circle-exclamation text-rose-500 shrink-0 mt-1 text-base"></i>
-            <p class="text-xs font-bold text-rose-600 leading-normal">{{ error }}</p>
+          <div v-if="error" class="mb-5 sm:mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3 animate-shake relative z-10">
+            <i class="fas fa-circle-exclamation text-rose-500 shrink-0 mt-0.5 text-sm"></i>
+            <p class="text-[11px] font-bold text-rose-600 leading-tight">{{ error }}</p>
           </div>
 
           <!-- Form -->
-          <form @submit.prevent="handleLogin" class="space-y-7 relative z-10">
+          <form @submit.prevent="handleLogin" class="space-y-4 sm:space-y-5 relative z-10">
             <!-- Email -->
-            <div class="space-y-2">
+            <div class="space-y-1.5">
               <div class="relative group">
-                <div class="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary-500 transition-all duration-300">
-                  <i class="far fa-envelope text-base"></i>
+                <div class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary-500 transition-all duration-300">
+                  <i class="far fa-envelope text-sm"></i>
                 </div>
                 <input
                   v-model="credentials.email"
                   type="email"
                   required
                   placeholder="usuario@email.com"
-                  class="w-full bg-slate-50/50 border border-slate-100 rounded-[1.5rem] py-5 pl-16 pr-6 text-sm font-semibold focus:ring-4 focus:ring-primary-500/5 focus:border-primary-500 focus:bg-white outline-none transition-all duration-300 text-slate-800 placeholder:text-slate-300 placeholder:font-medium"
+                  class="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-3.5 sm:py-4 pl-14 pr-6 text-sm font-semibold focus:ring-4 focus:ring-primary-500/5 focus:border-primary-500 focus:bg-white outline-none transition-all duration-300 text-slate-800 placeholder:text-slate-300 placeholder:font-medium"
                 />
               </div>
             </div>
 
             <!-- Password -->
-            <div class="space-y-2">
+            <div class="space-y-1.5">
               <div class="relative group">
-                <div class="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary-500 transition-all duration-300">
-                  <i class="far fa-lock text-base"></i>
+                <div class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary-500 transition-all duration-300">
+                  <i class="far fa-lock text-sm"></i>
                 </div>
                 <input
                   v-model="credentials.password"
                   :type="showPassword ? 'text' : 'password'"
                   required
                   placeholder="••••••••••"
-                  class="w-full bg-slate-50/50 border border-slate-100 rounded-[1.5rem] py-5 pl-16 pr-16 text-sm font-semibold focus:ring-4 focus:ring-primary-500/5 focus:border-primary-500 focus:bg-white outline-none transition-all duration-300 text-slate-800 placeholder:text-slate-300 placeholder:font-medium"
+                  class="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-3.5 sm:py-4 pl-14 pr-14 text-sm font-semibold focus:ring-4 focus:ring-primary-500/5 focus:border-primary-500 focus:bg-white outline-none transition-all duration-300 text-slate-800 placeholder:text-slate-300 placeholder:font-medium"
                 />
                 <button
                   type="button"
                   @click="showPassword = !showPassword"
-                  class="absolute right-6 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-600 transition-all duration-300 p-2"
+                  class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-600 transition-all duration-300 p-2"
                 >
                   <i :class="showPassword ? 'far fa-eye-slash' : 'far fa-eye'" class="text-sm"></i>
                 </button>
@@ -113,22 +113,22 @@
             </div>
 
             <!-- Options -->
-            <div class="flex items-center justify-between px-2">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0 px-2">
               <label class="flex items-center cursor-pointer group select-none">
                 <div class="relative">
                   <input
                     type="checkbox"
                     v-model="rememberMe"
-                    class="peer appearance-none w-5 h-5 rounded-lg border-2 border-slate-100 checked:bg-primary-500 checked:border-primary-500 transition-all duration-300 cursor-pointer"
+                    class="peer appearance-none w-4 h-4 rounded-md border-2 border-slate-100 checked:bg-primary-500 checked:border-primary-500 transition-all duration-300 cursor-pointer"
                   />
-                  <i class="fas fa-check absolute inset-0 flex items-center justify-center text-[10px] text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none"></i>
+                  <i class="fas fa-check absolute inset-0 flex items-center justify-center text-[8px] text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none"></i>
                 </div>
-                <span class="ml-3 text-xs font-bold text-slate-400 group-hover:text-slate-600 transition-colors">Recordarme</span>
+                <span class="ml-2 text-[11px] font-bold text-slate-400 group-hover:text-slate-600 transition-colors">Recordarme</span>
               </label>
               <button
                 type="button"
                 @click="showForgotPassword = true"
-                class="text-xs font-bold text-slate-400 hover:text-primary-600 transition-colors"
+                class="text-[11px] font-bold text-slate-400 hover:text-primary-600 transition-colors"
               >
                 ¿Olvidaste tu contraseña?
               </button>
@@ -138,15 +138,34 @@
             <button
               type="submit"
               :disabled="isLoading"
-              class="w-full py-5 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white font-black rounded-2xl transition-all duration-300 shadow-[0_12px_24px_-8px_rgba(82,194,239,0.5)] hover:shadow-[0_16px_32px_-8px_rgba(82,194,239,0.6)] active:scale-[0.97] flex items-center justify-center gap-4 disabled:opacity-70 disabled:pointer-events-none mt-6 text-sm uppercase tracking-widest"
+              class="w-full py-4 sm:py-4.5 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white font-black rounded-2xl transition-all duration-300 shadow-[0_12px_24px_-8px_rgba(82,194,239,0.5)] hover:shadow-[0_16px_32px_-8px_rgba(82,194,239,0.6)] active:scale-[0.97] flex items-center justify-center gap-4 disabled:opacity-70 disabled:pointer-events-none mt-2 sm:mt-4 text-xs uppercase tracking-widest"
             >
               <template v-if="isLoading">
-                <i class="fas fa-circle-notch fa-spin text-lg"></i>
+                <i class="fas fa-circle-notch fa-spin text-base"></i>
               </template>
               <template v-else>
                 Acceder al Sistema
               </template>
             </button>
+
+            <!-- Social Media Icons -->
+            <div class="pt-5 sm:pt-6 flex flex-col items-center gap-3 border-t border-slate-50 mt-1">
+              <p class="text-[8px] font-black text-slate-300 uppercase tracking-[0.2em]">Conéctate con nosotros</p>
+              <div class="flex items-center gap-4">
+                <a href="https://www.facebook.com/customertcr/?locale=es_LA" target="_blank" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:bg-primary-50 hover:text-primary-600 transition-all duration-300">
+                  <i class="fab fa-facebook-f text-xs"></i>
+                </a>
+                <a href="https://www.instagram.com/customertcr/" target="_blank" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all duration-300">
+                  <i class="fab fa-instagram text-sm"></i>
+                </a>
+                <a href="http://linkedin.com/company/customertcr/" target="_blank" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-all duration-300">
+                  <i class="fab fa-linkedin-in text-xs"></i>
+                </a>
+                <a href="https://bit.ly/45kNWRK" target="_blank" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:bg-emerald-50 hover:text-emerald-500 transition-all duration-300">
+                  <i class="fab fa-whatsapp text-sm"></i>
+                </a>
+              </div>
+            </div>
           </form>
         </div> <!-- End Card -->
         

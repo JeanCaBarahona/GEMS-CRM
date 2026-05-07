@@ -1467,7 +1467,6 @@
                 <div class="flex-1 min-w-0 pr-12">
                   <h3 class="text-red-900 font-bold text-[13px] leading-snug mb-1 line-clamp-2 group-hover:text-red-600 transition-colors" :title="activity.title">{{ activity.title }}</h3>
                   <p class="text-red-500 font-bold text-[10px] uppercase tracking-wider mt-0.5 truncate">{{ getClientName(activity.clientId) }}</p>
-tClientName(activity.clientId) }}</p>
                   
                   <!-- Visible Expand Toggle -->
                   <button @click.stop="toggleCardExpansion(activity._id!)" class="mt-1 flex items-center gap-1 text-slate-400 hover:text-red-500 transition-colors py-0.5">

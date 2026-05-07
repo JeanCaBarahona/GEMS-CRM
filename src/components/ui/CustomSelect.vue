@@ -4,8 +4,11 @@
     <button
       type="button"
       @click="toggle"
-      class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all shadow-sm flex items-center justify-between group"
-      :class="{ 'ring-4 ring-primary-500/10 border-primary-500 bg-white': isOpen }"
+      :class="[
+        'w-full bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all shadow-sm flex items-center justify-between group',
+        size === 'sm' ? 'px-3 py-1.5 text-xs' : 'px-4 py-2.5 text-sm',
+        { 'ring-4 ring-primary-500/10 border-primary-500 bg-white': isOpen }
+      ]"
     >
       <div class="flex items-center gap-2 truncate">
         <span v-if="selectedOption?.icon" v-html="selectedOption.icon" class="text-slate-400"></span>
@@ -37,8 +40,9 @@
             v-for="option in options"
             :key="String(option.value)"
             @click="selectOption(option)"
-            class="px-3 py-2.5 rounded-xl cursor-pointer transition-colors flex items-center justify-between group/item"
             :class="[
+              'rounded-xl cursor-pointer transition-colors flex items-center justify-between group/item',
+              size === 'sm' ? 'px-2 py-1.5' : 'px-3 py-2.5',
               option.value === modelValue 
                 ? 'bg-primary-50 text-primary-700' 
                 : 'hover:bg-slate-50 text-slate-700'
@@ -46,7 +50,10 @@
           >
             <div class="flex items-center gap-2 truncate">
               <span v-if="option.icon" v-html="option.icon" :class="option.value === modelValue ? 'text-primary-500' : 'text-slate-400 group-hover/item:text-slate-600'"></span>
-              <span :class="option.specialClass || 'font-medium text-sm'">{{ option.label }}</span>
+              <span :class="[
+                option.specialClass || 'font-medium',
+                size === 'sm' ? 'text-xs' : 'text-sm'
+              ]">{{ option.label }}</span>
             </div>
             
             <i 
@@ -70,11 +77,15 @@ interface SelectOption {
   specialClass?: string
 }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   modelValue: string | number | null
   options: SelectOption[]
   placeholder?: string
-}>()
+  size?: 'sm' | 'md'
+}>(), {
+  placeholder: 'Seleccionar...',
+  size: 'md'
+})
 
 const emit = defineEmits(['update:modelValue', 'change'])
 

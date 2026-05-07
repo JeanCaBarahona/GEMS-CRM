@@ -1,20 +1,18 @@
 <template>
   <div class="space-y-6">
     <!-- Header con controles -->
-  <div class="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
-  <!-- ...existing code... -->
-      
-  <div class="flex items-center gap-3 flex-wrap">
+    <div class="flex flex-wrap items-center justify-between gap-4 bg-slate-50/50 p-2 rounded-xl border border-slate-100 shadow-sm">
+      <div class="flex items-center gap-4 flex-wrap">
         <!-- Toggle vista -->
-        <div class="flex bg-slate-100 placeholder-slate-200 rounded-lg p-1 border border-slate-200 shadow-inner">
+        <div class="flex bg-slate-100 rounded-lg p-1 border border-slate-200 shadow-inner">
           <button
             @click="currentView = 'kanban'"
             :class="currentView === 'kanban' 
               ? 'bg-white text-primary-600 shadow-sm font-bold border-slate-200' 
               : 'text-slate-500 hover:text-slate-800'"
-            class="px-3 py-1.5 rounded-md text-sm font-medium transition-all"
+            class="px-3 py-1.5 rounded-md text-xs font-medium transition-all"
           >
-            <i class="fas fa-columns mr-2"></i>
+            <i class="fas fa-columns mr-1.5"></i>
             Kanban
           </button>
           <button
@@ -22,9 +20,9 @@
             :class="currentView === 'tasks' 
               ? 'bg-white text-primary-600 shadow-sm font-bold border-slate-200' 
               : 'text-slate-500 hover:text-slate-800'"
-            class="px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center"
+            class="px-3 py-1.5 rounded-md text-xs font-medium transition-all"
           >
-            <i class="fas fa-list mr-2"></i>
+            <i class="fas fa-list mr-1.5"></i>
             Lista
           </button>
           <button
@@ -32,19 +30,19 @@
             :class="currentView === 'calendar' 
               ? 'bg-white text-primary shadow-sm font-bold border-slate-200' 
               : 'text-slate-500 hover:text-slate-800'"
-            class="px-3 py-1.5 rounded-md text-sm font-medium transition-all"
+            class="px-3 py-1.5 rounded-md text-xs font-medium transition-all"
           >
-            <i class="fas fa-calendar-alt mr-2"></i>
-            Calendario
+            <i class="fas fa-calendar-alt mr-1.5"></i>
+            Cal.
           </button>
           <button
             @click="currentView = 'daily'"
             :class="currentView === 'daily' 
               ? 'bg-white text-primary shadow-sm font-bold border-slate-200' 
               : 'text-slate-500 hover:text-slate-800'"
-            class="px-3 py-1.5 rounded-md text-sm font-medium transition-all"
+            class="px-3 py-1.5 rounded-md text-xs font-medium transition-all"
           >
-            <i class="fas fa-sun mr-2"></i>
+            <i class="fas fa-sun mr-1.5"></i>
             Daily
           </button>
           <button
@@ -53,37 +51,57 @@
             :class="currentView === 'team' 
               ? 'bg-white text-primary shadow-sm font-bold border-slate-200' 
               : 'text-slate-500 hover:text-slate-800'"
-            class="px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center"
+            class="px-3 py-1.5 rounded-md text-xs font-medium transition-all"
           >
-            <i class="fas fa-users-viewfinder mr-2"></i>
+            <i class="fas fa-users-viewfinder mr-1.5"></i>
             Equipo
           </button>
         </div>
-        
+
+        <!-- Search Input -->
+        <div class="relative w-64 hidden md:block">
+          <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+          <input
+            :value="searchTerm"
+            @input="$emit('update:searchTerm', ($event.target as HTMLInputElement).value)"
+            type="text"
+            placeholder="Buscar actividad..."
+            class="w-full pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-primary-500 transition-all outline-none"
+          />
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- Stats (Only Desktop) -->
+        <div class="hidden lg:flex items-center gap-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 mr-2">
+          <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> {{ pendingActivities.length }}</span>
+          <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-primary-400"></span> {{ inProgressActivities.length }}</span>
+        </div>
+
         <!-- Botón crear -->
         <button
           v-if="authStore.canCreateActivities"
           @click="showCreateModal = true"
-          class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors font-bold flex items-center gap-2 shadow-sm text-sm"
+          class="px-4 py-1.5 bg-primary text-white rounded-lg hover:bg-primary-600 transition-all font-bold flex items-center gap-2 shadow-sm text-xs hover:scale-[1.02] active:scale-[0.98]"
         >
           <i class="fas fa-plus"></i>
-          Nueva Actividad
+          <span class="hidden sm:inline">Nueva Actividad</span>
+          <span class="sm:hidden">Nueva</span>
         </button>
-
       </div>
     </div>
 
     <!-- Barra de tarea rápida -->
     <div 
-      class="bg-indigo-50 rounded-xl p-3 border border-indigo-100 shadow-sm relative"
+      class="bg-indigo-50 rounded-xl p-2 border border-indigo-100 shadow-sm relative"
     >
-      <div class="flex items-center gap-4">
-        <div class="flex items-center gap-2 text-indigo-700">
-          <i class="fas fa-bolt"></i>
-          <span class="font-bold text-sm tracking-wide uppercase">Tarea Rápida</span>
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 text-indigo-700 ml-1">
+          <i class="fas fa-bolt text-xs"></i>
+          <span class="font-bold text-xs tracking-wide uppercase">Tarea Rápida</span>
           <!-- Indicador de configuración -->
-          <div class="flex items-center text-[10px] bg-indigo-200/50 text-indigo-800 font-bold px-2 py-1 rounded">
-            <i class="fas fa-clock mr-1"></i>
+          <div class="flex items-center text-[9px] bg-indigo-200/50 text-indigo-800 font-bold px-2 py-0.5 rounded">
+            <i class="fas fa-clock mr-1 text-[8px]"></i>
             <span>{{ quickTaskSettings.dueDays }}d</span>
             <span class="mx-1">·</span>
             <span>{{ quickTaskSettings.priority === 'low' ? 'Baja' : quickTaskSettings.priority === 'medium' ? 'Media' : quickTaskSettings.priority === 'high' ? 'Alta' : 'Urgente' }}</span>
@@ -101,17 +119,17 @@
             @blur="setTimeout(() => showQuickTaskHints = false, 200)"
             type="text"
             placeholder="¿Qué necesitas hacer? (Enter para crear, Esc para limpiar)"
-            class="w-full px-4 py-2 bg-white border border-indigo-200 rounded-lg text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none font-medium text-sm shadow-sm"
+            class="w-full px-3 py-1.5 bg-white border border-indigo-200 rounded-lg text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none font-medium text-xs shadow-sm"
           />
           
           <!-- Hints para atajos de teclado -->
           <div 
             v-if="showQuickTaskHints && quickTaskTitle"
-            class="absolute top-full left-0 mt-1 bg-slate-800 border border-slate-700 shadow-xl rounded-lg p-2 text-xs text-white z-20 font-medium"
+            class="absolute top-full left-0 mt-1 bg-slate-800 border border-slate-700 shadow-xl rounded-lg p-2 text-[10px] text-white z-20 font-medium"
           >
             <div class="flex gap-3">
-              <span><kbd class="bg-slate-700 text-white border border-slate-600 px-1.5 py-0.5 rounded shadow-sm mr-1">Enter</kbd>Crear</span>
-              <span><kbd class="bg-slate-700 text-white border border-slate-600 px-1.5 py-0.5 rounded shadow-sm mr-1">Esc</kbd>Limpiar</span>
+              <span><kbd class="bg-slate-700 text-white border border-slate-600 px-1 py-0.5 rounded shadow-sm mr-1">Enter</kbd>Crear</span>
+              <span><kbd class="bg-slate-700 text-white border border-slate-600 px-1 py-0.5 rounded shadow-sm mr-1">Esc</kbd>Limpiar</span>
             </div>
           </div>
         </div>
@@ -119,9 +137,9 @@
         <button
           @click="createQuickTaskNow"
           :disabled="!quickTaskTitle.trim()"
-          class="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-bold text-sm shadow-sm disabled:opacity-50"
+          class="px-4 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-bold text-xs shadow-sm disabled:opacity-50 flex items-center gap-1"
         >
-          <i class="fas fa-bolt mr-1"></i>
+          <i class="fas fa-bolt"></i>
           Crear
         </button>
 
@@ -129,10 +147,10 @@
         <div class="relative">
           <button
             @click="showQuickSettings = !showQuickSettings"
-            class="p-2 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-100/50 rounded-lg transition-colors"
+            class="p-1.5 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-100/50 rounded-lg transition-colors"
             title="Configuración rápida"
           >
-            <i class="fas fa-cog"></i>
+            <i class="fas fa-cog text-sm"></i>
           </button>
         </div>
       </div>
@@ -144,7 +162,7 @@
       :class="filtersLocked ? 'border-primary-200 ring-2 ring-primary-100' : 'border-slate-200'"
     >
       <!-- Filter Header -->
-      <div class="flex items-center justify-between px-4 pt-3 pb-2 border-b border-slate-100">
+      <div class="flex items-center justify-between px-4 pt-2.5 pb-2 border-b border-slate-100">
         <div class="flex items-center gap-2">
           <i class="fas fa-filter text-xs text-slate-400"></i>
           <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Filtros Activos</span>
@@ -181,13 +199,13 @@
           <button
             @click="setMyTasksFilter"
             :class="selectedTeamMember === authStore.user?._id ? 'bg-primary-500 text-white' : 'bg-slate-100 text-slate-500 hover:bg-primary-50 hover:text-primary-600'"
-            class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5"
+            class="px-3.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5"
           >
             <i class="fas fa-user text-[9px]"></i> Mis Tareas
           </button>
           <button
             @click="clearFilters"
-            class="px-3 py-1.5 bg-slate-100 text-slate-500 hover:bg-slate-200 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"
+            class="px-3.5 py-1.5 bg-slate-100 text-slate-500 hover:bg-slate-200 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"
           >
             <i class="fas fa-times mr-1"></i> Limpiar
           </button>
@@ -195,14 +213,15 @@
       </div>
 
       <!-- Filter Selects -->
-      <div class="flex flex-wrap gap-3 sm:gap-4 items-center p-3 sm:p-4">
+      <div class="flex flex-wrap gap-3 items-center p-2.5 sm:p-3">
         <!-- Filtro por cliente -->
         <div class="flex-1 min-w-[180px]">
-          <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1 ml-1">
+          <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-0.5 ml-1">
             Cliente
           </label>
           <CustomSelect
             v-model="selectedClient"
+            size="sm"
             :options="[
               { value: '', label: 'Todos los clientes' },
               ...clients.map(c => ({ value: c._id || '', label: c.name }))
@@ -211,11 +230,12 @@
         </div>
         <!-- Filtro por departamento -->
         <div class="flex-1 min-w-[140px]">
-          <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1 ml-1">
+          <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-0.5 ml-1">
             Departamento
           </label>
           <CustomSelect
             v-model="selectedDepartment"
+            size="sm"
             :options="[
               { value: '', label: 'Todos los depto.' },
               { value: 'TI', label: 'TI' },
@@ -227,11 +247,12 @@
 
         <!-- Filtro por miembro del equipo -->
         <div class="flex-1 min-w-[180px]">
-          <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1 ml-1">
+          <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-0.5 ml-1">
             Miembro del equipo
           </label>
           <CustomSelect
             v-model="selectedTeamMember"
+            size="sm"
             :options="[
               { value: '', label: 'Todos los miembros' },
               { value: 'unassigned', label: 'Sin asignar', specialClass: 'text-slate-500 italic' },
@@ -242,11 +263,12 @@
 
         <!-- Filtro por estado -->
         <div class="flex-1 min-w-[160px]">
-          <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1 ml-1">
+          <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-0.5 ml-1">
             Estado
           </label>
           <CustomSelect
             v-model="selectedStatus"
+            size="sm"
             :options="[
               { value: '', label: 'Todos los estados' },
               { value: 'pending', label: 'Pendiente' },
@@ -259,23 +281,23 @@
         <!-- Filtro por rango de fechas -->
         <div class="flex items-center gap-2 min-w-[280px]">
           <div class="flex-1">
-            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1 ml-1">
+            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-0.5 ml-1">
               Desde
             </label>
             <input 
               v-model="startDate" 
               type="date" 
-              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+              class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:ring-2 focus:ring-primary-500 outline-none transition-all"
             />
           </div>
           <div class="flex-1">
-            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1 ml-1">
+            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-0.5 ml-1">
               Hasta
             </label>
             <input 
               v-model="endDate" 
               type="date" 
-              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+              class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:ring-2 focus:ring-primary-500 outline-none transition-all"
             />
           </div>
         </div>
@@ -811,23 +833,23 @@
     <!-- Tablero Kanban -->
     <div
       v-else-if="currentView === 'kanban'"
-  class="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-4"
+      class="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-4"
     >
-    <!-- Columna Pendiente -->
-  <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 w-full snap-start flex flex-col h-full shadow-sm">
+      <!-- Columna Pendiente -->
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 w-full snap-start flex flex-col h-full shadow-sm">
         <div class="flex items-center gap-3 mb-4">
-          <div class="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center border border-amber-200">
-            <i class="fas fa-clock text-amber-500 text-sm"></i>
+          <div class="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center border border-amber-200 shadow-sm">
+            <i class="far fa-clock text-amber-500 text-sm"></i>
           </div>
-          <h2 class="text-lg font-black text-slate-800">Pendiente</h2>
-          <span class="bg-amber-100 border border-amber-200 text-amber-600 px-2.5 py-0.5 rounded text-xs font-bold shadow-sm">
+          <h2 class="text-xs font-black text-slate-800 uppercase tracking-wide">Pendiente</h2>
+          <span class="w-5 h-5 flex items-center justify-center bg-amber-100 border border-amber-200 text-amber-600 rounded-full text-[10px] font-black shadow-sm">
             {{ pendingActivities.length }}
           </span>
         </div>
         
         <div 
           :class="[
-            'space-y-3 flex-1 overflow-y-auto overflow-x-hidden pr-1 sm:pr-2 transition-all duration-300 min-h-0',
+            'flex flex-col gap-2.5 flex-1 overflow-y-auto overflow-x-hidden pr-1 sm:pr-2 transition-all duration-300 min-h-0 content-start',
             isDragging && draggedActivity?.status !== 'pending' ? 'ring-2 ring-amber-400/50 rounded-lg bg-amber-50/50' : ''
           ]"
           @drop="onDrop($event, 'pending')"
@@ -837,143 +859,105 @@
           <div
             v-for="activity in pendingActivities"
             :key="activity._id"
-            class="bg-white rounded-lg p-3 sm:p-4 border border-slate-200 hover:border-amber-400 hover:shadow-md shadow-sm transition-all duration-200 group cursor-move overflow-hidden"
+            class="bg-white rounded-xl p-3 border border-slate-200 hover:border-amber-400 hover:shadow-xl hover:-translate-y-0.5 hover:scale-[1.01] shadow-sm transition-all duration-300 group cursor-move overflow-hidden flex flex-col justify-between h-[145px] relative shrink-0"
             draggable="true"
             @dragstart="onDragStart($event, activity)"
             @dragend="onDragEnd"
           >
-            <!-- Header de la tarjeta -->
-            <div class="flex items-start justify-between gap-2 mb-3 min-w-0">
-              <div class="flex flex-wrap items-center gap-2 flex-1 min-w-0">
-                <i class="fas fa-grip-vertical text-slate-300 text-xs opacity-50 group-hover:opacity-100 transition-opacity"></i>
-                <h3 class="text-slate-800 font-bold text-[13px] sm:text-sm leading-tight flex-1 min-w-0 break-words whitespace-normal">{{ activity.title }}</h3>
-                
-                <!-- Indicador de prioridad -->
-                <span 
-                  v-if="activity.priority"
-                  class="px-2.5 py-1 rounded-full text-[10px] font-semibold border inline-flex items-center gap-1 basis-full mt-1 shrink-0"
-                  :class="getPriorityClass(activity.priority)"
-                >
-                  <i :class="getPriorityIcon(activity.priority)" class="text-[10px]"></i>
-                  {{ getPriorityLabel(activity.priority) }}
-                </span>
-              </div>
-              <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                <button
-                  @click="markAsCompleted(activity._id!)"
-                  class="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-all duration-200"
-                  title="Marcar como completada"
-                >
-                  <i class="fas fa-check text-xs"></i>
-                </button>
-                <button
-                  v-if="authStore.canEditActivities"
-                  @click="editActivity(activity)"
-                  class="p-1 text-gray-400 hover:text-purple-400 hover:bg-purple-500/20 rounded transition-all duration-200"
-                  title="Editar"
-                >
-                  <i class="fas fa-edit text-xs"></i>
-                </button>
-                <button
-                  v-if="authStore.canDeleteActivities"
-                  @click="deleteActivity(activity._id!)"
-                  class="p-1 text-gray-400 hover:text-red-400 hover:bg-red-500/20 rounded transition-all duration-200"
-                  title="Eliminar"
-                >
-                  <i class="fas fa-trash text-xs"></i>
-                </button>
-              </div>
-            </div>
+            <!-- Priority Sidebar -->
+            <div 
+              class="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-xl transition-colors"
+              :class="activity.priority === 'urgent' ? 'bg-red-500' : activity.priority === 'high' ? 'bg-orange-500' : activity.priority === 'medium' ? 'bg-amber-500' : 'bg-slate-200'"
+            ></div>
 
-            <!-- Cliente -->
-            <p class="text-slate-500 font-medium text-xs mb-2">{{ getClientName(activity.clientId) }}</p>
-
-            <!-- Descripción -->
-            <p class="text-slate-600 text-[13px] sm:text-sm mb-3 line-clamp-2 leading-relaxed">{{ activity.description }}</p>
-
-            <!-- Asignados -->
-            <div class="flex items-center gap-2 mb-3 flex-wrap">
-              <template v-if="Array.isArray(activity.assignedTo) && activity.assignedTo.length">
-                <div v-for="user in activity.assignedTo" :key="user._id || user" class="flex items-center gap-1">
-                  <AvatarInline
-                    :name="getUserInfo(user).name"
-                    :photo="getUserInfo(user).photo"
-                    :avatar="getUserInfo(user).avatar"
-                    :hide-name="activity.assignedTo.length > 1"
-                  />
+            <div 
+              class="flex flex-col relative group/card transition-all duration-300 cursor-pointer"
+              :class="expandedCards.has(activity._id!) ? 'min-h-[145px] h-auto pb-4' : 'h-[145px]'"
+              @click="editActivity(activity)"
+            >
+              <div class="p-3.5 flex flex-col h-full">
+                <!-- Top Row -->
+                <div class="flex justify-between items-center mb-1">
+                  <span class="text-[7px] font-black uppercase text-amber-600 tracking-widest bg-amber-50 px-1 rounded">{{ activity.dueDate ? formatDate(activity.dueDate) : 'Sin fecha' }}</span>
                 </div>
-              </template>
-              <template v-else>
-                <AvatarInline
-                  :name="getSmartAssignedName(activity)"
-                  :photo="(activity.assignedTo && typeof activity.assignedTo === 'object') ? activity.assignedTo.photo : ''"
-                  :avatar="(activity.assignedTo && typeof activity.assignedTo === 'object') ? activity.assignedTo.avatar : ''"
-                />
-                <button
-                  v-if="!activity.assignedTo"
-                  @click="showAssignModal(activity)"
-                  class="ml-auto text-xs text-primary-500 hover:text-primary-700 transition-colors font-bold"
-                  title="Asignar actividad"
-                >
-                  <i class="fas fa-user-plus"></i>
-                </button>
-              </template>
-            </div>
 
-            <!-- Fecha y Progreso -->
-            <div class="flex flex-col gap-2 mt-2 pt-2 border-t border-slate-100">
-              <div class="flex items-center justify-between text-xs text-slate-500 font-medium">
-                <div class="flex items-center gap-1">
-                  <i class="fas fa-calendar"></i>
-                  <span>{{ formatDate(activity.date) }}</span>
-                </div>
-              </div>
-              
-              <div v-if="activity.estimatedTime || activity.timeSpent || activity.completionPercentage !== undefined" class="flex items-center gap-3">
-                <div class="flex-1 relative group/progress">
-                  <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden flex items-center shrink-0">
-                    <div class="bg-primary-500 h-1.5 rounded-full transition-all" :style="{ width: `${activity.completionPercentage || 0}%` }"></div>
-                  </div>
-                  <input 
-                    type="range" 
-                    min="0" 
-                    max="100" 
-                    step="5"
-                    :value="activity.completionPercentage || 0"
-                    @change="(e) => updatePercentage(activity, parseInt((e.target as HTMLInputElement).value))"
-                    @click.stop
-                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                    title="Ajustar progreso"
-                  />
-                  <!-- Tooltip de porcentaje -->
-                  <div class="absolute -top-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-slate-800 text-white text-[9px] font-black rounded opacity-0 group-hover/progress:opacity-100 transition-opacity pointer-events-none">
-                    {{ activity.completionPercentage || 0 }}%
-                  </div>
-                </div>
-                <div class="flex items-center gap-1.5 text-[10px] font-black text-slate-500 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200 shadow-sm transition-colors group/timer" :class="isTimerActive(activity) ? 'border-red-200 bg-red-50' : 'hover:border-primary-200'">
-                  <button @click.stop="toggleTimer(activity)" class="flex items-center justify-center transition-transform hover:scale-110 active:scale-95">
-                    <i :class="isTimerActive(activity) ? 'fas fa-stop-circle text-red-500 text-xs shadow-red-200 drop-shadow-sm' : 'fas fa-play-circle text-primary-500 text-xs shadow-primary-200 drop-shadow-sm group-hover/timer:text-primary-600'"></i>
-                  </button>
-                  <span class="font-bold" :class="isTimerActive(activity) ? 'text-red-600' : ''">{{ formatTime(activity.timeSpent) }}</span>
-                  <span v-if="activity.estimatedTime" class="opacity-60">/ {{ activity.estimatedTime }}</span>
+                <!-- Middle: Title & Client -->
+                <div class="flex-1 min-w-0 pr-12">
+                  <h3 class="text-slate-800 font-black text-[11px] leading-tight line-clamp-2 group-hover:text-amber-600 transition-colors" :title="activity.title">{{ activity.title }}</h3>
+                  <p class="text-slate-400 font-bold text-[8px] uppercase tracking-wider mt-0.5 truncate">{{ getClientName(activity.clientId) }}</p>
                   
-                  <button @click.stop="promptAddManualTime(activity)" class="ml-0.5 w-4 h-4 rounded-full flex items-center justify-center bg-slate-200 text-slate-500 hover:bg-primary-100 hover:text-primary-600 transition-all opacity-0 group-hover/timer:opacity-100" title="Añadir minutos (Manual)">
-                    <i class="fas fa-plus text-[8px]"></i>
+                  <!-- Visible Expand Toggle -->
+                  <button @click.stop="toggleCardExpansion(activity._id!)" class="mt-1 flex items-center gap-1 text-slate-400 hover:text-amber-500 transition-colors py-0.5">
+                    <i class="fas text-[8px]" :class="expandedCards.has(activity._id!) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                    <span class="text-[7px] font-black uppercase tracking-tighter">{{ expandedCards.has(activity._id!) ? 'Ocultar' : 'Detalles' }}</span>
                   </button>
+
+                  <!-- Expandable Description -->
+                  <div v-if="expandedCards.has(activity._id!)" class="mt-2 text-[9px] text-slate-500 leading-relaxed border-t border-slate-50 pt-2 animate-fade-in">
+                    {{ activity.description || 'Sin descripción' }}
+                  </div>
+                </div>
+
+                <!-- Bottom Row: Time & Progress -->
+                <div class="mt-auto flex justify-between items-center pt-2">
+                  <div class="flex items-center gap-2">
+                    <!-- Timer -->
+                    <div @click.stop="toggleTimer(activity)" class="flex items-center gap-1.5 text-[10px] font-black text-slate-700 bg-white px-2 py-1 rounded border border-slate-200 cursor-pointer hover:border-amber-300 transition-all shadow-sm" :class="isTimerActive(activity) ? 'bg-red-50 text-red-600 border-red-100 animate-pulse' : ''">
+                      <i :class="isTimerActive(activity) ? 'fas fa-stop-circle text-[8px]' : 'far fa-play-circle text-[8px]'"></i>
+                      <span>{{ formatTime(activity.timeSpent) }}</span>
+                    </div>
+                    
+                    <!-- Progress % with Inline Edit -->
+                    <div class="relative">
+                      <div @click.stop="editingPercentageId = activity._id!" class="flex items-center gap-1 text-[10px] font-black text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-100 cursor-pointer hover:bg-white hover:border-amber-300 transition-all">
+                        <span class="text-amber-600">{{ activity.completionPercentage || 0 }}%</span>
+                      </div>
+                      
+                      <!-- Inline Tooltip Edit -->
+                      <div v-if="editingPercentageId === activity._id" class="absolute bottom-full left-0 mb-2 z-30 bg-white rounded-lg shadow-xl border border-slate-200 p-2 flex items-center gap-2 animate-scale-up origin-bottom-left" @click.stop>
+                        <input 
+                          type="number" 
+                          v-model="activity.completionPercentage" 
+                          class="w-12 text-[10px] font-bold border-slate-200 rounded p-1"
+                          @keyup.enter="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null"
+                          @blur="editingPercentageId = null"
+                          v-focus
+                        />
+                        <button @click.stop="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null" class="text-emerald-500 hover:text-emerald-600"><i class="fas fa-check"></i></button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="flex -space-x-1.5" @click.stop>
+                    <template v-if="Array.isArray(activity.assignedTo) && activity.assignedTo.length">
+                      <div v-for="user in activity.assignedTo.slice(0, 2)" :key="user._id || user" class="relative">
+                        <img v-if="getUserInfo(user).photo" :src="getUserInfo(user).photo" class="w-4 h-4 rounded-full border border-white shadow-sm object-cover" :title="getUserInfo(user).name">
+                        <div v-else class="w-4 h-4 rounded-full bg-slate-200 border border-white flex items-center justify-center text-[8px] font-bold text-slate-500 shadow-sm" :title="getUserInfo(user).name">
+                          {{ getUserInfo(user).name.charAt(0).toUpperCase() }}
+                        </div>
+                      </div>
+                    </template>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <!-- Fecha de vencimiento -->
-            <div v-if="activity.dueDate" class="mt-2 flex items-center gap-1 text-xs">
-              <i class="fas fa-calendar-times text-orange-400"></i>
-              <span 
-                class="text-orange-400"
-                :class="{ 'text-red-400': isOverdue(activity.dueDate) }"
-              >
-                Vence: {{ formatDate(activity.dueDate) }}
-              </span>
+              <!-- Floating Actions Pill -->
+              <div class="absolute right-1.5 top-1.5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0 z-10" @click.stop>
+                <button @click.stop="markAsCompleted(activity._id!)" class="w-6 h-6 flex items-center justify-center text-emerald-600 bg-white/95 backdrop-blur-sm hover:bg-emerald-500 hover:text-white rounded-lg shadow-sm border border-emerald-100 transition-all" title="Completar"><i class="fas fa-check text-[7px]"></i></button>
+                <button @click.stop="deleteActivity(activity._id!)" class="w-6 h-6 flex items-center justify-center text-red-600 bg-white/95 backdrop-blur-sm hover:bg-red-500 hover:text-white rounded-lg shadow-sm border border-red-100 transition-all" title="Eliminar"><i class="fas fa-trash-alt text-[7px]"></i></button>
+              </div>
             </div>
+          </div>
+
+          <!-- View More Button -->
+          <div v-if="hasMorePending" class="mt-4 pb-2">
+            <button 
+              @click="increaseLimit('pending')"
+              class="w-full py-2.5 bg-white/50 hover:bg-white border border-slate-200 border-dashed rounded-xl text-[10px] font-black text-slate-500 uppercase tracking-widest transition-all hover:border-amber-400 hover:text-amber-600 shadow-sm"
+            >
+              <i class="fas fa-plus-circle mr-1.5"></i>
+              Ver más tareas pendientes
+            </button>
           </div>
 
           <!-- Estado vacío para pendientes -->
@@ -996,20 +980,20 @@
       </div>
 
     <!-- Columna En Proceso -->
-  <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 w-full snap-start flex flex-col h-full shadow-sm">
+    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 w-full snap-start flex flex-col h-full shadow-sm">
         <div class="flex items-center gap-3 mb-4">
           <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center border border-blue-200">
             <i class="fas fa-play text-blue-500 text-sm"></i>
           </div>
-          <h2 class="text-lg font-black text-slate-800">En Proceso</h2>
-          <span class="bg-blue-100 border border-blue-200 text-blue-600 px-2.5 py-0.5 rounded text-xs font-bold shadow-sm">
+          <h2 class="text-xs font-black text-slate-800 uppercase tracking-wide">En Proceso</h2>
+          <span class="w-5 h-5 flex items-center justify-center bg-blue-100 border border-blue-200 text-blue-600 rounded-full text-[10px] font-black shadow-sm">
             {{ inProgressActivities.length }}
           </span>
         </div>
         
         <div 
           :class="[
-            'space-y-3 flex-1 overflow-y-auto overflow-x-hidden pr-1 sm:pr-2 transition-all duration-300 min-h-0',
+            'flex flex-col gap-2.5 flex-1 overflow-y-auto overflow-x-hidden pr-1 sm:pr-2 transition-all duration-300 min-h-0 content-start',
             isDragging && draggedActivity?.status !== 'in-progress' ? 'ring-2 ring-blue-400/50 rounded-lg bg-blue-50/50' : ''
           ]"
           @drop="onDrop($event, 'in-progress')"
@@ -1019,159 +1003,107 @@
           <div
             v-for="activity in inProgressActivities"
             :key="activity._id"
-            class="bg-white rounded-lg p-3 sm:p-4 border border-slate-200 hover:border-blue-400 hover:shadow-md shadow-sm transition-all duration-200 group cursor-move overflow-hidden"
+            class="bg-white rounded-xl p-3 border border-slate-200 hover:border-blue-400 hover:shadow-xl hover:-translate-y-0.5 hover:scale-[1.01] shadow-sm transition-all duration-300 group cursor-move overflow-hidden flex flex-col justify-between h-[145px] relative shrink-0"
             draggable="true"
             @dragstart="onDragStart($event, activity)"
             @dragend="onDragEnd"
           >
-            <!-- Header de la tarjeta -->
-            <div class="flex items-start justify-between gap-2 mb-3 min-w-0">
-              <div class="flex flex-wrap items-center gap-2 flex-1 min-w-0">
-                <i class="fas fa-grip-vertical text-slate-300 text-xs opacity-50 group-hover:opacity-100 transition-opacity"></i>
-                <h3 class="text-slate-800 font-bold text-[13px] sm:text-sm leading-tight flex-1 min-w-0 break-words whitespace-normal">{{ activity.title }}</h3>
-                
-                <!-- Indicador de prioridad -->
-                <span 
-                  v-if="activity.priority"
-                  class="px-2.5 py-1 rounded-full text-[10px] font-semibold border inline-flex items-center gap-1 basis-full mt-1 shrink-0"
-                  :class="getPriorityClass(activity.priority)"
-                >
-                  <i :class="getPriorityIcon(activity.priority)" class="text-[10px]"></i>
-                  {{ getPriorityLabel(activity.priority) }}
-                </span>
-              </div>
-              <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                <button
-                  @click="markAsCompleted(activity._id!)"
-                  class="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-all duration-200"
-                  title="Marcar como completada"
-                >
-                  <i class="fas fa-check text-xs"></i>
-                </button>
-                <button
-                  v-if="authStore.canEditActivities"
-                  @click="editActivity(activity)"
-                  class="p-1 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-all duration-200"
-                  title="Editar"
-                >
-                  <i class="fas fa-edit text-xs"></i>
-                </button>
-                <button
-                  v-if="authStore.canDeleteActivities"
-                  @click="deleteActivity(activity._id!)"
-                  class="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-all duration-200"
-                  title="Eliminar"
-                >
-                  <i class="fas fa-trash text-xs"></i>
-                </button>
-              </div>
-            </div>
+            <!-- Priority Sidebar -->
+            <div 
+              class="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-xl transition-colors"
+              :class="activity.priority === 'urgent' ? 'bg-red-500' : activity.priority === 'high' ? 'bg-orange-500' : activity.priority === 'medium' ? 'bg-amber-500' : 'bg-slate-200'"
+            ></div>
 
-            <!-- Cliente -->
-            <p class="text-slate-500 font-medium text-xs mb-2">{{ getClientName(activity.clientId) }}</p>
-
-            <!-- Descripción -->
-            <p class="text-slate-600 text-[13px] sm:text-sm mb-3 line-clamp-2 leading-relaxed">{{ activity.description }}</p>
-
-            <!-- Asignado a -->
-            <div class="flex items-center gap-2 mb-3">
-              <template v-if="Array.isArray(activity.assignedTo) && activity.assignedTo.length > 0">
-                <div v-for="user in activity.assignedTo" :key="user._id || user" class="flex items-center gap-1">
-                  <AvatarInline
-                    :name="getUserInfo(user).name"
-                    :photo="getUserInfo(user).photo"
-                    :avatar="getUserInfo(user).avatar"
-                    :hide-name="activity.assignedTo.length > 1"
-                  />
+            <div 
+              class="flex flex-col relative group/card transition-all duration-300 cursor-pointer"
+              :class="expandedCards.has(activity._id!) ? 'min-h-[145px] h-auto pb-4' : 'h-[145px]'"
+              @click="editActivity(activity)"
+            >
+              <div class="p-3.5 flex flex-col h-full">
+                <!-- Top Row -->
+                <div class="flex justify-between items-center mb-1">
+                  <span class="text-[7px] font-black uppercase text-blue-600 tracking-widest bg-blue-50 px-1 rounded">{{ activity.dueDate ? formatDate(activity.dueDate) : 'Sin fecha' }}</span>
                 </div>
-              </template>
-              <template v-else>
-                <AvatarInline
-                  :name="getSmartAssignedName(activity)"
-                  :photo="''"
-                  :avatar="''"
-                />
-                <button
-                  v-if="!Array.isArray(activity.assignedTo) || activity.assignedTo.length === 0"
-                  @click="showAssignModal(activity)"
-                  class="ml-auto text-xs text-primary-500 hover:text-primary-700 transition-colors font-bold"
-                  title="Asignar actividad"
-                >
-                  <i class="fas fa-user-plus"></i>
-                </button>
-              </template>
-            </div>
 
-            <!-- Fecha y Progreso -->
-            <div class="flex flex-col gap-2 mt-2 pt-2 border-t border-slate-100">
-              <div class="flex items-center justify-between text-xs text-slate-500 font-medium">
-                <div class="flex items-center gap-1">
-                  <i class="fas fa-calendar"></i>
-                  <span>{{ formatDate(activity.date) }}</span>
-                </div>
-              </div>
-              
-              <div v-if="activity.estimatedTime || activity.timeSpent || activity.completionPercentage !== undefined" class="flex items-center gap-3">
-                <div class="flex-1 relative group/progress">
-                  <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden flex items-center shrink-0">
-                    <div class="bg-primary-500 h-1.5 rounded-full transition-all" :style="{ width: `${activity.completionPercentage || 0}%` }"></div>
-                  </div>
-                  <input 
-                    type="range" 
-                    min="0" 
-                    max="100" 
-                    step="5"
-                    :value="activity.completionPercentage || 0"
-                    @change="(e) => updatePercentage(activity, parseInt((e.target as HTMLInputElement).value))"
-                    @click.stop
-                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                    title="Ajustar progreso"
-                  />
-                  <!-- Tooltip de porcentaje -->
-                  <div class="absolute -top-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-slate-800 text-white text-[9px] font-black rounded opacity-0 group-hover/progress:opacity-100 transition-opacity pointer-events-none">
-                    {{ activity.completionPercentage || 0 }}%
-                  </div>
-                </div>
-                <div class="flex items-center gap-1.5 text-[10px] font-black text-slate-500 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200 shadow-sm transition-colors group/timer" :class="isTimerActive(activity) ? 'border-red-200 bg-red-50' : 'hover:border-primary-200'">
-                  <button @click.stop="toggleTimer(activity)" class="flex items-center justify-center transition-transform hover:scale-110 active:scale-95">
-                    <i :class="isTimerActive(activity) ? 'fas fa-stop-circle text-red-500 text-xs shadow-red-200 drop-shadow-sm' : 'fas fa-play-circle text-primary-500 text-xs shadow-primary-200 drop-shadow-sm group-hover/timer:text-primary-600'"></i>
-                  </button>
-                  <span class="font-bold" :class="isTimerActive(activity) ? 'text-red-600' : ''">{{ formatTime(activity.timeSpent) }}</span>
-                  <span v-if="activity.estimatedTime" class="opacity-60">/ {{ activity.estimatedTime }}</span>
+                <!-- Middle -->
+                <div class="flex-1 min-w-0 pr-12">
+                  <h3 class="text-slate-800 font-black text-[11px] leading-tight line-clamp-2 group-hover:text-blue-600 transition-colors" :title="activity.title">{{ activity.title }}</h3>
+                  <p class="text-slate-400 font-bold text-[8px] uppercase tracking-wider mt-0.5 truncate">{{ getClientName(activity.clientId) }}</p>
                   
-                  <div class="relative">
-                    <button 
-                      @click.stop="activeTimePopover = activeTimePopover === activity._id ? null : activity._id" 
-                      class="ml-0.5 w-4 h-4 rounded-full flex items-center justify-center bg-slate-200 text-slate-500 hover:bg-primary-100 hover:text-primary-600 transition-all opacity-0 group-hover/timer:opacity-100" 
-                      title="Añadir minutos (Manual)"
-                    >
-                      <i class="fas fa-plus text-[8px]"></i>
-                    </button>
+                  <!-- Visible Expand Toggle -->
+                  <button @click.stop="toggleCardExpansion(activity._id!)" class="mt-1 flex items-center gap-1 text-slate-400 hover:text-blue-500 transition-colors py-0.5">
+                    <i class="fas text-[8px]" :class="expandedCards.has(activity._id!) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                    <span class="text-[7px] font-black uppercase tracking-tighter">{{ expandedCards.has(activity._id!) ? 'Ocultar' : 'Detalles' }}</span>
+                  </button>
+
+                  <!-- Expandable Description -->
+                  <div v-if="expandedCards.has(activity._id!)" class="mt-2 text-[9px] text-slate-500 leading-relaxed border-t border-slate-50 pt-2 animate-fade-in">
+                    {{ activity.description || 'Sin descripción' }}
+                  </div>
+                </div>
+
+                <!-- Bottom Row -->
+                <div class="mt-auto flex justify-between items-center pt-2">
+                  <div class="flex items-center gap-2">
+                    <!-- Timer -->
+                    <div @click.stop="toggleTimer(activity)" class="flex items-center gap-1.5 text-[10px] font-black text-slate-700 bg-white px-2 py-1 rounded border border-slate-200 cursor-pointer hover:border-blue-300 transition-all shadow-sm" :class="isTimerActive(activity) ? 'bg-red-50 text-red-600 border-red-100 animate-pulse' : ''">
+                      <i :class="isTimerActive(activity) ? 'fas fa-stop-circle text-[8px]' : 'far fa-play-circle text-[8px]'"></i>
+                      <span>{{ formatTime(activity.timeSpent) }}</span>
+                    </div>
                     
-                    <!-- Popover manual time (Kanban) -->
-                    <div v-if="activeTimePopover === activity._id" class="absolute bottom-full right-0 mb-2 z-50 bg-white/90 backdrop-blur-md border border-slate-200 rounded-xl shadow-xl p-1.5 flex flex-col gap-1 min-w-[70px] animate-fade-in">
-                      <button v-for="m in [15, 30, 60, 120]" :key="m" @click.stop="addManualTime(activity, m)" class="px-2 py-1 hover:bg-primary-50 hover:text-primary-600 rounded-lg text-[9px] font-black transition-colors flex items-center justify-between gap-2">
-                        <span>+{{ m >= 60 ? m/60 + 'h' : m + 'm' }}</span>
-                      </button>
+                    <!-- Progress % with Inline Edit -->
+                    <div class="relative">
+                      <div @click.stop="editingPercentageId = activity._id!" class="flex items-center gap-1 text-[10px] font-black text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-100 cursor-pointer hover:bg-white hover:border-blue-300 transition-all">
+                        <span class="text-blue-600">{{ activity.completionPercentage || 0 }}%</span>
+                      </div>
+                      
+                      <!-- Inline Tooltip Edit -->
+                      <div v-if="editingPercentageId === activity._id" class="absolute bottom-full left-0 mb-2 z-30 bg-white rounded-lg shadow-xl border border-slate-200 p-2 flex items-center gap-2 animate-scale-up origin-bottom-left" @click.stop>
+                        <input 
+                          type="number" 
+                          v-model="activity.completionPercentage" 
+                          class="w-12 text-[10px] font-bold border-slate-200 rounded p-1"
+                          @keyup.enter="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null"
+                          @blur="editingPercentageId = null"
+                          v-focus
+                        />
+                        <button @click.stop="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null" class="text-emerald-500 hover:text-emerald-600"><i class="fas fa-check"></i></button>
+                      </div>
                     </div>
                   </div>
+                  
+                  <div class="flex -space-x-1.5" @click.stop>
+                    <template v-if="Array.isArray(activity.assignedTo) && activity.assignedTo.length">
+                      <div v-for="user in activity.assignedTo.slice(0, 2)" :key="user._id || user" class="relative">
+                        <img v-if="getUserInfo(user).photo" :src="getUserInfo(user).photo" class="w-4 h-4 rounded-full border border-white shadow-sm object-cover" :title="getUserInfo(user).name">
+                        <div v-else class="w-4 h-4 rounded-full bg-slate-200 border border-white flex items-center justify-center text-[8px] font-bold text-slate-500 shadow-sm" :title="getUserInfo(user).name">
+                          {{ getUserInfo(user).name.charAt(0).toUpperCase() }}
+                        </div>
+                      </div>
+                    </template>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <!-- Fecha de vencimiento -->
-            <div v-if="activity.dueDate" class="mt-2 flex items-center gap-1 text-xs">
-              <i class="fas fa-calendar-times text-orange-400"></i>
-              <span 
-                class="text-orange-400"
-                :class="{ 'text-red-400': isOverdue(activity.dueDate) }"
-              >
-                Vence: {{ formatDate(activity.dueDate) }}
-              </span>
+              <!-- Floating Actions Pill -->
+              <div class="absolute right-1.5 top-1.5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0 z-10" @click.stop>
+                <button @click.stop="markAsCompleted(activity._id!)" class="w-6 h-6 flex items-center justify-center text-emerald-600 bg-white/95 backdrop-blur-sm hover:bg-emerald-500 hover:text-white rounded-lg shadow-sm border border-emerald-100 transition-all" title="Completar"><i class="fas fa-check text-[7px]"></i></button>
+                <button @click.stop="deleteActivity(activity._id!)" class="w-6 h-6 flex items-center justify-center text-red-600 bg-white/95 backdrop-blur-sm hover:bg-red-500 hover:text-white rounded-lg shadow-sm border border-red-100 transition-all" title="Eliminar"><i class="fas fa-trash-alt text-[7px]"></i></button>
+              </div>
             </div>
           </div>
 
-          <!-- Estado vacío para en proceso -->
+          <!-- View More Button -->
+          <div v-if="hasMoreInProgress" class="mt-4 pb-2">
+            <button 
+              @click="increaseLimit('inProgress')"
+              class="w-full py-2.5 bg-white/50 hover:bg-white border border-slate-200 border-dashed rounded-xl text-[10px] font-black text-slate-500 uppercase tracking-widest transition-all hover:border-blue-400 hover:text-blue-600 shadow-sm"
+            >
+              <i class="fas fa-plus-circle mr-1.5"></i>
+              Ver más tareas en proceso
+            </button>
+          </div>
+
           <div v-if="inProgressActivities.length === 0" class="text-center py-8">
             <i class="fas fa-play text-3xl text-slate-300 mb-2"></i>
             <p class="text-slate-500 text-sm font-medium">No hay actividades en proceso</p>
@@ -1191,20 +1123,20 @@
       </div>
 
     <!-- Columna Completada -->
-  <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 w-full snap-start flex flex-col h-full shadow-sm">
+    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 w-full snap-start flex flex-col h-full shadow-sm">
         <div class="flex items-center gap-3 mb-4">
           <div class="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center border border-emerald-200">
             <i class="fas fa-check text-emerald-500 text-sm"></i>
           </div>
-          <h2 class="text-lg font-black text-slate-800">Completada</h2>
-          <span class="bg-emerald-100 border border-emerald-200 text-emerald-600 px-2.5 py-0.5 rounded text-xs font-bold shadow-sm">
+          <h2 class="text-xs font-black text-slate-800 uppercase tracking-wide">Completada</h2>
+          <span class="w-5 h-5 flex items-center justify-center bg-emerald-100 border border-emerald-200 text-emerald-600 rounded-full text-[10px] font-black shadow-sm">
             {{ completedActivities.length }}
           </span>
         </div>
         
         <div 
           :class="[
-            'space-y-3 flex-1 overflow-y-auto overflow-x-hidden pr-1 sm:pr-2 transition-all duration-300 min-h-0',
+            'flex flex-col gap-2.5 flex-1 overflow-y-auto overflow-x-hidden pr-1 sm:pr-2 transition-all duration-300 min-h-0 content-start',
             isDragging && draggedActivity?.status !== 'completed' ? 'ring-2 ring-emerald-400/50 rounded-lg bg-emerald-50/50' : ''
           ]"
           @drop="onDrop($event, 'completed')"
@@ -1214,92 +1146,81 @@
           <div
             v-for="activity in completedActivities"
             :key="activity._id"
-            class="bg-white rounded-lg p-3 sm:p-4 border border-slate-200 hover:border-emerald-400 hover:shadow-md shadow-sm transition-all duration-200 group cursor-move overflow-hidden opacity-75 hover:opacity-100"
+            class="bg-white rounded-xl p-3 border border-slate-200 hover:border-emerald-400 hover:shadow-xl hover:-translate-y-0.5 hover:scale-[1.01] shadow-sm transition-all duration-300 group cursor-move overflow-hidden flex flex-col justify-between h-[145px] relative shrink-0 opacity-80 hover:opacity-100"
             draggable="true"
             @dragstart="onDragStart($event, activity)"
             @dragend="onDragEnd"
           >
-            <!-- Header de la tarjeta -->
-            <div class="flex items-start justify-between gap-2 mb-3 min-w-0">
-              <div class="flex flex-wrap items-center gap-2 flex-1 min-w-0">
-                <i class="fas fa-grip-vertical text-slate-300 text-xs opacity-50 group-hover:opacity-100 transition-opacity"></i>
-                <h3 class="text-slate-500 font-bold text-[13px] sm:text-sm leading-tight flex-1 min-w-0 break-words whitespace-normal line-through decoration-slate-300">{{ activity.title }}</h3>
-                
-                <!-- Indicador de prioridad -->
-                <span 
-                  v-if="activity.priority"
-                  class="px-2.5 py-1 rounded-full text-[10px] font-semibold border inline-flex items-center gap-1 basis-full mt-1 shrink-0"
-                  :class="getPriorityClass(activity.priority)"
-                >
-                  <i :class="getPriorityIcon(activity.priority)" class="text-[10px]"></i>
-                  {{ getPriorityLabel(activity.priority) }}
-                </span>
-              </div>
-              <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                <button
-                  @click="markAsPending(activity._id!)"
-                  class="p-1 text-gray-400 hover:text-yellow-400 hover:bg-yellow-500/20 rounded transition-all duration-200"
-                  title="Marcar como pendiente"
-                >
-                  <i class="fas fa-undo text-xs"></i>
-                </button>
-                <button
-                  v-if="authStore.canEditActivities"
-                  @click="editActivity(activity)"
-                  class="p-1 text-gray-400 hover:text-purple-400 hover:bg-purple-500/20 rounded transition-all duration-200"
-                  title="Editar"
-                >
-                  <i class="fas fa-edit text-xs"></i>
-                </button>
-                <button
-                  v-if="authStore.canDeleteActivities"
-                  @click="deleteActivity(activity._id!)"
-                  class="p-1 text-gray-400 hover:text-red-400 hover:bg-red-500/20 rounded transition-all duration-200"
-                  title="Eliminar"
-                >
-                  <i class="fas fa-trash text-xs"></i>
-                </button>
-              </div>
-            </div>
+            <!-- Priority Sidebar (Gray for completed) -->
+            <div class="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-xl bg-slate-200"></div>
 
-            <!-- Cliente -->
-            <p class="text-slate-400 font-medium text-xs mb-2">{{ getClientName(activity.clientId) }}</p>
-
-            <!-- Descripción -->
-            <p class="text-slate-400 text-[13px] sm:text-sm mb-3 line-clamp-2 leading-relaxed">{{ activity.description }}</p>
-
-            <!-- Asignado a -->
-            <div class="flex items-center gap-2 mb-3">
-              <template v-if="Array.isArray(activity.assignedTo) && activity.assignedTo.length > 0">
-                <div v-for="user in activity.assignedTo" :key="user._id || user" class="flex items-center gap-1">
-                  <AvatarInline
-                    :name="getUserInfo(user).name"
-                    :photo="getUserInfo(user).photo"
-                    :avatar="getUserInfo(user).avatar"
-                    :hide-name="activity.assignedTo.length > 1"
-                  />
+            <div 
+              class="flex flex-col relative group/card transition-all duration-300 cursor-pointer"
+              :class="expandedCards.has(activity._id!) ? 'min-h-[145px] h-auto pb-4' : 'h-[145px]'"
+              @click="editActivity(activity)"
+            >
+              <div class="p-3.5 flex flex-col h-full">
+                <!-- Top Row -->
+                <div class="flex justify-between items-center mb-1">
+                  <span class="text-[7px] font-black uppercase text-emerald-600 tracking-widest bg-emerald-50 px-1 rounded">{{ activity.dueDate ? formatDate(activity.dueDate) : 'Sin fecha' }}</span>
                 </div>
-              </template>
-              <template v-else>
-                <AvatarInline
-                  :name="getSmartAssignedName(activity)"
-                  :photo="''"
-                  :avatar="''"
-                />
-              </template>
-            </div>
 
-            <!-- Fecha -->
-            <div class="flex items-center justify-between text-xs text-gray-400">
-              <div class="flex items-center gap-1">
-                <i class="fas fa-calendar"></i>
-                <span>{{ formatDate(activity.date) }}</span>
+                <!-- Middle -->
+                <div class="flex-1 min-w-0 pr-12">
+                  <h3 class="text-slate-500 font-bold text-[11px] leading-tight line-clamp-2 line-through decoration-slate-300" :title="activity.title">{{ activity.title }}</h3>
+                  <p class="text-slate-400 font-bold text-[8px] uppercase tracking-wider mt-0.5 truncate">{{ getClientName(activity.clientId) }}</p>
+                  
+                  <!-- Visible Expand Toggle -->
+                  <button @click.stop="toggleCardExpansion(activity._id!)" class="mt-1 flex items-center gap-1 text-slate-400 hover:text-emerald-500 transition-colors py-0.5">
+                    <i class="fas text-[8px]" :class="expandedCards.has(activity._id!) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                    <span class="text-[7px] font-black uppercase tracking-tighter">{{ expandedCards.has(activity._id!) ? 'Ocultar' : 'Detalles' }}</span>
+                  </button>
+
+                  <!-- Expandable Description -->
+                  <div v-if="expandedCards.has(activity._id!)" class="mt-2 text-[9px] text-slate-500 leading-relaxed border-t border-slate-50 pt-2 animate-fade-in">
+                    {{ activity.description || 'Sin descripción' }}
+                  </div>
+                </div>
+
+                <!-- Bottom Row -->
+                <div class="mt-auto flex justify-between items-center pt-2">
+                  <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1.5 text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-100 shadow-sm">
+                      <i class="fas fa-check-circle text-[8px]"></i>
+                      <span>COMPLETADO</span>
+                    </div>
+                  </div>
+                  
+                  <div class="flex -space-x-1.5" @click.stop>
+                    <template v-if="Array.isArray(activity.assignedTo) && activity.assignedTo.length">
+                      <div v-for="user in activity.assignedTo.slice(0, 2)" :key="user._id || user" class="relative">
+                        <img v-if="getUserInfo(user).photo" :src="getUserInfo(user).photo" class="w-4 h-4 rounded-full border border-white shadow-sm object-cover" :title="getUserInfo(user).name">
+                        <div v-else class="w-4 h-4 rounded-full bg-slate-200 border border-white flex items-center justify-center text-[8px] font-bold text-slate-500 shadow-sm" :title="getUserInfo(user).name">
+                          {{ getUserInfo(user).name.charAt(0).toUpperCase() }}
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
               </div>
-              <div class="flex items-center gap-1">
-                <i class="fas fa-check-circle text-green-400"></i>
-                <span>Completada</span>
+
+              <!-- Floating Actions Pill -->
+              <div class="absolute right-1.5 top-1.5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0 z-10" @click.stop>
+                <button @click.stop="markAsPending(activity._id!)" class="w-6 h-6 flex items-center justify-center text-amber-600 bg-white/95 backdrop-blur-sm hover:bg-amber-500 hover:text-white rounded-lg shadow-sm border border-amber-100 transition-all" title="Deshacer"><i class="fas fa-undo text-[7px]"></i></button>
+                <button @click.stop="deleteActivity(activity._id!)" class="w-6 h-6 flex items-center justify-center text-red-600 bg-white/95 backdrop-blur-sm hover:bg-red-500 hover:text-white rounded-lg shadow-sm border border-red-100 transition-all" title="Eliminar"><i class="fas fa-trash-alt text-[7px]"></i></button>
               </div>
             </div>
+          </div>
+
+          <!-- View More Button -->
+          <div v-if="hasMoreCompleted" class="mt-4 pb-2">
+            <button 
+              @click="increaseLimit('completed')"
+              class="w-full py-2.5 bg-white/50 hover:bg-white border border-slate-200 border-dashed rounded-xl text-[10px] font-black text-slate-500 uppercase tracking-widest transition-all hover:border-emerald-400 hover:text-emerald-600 shadow-sm"
+            >
+              <i class="fas fa-plus-circle mr-1.5"></i>
+              Ver más tareas completadas
+            </button>
           </div>
 
           <!-- Estado vacío para completadas -->
@@ -1310,22 +1231,21 @@
         </div>
       </div>
 
-
     <!-- Columna Vencida -->
-  <div class="bg-red-50 border border-red-200 rounded-xl p-3 sm:p-4 w-full snap-start flex flex-col h-full shadow-sm">
+    <div class="bg-red-50 border border-red-200 rounded-xl p-3 sm:p-4 w-full snap-start flex flex-col h-full shadow-sm">
         <div class="flex items-center gap-3 mb-4">
           <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center border border-red-200">
             <i class="fas fa-exclamation-triangle text-red-600 text-sm"></i>
           </div>
-          <h2 class="text-lg font-black text-red-800">Vencida</h2>
-          <span class="bg-red-100 border border-red-200 text-red-600 px-2.5 py-0.5 rounded text-xs font-bold shadow-sm">
+          <h2 class="text-xs font-black text-red-800 uppercase tracking-wide">Vencida</h2>
+          <span class="w-5 h-5 flex items-center justify-center bg-red-100 border border-red-200 text-red-600 rounded-full text-[10px] font-black shadow-sm">
             {{ overdueActivities.length }}
           </span>
         </div>
         
         <div 
           :class="[
-            'space-y-3 flex-1 overflow-y-auto overflow-x-hidden pr-1 sm:pr-2 transition-all duration-300 min-h-0',
+            'flex flex-col gap-2.5 flex-1 overflow-y-auto overflow-x-hidden pr-1 sm:pr-2 transition-all duration-300 min-h-0 content-start',
             isDragging && draggedActivity?.status !== 'overdue' ? 'ring-2 ring-red-400/50 rounded-lg bg-red-100/50' : ''
           ]"
           @drop="onDrop($event, 'overdue')"
@@ -1335,121 +1255,104 @@
           <div
             v-for="activity in overdueActivities"
             :key="activity._id"
-            class="bg-white rounded-lg p-3 sm:p-4 border border-red-300 hover:border-red-500 hover:shadow-md shadow-sm transition-all duration-200 group cursor-move overflow-hidden"
+            class="bg-white rounded-xl p-3 border border-red-200 hover:border-red-500 hover:shadow-xl hover:-translate-y-0.5 hover:scale-[1.01] shadow-sm transition-all duration-300 group cursor-move overflow-hidden flex flex-col justify-between h-[145px] relative shrink-0"
             draggable="true"
             @dragstart="onDragStart($event, activity)"
             @dragend="onDragEnd"
           >
-            <!-- Header de la tarjeta -->
-            <div class="flex items-start justify-between gap-2 mb-3 min-w-0">
-              <div class="flex flex-wrap items-center gap-2 flex-1 min-w-0">
-                <i class="fas fa-grip-vertical text-red-300 text-xs opacity-50 group-hover:opacity-100 transition-opacity"></i>
-                <h3 class="text-red-900 font-bold text-[13px] sm:text-sm leading-tight flex-1 min-w-0 break-words whitespace-normal">{{ activity.title }}</h3>
-                
-                <!-- Indicador de prioridad -->
-                <span 
-                  v-if="activity.priority"
-                  class="px-2.5 py-1 rounded-full text-[10px] font-semibold border inline-flex items-center gap-1 basis-full mt-1 shrink-0"
-                  :class="getPriorityClass(activity.priority)"
-                >
-                  <i :class="getPriorityIcon(activity.priority)" class="text-[10px]"></i>
-                  {{ getPriorityLabel(activity.priority) }}
-                </span>
-              </div>
-              <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                <button
-                  @click="markAsInProgress(activity._id!)"
-                  class="p-1 text-gray-400 hover:text-blue-400 hover:bg-blue-500/20 rounded transition-all duration-200"
-                  title="Retomar actividad"
-                >
-                  <i class="fas fa-play text-xs"></i>
-                </button>
-                <button
-                  @click="extendDeadline(activity._id!)"
-                  class="p-1 text-gray-400 hover:text-yellow-400 hover:bg-yellow-500/20 rounded transition-all duration-200"
-                  title="Extender plazo"
-                >
-                  <i class="fas fa-calendar-plus text-xs"></i>
-                </button>
-                <button
-                  v-if="authStore.canEditActivities"
-                  @click="editActivity(activity)"
-                  class="p-1 text-gray-400 hover:text-purple-400 hover:bg-purple-500/20 rounded transition-all duration-200"
-                  title="Editar"
-                >
-                  <i class="fas fa-edit text-xs"></i>
-                </button>
-                <button
-                  v-if="authStore.canDeleteActivities"
-                  @click="deleteActivity(activity._id!)"
-                  class="p-1 text-gray-400 hover:text-red-400 hover:bg-red-500/20 rounded transition-all duration-200"
-                  title="Eliminar"
-                >
-                  <i class="fas fa-trash text-xs"></i>
-                </button>
-              </div>
-            </div>
+            <!-- Priority Sidebar (Red for overdue) -->
+            <div class="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-xl bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.3)]"></div>
 
-            <!-- Cliente -->
-            <p class="text-red-500 font-medium text-xs mb-2">{{ getClientName(activity.clientId) }}</p>
-
-            <!-- Descripción -->
-            <p class="text-slate-700 text-[13px] sm:text-sm mb-3 line-clamp-2 leading-relaxed">{{ activity.description }}</p>
-
-            <!-- Asignado a -->
-            <div class="flex items-center gap-2 mb-3">
-              <template v-if="Array.isArray(activity.assignedTo) && activity.assignedTo.length > 0">
-                <div v-for="user in activity.assignedTo" :key="user._id || user" class="flex items-center gap-1">
-                  <AvatarInline
-                    :name="getUserInfo(user).name"
-                    :photo="getUserInfo(user).photo"
-                    :avatar="getUserInfo(user).avatar"
-                    :hide-name="activity.assignedTo.length > 1"
-                  />
+            <div 
+              class="flex flex-col relative group/card transition-all duration-300 cursor-pointer"
+              :class="expandedCards.has(activity._id!) ? 'min-h-[145px] h-auto pb-4' : 'h-[145px]'"
+              @click="editActivity(activity)"
+            >
+              <div class="p-3.5 flex flex-col h-full">
+                <!-- Top Row -->
+                <div class="flex justify-between items-center mb-1">
+                  <span class="text-[7px] font-black uppercase text-red-600 tracking-widest bg-red-50 px-1 rounded">{{ activity.dueDate ? formatDate(activity.dueDate) : 'Sin fecha' }}</span>
                 </div>
-              </template>
-              <template v-else>
-                <AvatarInline
-                  :name="getSmartAssignedName(activity)"
-                  :photo="''"
-                  :avatar="''"
-                />
-                <button
-                  v-if="!Array.isArray(activity.assignedTo) || activity.assignedTo.length === 0"
-                  @click="showAssignModal(activity)"
-                  class="ml-auto text-xs text-purple-400 hover:text-purple-300 transition-colors"
-                  title="Asignar actividad"
-                >
-                  <i class="fas fa-user-plus"></i>
-                </button>
-              </template>
-            </div>
 
-            <!-- Fecha y tiempo estimado -->
-            <div class="flex items-center justify-between text-xs text-gray-400 mb-2">
-              <div class="flex items-center gap-1">
-                <i class="fas fa-calendar"></i>
-                <span>{{ formatDate(activity.date) }}</span>
-              </div>
-              <div v-if="activity.estimatedTime" class="flex items-center gap-1">
-                <i class="fas fa-clock"></i>
-                <span>{{ activity.estimatedTime }}</span>
-              </div>
-            </div>
+                <!-- Middle -->
+                <div class="flex-1 min-w-0 pr-12">
+                  <h3 class="text-red-900 font-bold text-[11px] leading-tight line-clamp-2 group-hover:text-red-600 transition-colors" :title="activity.title">{{ activity.title }}</h3>
+                  <p class="text-red-500 font-bold text-[8px] uppercase tracking-wider mt-0.5 truncate">{{ getClientName(activity.clientId) }}</p>
+                  
+                  <!-- Visible Expand Toggle -->
+                  <button @click.stop="toggleCardExpansion(activity._id!)" class="mt-1 flex items-center gap-1 text-slate-400 hover:text-red-500 transition-colors py-0.5">
+                    <i class="fas text-[8px]" :class="expandedCards.has(activity._id!) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                    <span class="text-[7px] font-black uppercase tracking-tighter">{{ expandedCards.has(activity._id!) ? 'Ocultar' : 'Detalles' }}</span>
+                  </button>
 
-            <!-- Fecha de vencimiento vencida -->
-            <div v-if="activity.dueDate" class="flex items-center gap-1 text-xs">
-              <i class="fas fa-exclamation-triangle text-red-400"></i>
-              <span class="text-red-400 font-medium">
-                Venció: {{ formatDate(activity.dueDate) }}
-              </span>
-              <span class="text-xs text-red-300 ml-2">
-                ({{ getDaysOverdue(activity.dueDate) }} días)
-              </span>
+                  <!-- Expandable Description -->
+                  <div v-if="expandedCards.has(activity._id!)" class="mt-2 text-[9px] text-slate-500 leading-relaxed border-t border-slate-50 pt-2 animate-fade-in">
+                    {{ activity.description || 'Sin descripción' }}
+                  </div>
+                </div>
+
+                <!-- Bottom Row -->
+                <div class="mt-auto flex justify-between items-center pt-2">
+                  <div class="flex items-center gap-2">
+                    <!-- Timer -->
+                    <div @click.stop="toggleTimer(activity)" class="flex items-center gap-1.5 text-[10px] font-black text-slate-700 bg-white px-2 py-1 rounded border border-slate-200 cursor-pointer hover:border-red-300 transition-all shadow-sm">
+                      <i class="far fa-play-circle text-[8px]"></i>
+                      <span>{{ formatTime(activity.timeSpent) }}</span>
+                    </div>
+                    
+                    <!-- Progress % with Inline Edit -->
+                    <div class="relative">
+                      <div @click.stop="editingPercentageId = activity._id!" class="flex items-center gap-1 text-[10px] font-black text-red-600 bg-red-50 px-2 py-1 rounded border border-red-100 cursor-pointer hover:bg-white hover:border-red-300 transition-all">
+                        <span>{{ activity.completionPercentage || 0 }}%</span>
+                      </div>
+                      
+                      <!-- Inline Tooltip Edit -->
+                      <div v-if="editingPercentageId === activity._id" class="absolute bottom-full left-0 mb-2 z-30 bg-white rounded-lg shadow-xl border border-slate-200 p-2 flex items-center gap-2 animate-scale-up origin-bottom-left" @click.stop>
+                        <input 
+                          type="number" 
+                          v-model="activity.completionPercentage" 
+                          class="w-12 text-[10px] font-bold border-slate-200 rounded p-1"
+                          @keyup.enter="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null"
+                          @blur="editingPercentageId = null"
+                          v-focus
+                        />
+                        <button @click.stop="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null" class="text-emerald-500 hover:text-emerald-600"><i class="fas fa-check"></i></button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="flex -space-x-1.5" @click.stop>
+                    <template v-if="Array.isArray(activity.assignedTo) && activity.assignedTo.length">
+                      <div v-for="user in activity.assignedTo.slice(0, 2)" :key="user._id || user" class="relative">
+                        <img v-if="getUserInfo(user).photo" :src="getUserInfo(user).photo" class="w-4 h-4 rounded-full border border-white shadow-sm object-cover" :title="getUserInfo(user).name">
+                        <div v-else class="w-4 h-4 rounded-full bg-slate-200 border border-white flex items-center justify-center text-[8px] font-bold text-slate-500 shadow-sm" :title="getUserInfo(user).name">
+                          {{ getUserInfo(user).name.charAt(0).toUpperCase() }}
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Floating Actions Pill -->
+              <div class="absolute right-1.5 top-1.5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0 z-10" @click.stop>
+                <button @click.stop="extendDeadline(activity._id!)" class="w-6 h-6 flex items-center justify-center text-amber-600 bg-white/95 backdrop-blur-sm hover:bg-amber-500 hover:text-white rounded-lg shadow-sm border border-amber-100 transition-all" title="Extender"><i class="fas fa-calendar-plus text-[7px]"></i></button>
+                <button @click.stop="deleteActivity(activity._id!)" class="w-6 h-6 flex items-center justify-center text-red-600 bg-white/95 backdrop-blur-sm hover:bg-red-500 hover:text-white rounded-lg shadow-sm border border-red-100 transition-all" title="Eliminar"><i class="fas fa-trash-alt text-[7px]"></i></button>
+              </div>
             </div>
           </div>
 
-          <!-- Estado vacío para vencidas -->
+          <!-- View More Button -->
+          <div v-if="hasMoreOverdue" class="mt-4 pb-2">
+            <button 
+              @click="increaseLimit('overdue')"
+              class="w-full py-2.5 bg-white/50 hover:bg-white border border-slate-200 border-dashed rounded-xl text-[10px] font-black text-slate-500 uppercase tracking-widest transition-all hover:border-red-400 hover:text-red-600 shadow-sm"
+            >
+              <i class="fas fa-plus-circle mr-1.5"></i>
+              Ver más tareas vencidas
+            </button>
+          </div>
+
           <div v-if="overdueActivities.length === 0" class="text-center py-8">
             <i class="fas fa-exclamation-triangle text-3xl text-red-300/50 mb-2"></i>
             <p class="text-red-500/70 text-sm font-bold">No hay actividades vencidas</p>
@@ -1457,9 +1360,8 @@
           </div>
         </div>
       </div>
-    </div>
+  </div>
 
-    <!-- Estado vacío general (Removido por solicitud) -->
     <!-- Modales -->
     <!-- Modal de crear/editar actividad -->
     <ActivityFormModal
@@ -2476,6 +2378,34 @@ import DailyScrum from '../../pages/DailyScrum.vue'
 import TeamActivities from '../../pages/TeamActivities.vue'
 
 const currentView = ref<'kanban' | 'tasks' | 'calendar' | 'daily' | 'team'>('kanban')
+
+// Gestión de expansión de tarjetas Kanban
+const expandedCards = ref<Set<string>>(new Set())
+const editingPercentageId = ref<string | null>(null)
+
+// Control de límites de visualización por columna
+const columnLimits = ref({
+  pending: 8,
+  inProgress: 8,
+  completed: 8,
+  overdue: 8
+})
+
+const increaseLimit = (column: 'pending' | 'inProgress' | 'completed' | 'overdue') => {
+  columnLimits.value[column] += 12
+}
+
+const toggleCardExpansion = (id: string) => {
+  if (expandedCards.value.has(id)) {
+    expandedCards.value.delete(id)
+  } else {
+    expandedCards.value.add(id)
+  }
+}
+const vFocus = {
+  mounted: (el: HTMLElement) => el.focus()
+}
+
 const quickTaskTitle = ref('')
 const showQuickSettings = ref(false)
 const showQuickTaskHints = ref(false)
@@ -2663,22 +2593,69 @@ const filteredActivities = computed(() => {
   return filtered
 })
 
-const pendingActivities = computed(() => 
-  filteredActivities.value.filter(a => a.status === 'pending')
+// Helper para priorización
+const getPriorityScore = (priority?: string) => {
+  const scores = { urgent: 4, high: 3, medium: 2, low: 1 }
+  return scores[priority as keyof typeof scores] || 0
+}
+
+const sortActivities = (list: ActivityData[]) => {
+  return [...list].sort((a, b) => {
+    // 1. Prioridad (Más alto primero: Urgente > Alta > Media > Baja)
+    const pA = getPriorityScore(a.priority)
+    const pB = getPriorityScore(b.priority)
+    if (pB !== pA) return pB - pA
+    
+    // 2. Gestión de fechas dentro de la misma prioridad
+    // Las tareas con fecha de fin definida tienen precedencia sobre las que no tienen
+    const hasDateA = !!a.dueDate
+    const hasDateB = !!b.dueDate
+    
+    if (hasDateA && !hasDateB) return -1
+    if (!hasDateA && hasDateB) return 1
+    
+    // Si ambas tienen fecha o ambas carecen de ella, ordenamos por fecha ascendente
+    // (Lo más próximo o antiguo primero para dar salida a lo pendiente)
+    const dA = a.dueDate ? new Date(a.dueDate).getTime() : new Date(a.date).getTime()
+    const dB = b.dueDate ? new Date(b.dueDate).getTime() : new Date(b.date).getTime()
+    return dA - dB
+  })
+}
+
+const pendingActivities = computed(() => {
+  const sorted = sortActivities(filteredActivities.value.filter(a => a.status === 'pending'))
+  return sorted.slice(0, columnLimits.value.pending)
+})
+
+const hasMorePending = computed(() => 
+  filteredActivities.value.filter(a => a.status === 'pending').length > columnLimits.value.pending
 )
 
-const inProgressActivities = computed(() => 
-  filteredActivities.value.filter(a => a.status === 'in-progress')
+const inProgressActivities = computed(() => {
+  const sorted = sortActivities(filteredActivities.value.filter(a => a.status === 'in-progress'))
+  return sorted.slice(0, columnLimits.value.inProgress)
+})
+
+const hasMoreInProgress = computed(() => 
+  filteredActivities.value.filter(a => a.status === 'in-progress').length > columnLimits.value.inProgress
 )
 
-const completedActivities = computed(() => 
-  filteredActivities.value.filter(a => a.status === 'completed')
+const completedActivities = computed(() => {
+  const sorted = sortActivities(filteredActivities.value.filter(a => a.status === 'completed'))
+  return sorted.slice(0, columnLimits.value.completed)
+})
+
+const hasMoreCompleted = computed(() => 
+  filteredActivities.value.filter(a => a.status === 'completed').length > columnLimits.value.completed
 )
 
-// Columna Cancelada eliminada del tablero Kanban; las actividades con estado 'cancelled' no se muestran en esta vista
+const overdueActivities = computed(() => {
+  const sorted = sortActivities(filteredActivities.value.filter(a => a.status === 'overdue'))
+  return sorted.slice(0, columnLimits.value.overdue)
+})
 
-const overdueActivities = computed(() => 
-  filteredActivities.value.filter(a => a.status === 'overdue')
+const hasMoreOverdue = computed(() => 
+  filteredActivities.value.filter(a => a.status === 'overdue').length > columnLimits.value.overdue
 )
 
 const formatTime = (seconds: number | undefined) => {
@@ -4954,7 +4931,6 @@ const getClientName = (clientData: any): string => {
 
 const formatDate = (dateString: string | Date): string => {
   return new Date(dateString).toLocaleDateString('es-ES', {
-    year: 'numeric',
     month: 'short',
     day: 'numeric'
   })

@@ -18,10 +18,10 @@ body {
   color: #0f172a; /* slate-900 */
 }
 
-/* Premium Minimal Scrollbar */
+/* Premium Minimal Scrollbar - Ultra Thin & Subtle */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 3px;
+  height: 3px;
 }
 
 ::-webkit-scrollbar-track {
@@ -29,21 +29,43 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #E2E8F0; /* slate-200 */
+  background: rgba(203, 213, 225, 0.2); /* Nearly invisible */
   border-radius: 20px;
-  border: 1px solid transparent;
+  border: 1px solid transparent; /* Separador */
   background-clip: content-box;
+  transition: all 0.3s ease;
+}
+
+*:hover::-webkit-scrollbar-thumb {
+  background: rgba(203, 213, 225, 0.6); /* Subtle hint on hover */
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #CBD5E1; /* slate-300 */
-  background-clip: content-box;
+  background: rgba(148, 163, 184, 0.8) !important; /* Clearly visible when interacting */
+}
+
+/* Specific class for even more space-saving */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(203, 213, 225, 0.2) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 2px; /* Ultra-thin */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(203, 213, 225, 0.1);
+}
+
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: rgba(203, 213, 225, 0.4);
 }
 
 /* Firefox Support */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #E2E8F0 transparent;
+  scrollbar-color: rgba(203, 213, 225, 0.2) transparent;
 }
 
 /* Custom animations */

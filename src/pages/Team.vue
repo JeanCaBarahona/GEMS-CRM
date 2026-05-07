@@ -412,8 +412,7 @@ const getRoleDisplayName = (role: string) => {
     fullstack: 'Ingeniero Soft.',
     employee: 'Colaborador',
     viewer: 'Consultor',
-    client: 'Cliente',
-    development: 'Especialista TI'
+    client: 'Cliente'
   }
   return roleNames[role] || role
 }

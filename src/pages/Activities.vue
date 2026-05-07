@@ -1,29 +1,19 @@
 <template>
   <div class="flex flex-col h-full min-h-0 relative">
-    <!-- Search Bar -->
-    <div class="mb-4 flex-shrink-0">
-      <div class="relative w-full max-w-md">
-        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <i class="fas fa-search text-slate-400"></i>
+    <!-- Activities View Wrapper -->
+    <div class="flex-1 min-h-0 bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col overflow-hidden">
+      <!-- Contenedor con scroll con márgenes para no chocar con las esquinas redondeadas -->
+      <div class="flex-1 overflow-y-auto custom-scrollbar my-4">
+        <div class="p-6 pr-8 pt-4">
+          <ActivitiesView 
+            ref="activitiesViewRef"
+            v-model:searchTerm="searchTerm"
+            @create="openCreateModal"
+            @edit="openEditModal"
+            class="h-full flex flex-col"
+          />
         </div>
-        <input
-          v-model="searchTerm"
-          type="text"
-          placeholder="Buscar actividades..."
-          class="w-full pl-10 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow shadow-sm"
-        />
       </div>
-    </div>
-
-    <!-- Activities View -->
-    <div class="flex-1 min-h-0 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-y-auto flex flex-col p-4">
-      <ActivitiesView 
-        ref="activitiesViewRef"
-        :searchTerm="searchTerm"
-        @create="openCreateModal"
-        @edit="openEditModal"
-        class="h-full flex flex-col"
-      />
     </div>
 
     <!-- Create/Edit Modal -->

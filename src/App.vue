@@ -300,21 +300,5 @@ onMounted(async () => {
   animation: fade-in 0.3s ease-out;
 }
 
-/* Custom scrollbar - Light Mode */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(241, 245, 249, 0.5); /* slate-100 */
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.5); /* slate-400 */
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.8); /* slate-500 */
-}
+/* Los estilos de scrollbar globales se gestionan en style.css para mayor consistencia */
 </style>

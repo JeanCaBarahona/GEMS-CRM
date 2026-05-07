@@ -21,6 +21,7 @@ import TasksBoard from './pages/TasksBoard.vue'
 import InternalTickets from './pages/tickets/InternalTickets.vue'
 import ExternalTickets from './pages/tickets/ExternalTickets.vue'
 import DailyScrum from './pages/DailyScrum.vue'
+import Prospects from './pages/Prospects.vue'
 
 const routes = [
   {
@@ -71,7 +72,16 @@ const routes = [
     path: '/clients',
     name: 'Clients',
     component: Clients,
-    meta: { 
+    meta: {
+      requiresAuth: true,
+      requiredPermissions: ['view-clients']
+    }
+  },
+  {
+    path: '/prospectos',
+    name: 'Prospects',
+    component: Prospects,
+    meta: {
       requiresAuth: true,
       requiredPermissions: ['view-clients']
     }

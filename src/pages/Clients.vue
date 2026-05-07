@@ -21,22 +21,8 @@
     <!-- Toolbar & Filters -->
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm mb-6 p-4">
       <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <!-- Tabs -->
-        <div class="flex bg-slate-100 p-1 rounded-xl">
-          <button
-            @click="activeTab = 'clientes'"
-            :class="[activeTab === 'clientes' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700']"
-            class="px-6 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all"
-          >Directorio</button>
-          <button
-            @click="activeTab = 'prospectos'"
-            :class="[activeTab === 'prospectos' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700']"
-            class="px-6 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all"
-          >Prospectos IA</button>
-        </div>
-
-        <!-- Search & Sort (Only if Directory) -->
-        <div v-if="activeTab === 'clientes'" class="flex flex-col sm:flex-row items-center gap-3 flex-1 lg:justify-end">
+        <!-- Search & Sort -->
+        <div class="flex flex-col sm:flex-row items-center gap-3 flex-1 lg:justify-end">
           <div class="relative w-full sm:max-w-xs group">
             <MagnifyingGlassIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-primary-500 transition-colors" />
             <input
@@ -64,11 +50,7 @@
 
     <!-- Main Content Area -->
     <div class="space-y-4 pb-20">
-      <div v-if="activeTab === 'prospectos'" class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden p-8">
-        <ProspectAIForm />
-      </div>
-          
-      <div v-else class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden flex flex-col min-h-[400px] relative">
+      <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden flex flex-col min-h-[400px] relative">
         <div v-if="loading" class="flex items-center justify-center absolute inset-0 z-10 bg-white/60 backdrop-blur-[2px]">
           <div class="flex flex-col items-center gap-3">
             <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-500"></div>
@@ -336,7 +318,6 @@
 import { ref, computed, onMounted } from 'vue'
 import { useClientStore } from '../stores/clientStore'
 import type { Client, ClientForm } from '../types'
-import ProspectAIForm from '../components/ProspectAIForm.vue'
 import {
   PlusIcon,
   MagnifyingGlassIcon,
@@ -347,7 +328,6 @@ import {
 } from '@heroicons/vue/24/outline'
 
 const clientsStore = useClientStore()
-const activeTab = ref('clientes')
 const showModal = ref(false)
 const showDeleteModal = ref(false)
 const searchTerm = ref('')
@@ -407,7 +387,7 @@ const paginatedClients = computed(() => {
 
 // Reset pagination on search
 import { watch } from 'vue'
-watch([searchTerm, sortBy, activeTab], () => {
+watch([searchTerm, sortBy], () => {
   currentPage.value = 1
 })
 

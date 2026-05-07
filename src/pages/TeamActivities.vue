@@ -86,7 +86,7 @@
       </div>
 
       <!-- Vista de tarjetas por miembro -->
-      <div v-else-if="viewMode === 'cards'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+      <div v-else-if="viewMode === 'cards'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         <div
           v-for="member in teamMembersWithActivities"
           :key="member._id"

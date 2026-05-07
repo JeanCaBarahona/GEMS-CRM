@@ -175,7 +175,7 @@
         <div
           v-for="column in columns"
           :key="column.id"
-          class="bg-slate-50/50 backdrop-blur-sm rounded-[2rem] p-5 border border-slate-200/60 w-80 flex-shrink-0 flex flex-col max-h-[calc(100vh-280px)]"
+          class="bg-slate-50/50 backdrop-blur-sm rounded-[2rem] p-3 border border-slate-200/60 w-96 flex-shrink-0 flex flex-col max-h-[calc(100vh-280px)]"
         >
           <!-- Column Header -->
           <div class="flex items-center justify-between mb-6 px-1">
@@ -207,45 +207,47 @@
               draggable="true"
               @dragstart="onDragStart($event, task)"
               @dragend="onDragEnd"
-              @click="openTaskDetail(task)"
-              class="bg-white rounded-[1.5rem] p-4 border border-slate-100 hover:border-primary-200 hover:shadow-xl hover:shadow-primary-500/5 transition-all cursor-move group relative animate-in fade-in duration-500"
+              class="bg-white rounded-[1.5rem] p-3 border border-slate-100 hover:border-primary-200 hover:shadow-xl hover:shadow-primary-500/5 transition-all cursor-move group relative animate-in fade-in duration-500"
             >
-              <!-- Task Header -->
-              <div class="flex items-start justify-between gap-3 mb-3">
-                <div class="flex items-start gap-2 flex-1">
-                  <div class="mt-1 w-2 h-2 rounded-full flex-shrink-0" :style="{ backgroundColor: getTaskTypeColor(task.type) }"></div>
-                  <h4 class="text-slate-700 text-[13px] font-bold flex-1 leading-snug group-hover:text-primary-600 transition-colors">{{ task.title }}</h4>
+              <!-- Clickable Content Wrapper -->
+              <div @click.stop="openTaskDetail(task)" class="cursor-pointer">
+                <!-- Task Header -->
+                <div class="flex items-start justify-between gap-3 mb-3">
+                  <div class="flex items-start gap-2 flex-1">
+                    <div class="mt-1 w-2 h-2 rounded-full flex-shrink-0" :style="{ backgroundColor: getTaskTypeColor(task.type) }"></div>
+                    <h4 class="text-slate-700 text-sm font-bold flex-1 leading-snug group-hover:text-primary-600 transition-colors">{{ task.title }}</h4>
+                  </div>
+                  <span 
+                    class="px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider flex-shrink-0 border"
+                    :class="getPriorityClass(task.priority)"
+                  >
+                    {{ getPriorityLabel(task.priority) }}
+                  </span>
                 </div>
-                <span 
-                  class="px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider flex-shrink-0 border"
-                  :class="getPriorityClass(task.priority)"
-                >
-                  {{ getPriorityLabel(task.priority) }}
-                </span>
-              </div>
 
-              <!-- Metadata & Assignee -->
-              <div class="flex items-center justify-between mt-4 pt-4 border-t border-slate-50">
-                <div class="flex -space-x-2">
-                  <div v-if="task.assignedTo" class="group/avatar relative">
-                    <div class="w-8 h-8 rounded-full border-2 border-white bg-primary-100 text-primary-700 flex items-center justify-center text-[10px] font-black shadow-sm overflow-hidden">
-                      <img v-if="task.assignedTo.photo" :src="task.assignedTo.photo" class="w-full h-full object-cover" />
-                      <span v-else>{{ getInitials(task.assignedTo.name) }}</span>
+                <!-- Metadata & Assignee -->
+                <div class="flex items-center justify-between mt-4 pt-4 border-t border-slate-50">
+                  <div class="flex -space-x-2">
+                    <div v-if="task.assignedTo" class="group/avatar relative">
+                      <div class="w-8 h-8 rounded-full border-2 border-white bg-primary-100 text-primary-700 flex items-center justify-center text-[10px] font-black shadow-sm overflow-hidden">
+                        <img v-if="task.assignedTo.photo" :src="task.assignedTo.photo" class="w-full h-full object-cover" />
+                        <span v-else>{{ getInitials(task.assignedTo.name) }}</span>
+                      </div>
+                    </div>
+                    <div v-else class="w-8 h-8 rounded-full border-2 border-white bg-slate-100 text-slate-400 flex items-center justify-center text-[10px] shadow-sm">
+                      <i class="fas fa-user-plus text-[8px]"></i>
                     </div>
                   </div>
-                  <div v-else class="w-8 h-8 rounded-full border-2 border-white bg-slate-100 text-slate-400 flex items-center justify-center text-[10px] shadow-sm">
-                    <i class="fas fa-user-plus text-[8px]"></i>
-                  </div>
-                </div>
 
-                <div class="flex items-center gap-3 text-slate-400">
-                  <div v-if="task.comments?.length" class="flex items-center gap-1.5">
-                    <i class="far fa-comment text-[10px]"></i>
-                    <span class="text-[10px] font-bold">{{ task.comments.length }}</span>
-                  </div>
-                  <div class="flex items-center gap-1.5" :class="{'text-emerald-500 font-bold': task.activeSessions?.length}">
-                    <i class="far fa-clock text-[10px]"></i>
-                    <span class="text-[10px] font-black tracking-tighter">{{ Number(task.actualHours || 0).toFixed(1) }}h</span>
+                  <div class="flex items-center gap-3 text-slate-400">
+                    <div v-if="task.comments?.length" class="flex items-center gap-1.5">
+                      <i class="far fa-comment text-[10px]"></i>
+                      <span class="text-[10px] font-bold">{{ task.comments.length }}</span>
+                    </div>
+                    <div class="flex items-center gap-1.5" :class="{'text-emerald-500 font-bold': task.activeSessions?.length}">
+                      <i class="far fa-clock text-[10px]"></i>
+                      <span class="text-[10px] font-black tracking-tighter">{{ Number(task.actualHours || 0).toFixed(1) }}h</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -253,6 +255,13 @@
               <!-- Timer Mini-Indicator -->
               <div v-if="task.activeSessions?.length" class="absolute -top-1 -right-1 flex gap-1">
                 <span class="w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white animate-pulse"></span>
+              </div>
+
+              <!-- Quick Edit Overlay Icon -->
+              <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div class="w-6 h-6 bg-primary-50 text-primary-600 rounded-lg flex items-center justify-center text-[8px] shadow-sm">
+                  <i class="fas fa-pen"></i>
+                </div>
               </div>
             </div>
 
@@ -347,18 +356,29 @@
       @close="closeTaskModal"
       @saved="onTaskSaved"
     />
+
+    <!-- Debug Overlay -->
+    <div v-if="showTaskModal" class="fixed bottom-4 right-4 bg-slate-900/90 backdrop-blur-md text-white p-4 rounded-2xl z-[9999] text-[10px] font-black border border-white/20 shadow-2xl">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+        ESTADO: MODAL ABIERTO
+      </div>
+      <div class="mt-1 text-slate-400">Tarea: {{ selectedTask?._id || 'NUEVA' }}</div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useBoardsStore } from '@/stores/boards'
 import { useTasksStore, type Task } from '@/stores/tasks'
 import { useAuthStore } from '@/stores/auth'
 import { teamService } from '@/services/teamService'
 import { clientService } from '@/services/clientService'
-import ActivityFormModal from '@/components/forms/ActivityFormModal.vue'
+import ActivityFormModal from '../components/forms/ActivityFormModal.vue'
 import { useNotifications } from '@/composables/useNotifications'
+
+console.log('TasksBoard initialized')
 
 const authStore = useAuthStore()
 const boardsStore = useBoardsStore()
@@ -376,6 +396,14 @@ const initialColumnId = ref('backlog')
 const teamMembers = ref<any[]>([])
 const clients = ref([])
 const departments = ref<string[]>(['TI', 'Comercial', 'Marketing'])
+
+watch(showTaskModal, (val) => {
+  console.log('showTaskModal changed to:', val)
+})
+
+watch(selectedTask, (val) => {
+  console.log('selectedTask changed to:', val)
+})
 
 const filters = ref({
   type: '',
@@ -555,6 +583,7 @@ function openTaskModal(columnId?: string) {
 }
 
 function openTaskDetail(task: Task) {
+  console.log('openTaskDetail called with task:', task)
   selectedTask.value = task
   showTaskModal.value = true
 }
@@ -569,30 +598,32 @@ async function onTaskSaved() {
 }
 
 onMounted(async () => {
-  // Cargar filtros guardados
-  const saved = localStorage.getItem('customer_touch_filters')
-  if (saved) {
-    try {
-      filters.value = JSON.parse(saved)
-    } catch (e) {}
-  }
-
-  await boardsStore.fetchBoards()
-  if (boards.value.length > 0) {
-    selectedBoardId.value = boards.value[0]._id
-    await boardsStore.fetchBoardById(selectedBoardId.value)
-    await loadTasks()
-  }
-
+  console.log('TasksBoard onMounted started')
   try {
+    // Cargar filtros guardados
+    const saved = localStorage.getItem('customer_touch_filters')
+    if (saved) {
+      try {
+        filters.value = JSON.parse(saved)
+      } catch (e) {}
+    }
+
+    await boardsStore.fetchBoards()
+    if (boards.value.length > 0) {
+      selectedBoardId.value = boards.value[0]._id
+      await boardsStore.fetchBoardById(selectedBoardId.value)
+      await loadTasks()
+    }
+
     const [team, cls] = await Promise.all([
       teamService.getActiveMembers(),
       clientService.getAll()
     ])
     teamMembers.value = team
     clients.value = cls
+    console.log('TasksBoard data loaded:', { teamMembers: team.length, clients: cls.length })
   } catch (error) {
-    console.error('Error loading data:', error)
+    console.error('Error in TasksBoard onMounted:', error)
   }
 })
 </script>

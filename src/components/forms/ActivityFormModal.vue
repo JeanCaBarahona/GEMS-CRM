@@ -1,4 +1,4 @@
-<template>
+11  |q1|<template>
   <div class="fixed -inset-1 bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-4 z-[100] animate-in fade-in duration-300" @click="closeOnOutsideClick">
     <div class="bg-white rounded-[2.5rem] shadow-2xl border border-slate-200/60 w-full max-w-3xl max-h-[95vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-300" @click.stop>
       <!-- Header -->
@@ -102,7 +102,7 @@
                     v-model="form.clientId"
                     :options="[
                       { value: '', label: 'Interno' },
-                      ...clients.map(client => ({ value: client._id, label: client.name }))
+                      ...(clients || []).map(client => ({ value: client._id, label: client.name }))
                     ]"
                   />
                 </div>
@@ -216,15 +216,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, watch } from 'vue'
 import AssignedUsersSelector from '../AssignedUsersSelector.vue'
 import CustomSelect from '../ui/CustomSelect.vue'
 import { activityService } from '../../services/activityService'
 import { useBoardsStore } from '../../stores/boards'
+import { useTasksStore } from '../../stores/tasks'
 import { useNotifications } from '../../composables/useNotifications'
 import type { TeamMember, Client } from '../../types'
 
+console.log('ActivityFormModal script setup initialized')
+
 const boardsStore = useBoardsStore()
+const tasksStore = useTasksStore()
 const { showSuccess, showError } = useNotifications()
 
 interface Props {
@@ -233,10 +237,12 @@ interface Props {
   teamMembers: TeamMember[]
   initialBoardStatus?: string
   boardId?: string
+  sprints?: any[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
   activity: null,
+  clients: () => [],
   teamMembers: () => [],
   initialBoardStatus: 'backlog'
 })
@@ -265,61 +271,126 @@ const form = reactive({
 })
 
 const populateForm = () => {
-  if (props.activity) {
-    form.title = props.activity.title || ''
-    form.description = props.activity.description || ''
-    form.clientId = props.activity.clientId?._id || props.activity.clientId || ''
-    form.assignedTo = Array.isArray(props.activity.assignedTo)
-      ? props.activity.assignedTo.map((u: any) => typeof u === 'object' ? u._id : u)
-      : []
-    form.priority = props.activity.priority || 'medium'
-    form.status = props.activity.status || 'pending'
-    form.type = props.activity.type || 'task'
-    form.estimatedTime = props.activity.estimatedTime || ''
-    form.completionPercentage = props.activity.completionPercentage || 0
-    form.date = props.activity.date ? formatDateTimeLocal(props.activity.date) : new Date().toISOString().slice(0, 16)
-    form.dueDate = props.activity.dueDate ? formatDateTimeLocal(props.activity.dueDate) : ''
-  } else {
-    form.date = new Date().toISOString().slice(0, 16)
+  try {
+    console.log('Populating ActivityFormModal with:', props.activity)
+    if (props.activity) {
+      form.title = props.activity.title || ''
+      form.description = props.activity.description || ''
+      
+      // Soporte para ambos: clientId (Activity) o client (Task)
+      form.clientId = props.activity.clientId?._id || props.activity.clientId || 
+                      props.activity.client?._id || props.activity.client || ''
+      
+      // Soporte para asignación múltiple (Activity) o única (Task)
+      if (props.activity.assignedTo) {
+        if (Array.isArray(props.activity.assignedTo)) {
+          form.assignedTo = props.activity.assignedTo.map((u: any) => typeof u === 'object' ? (u?._id || '') : u).filter(Boolean)
+        } else {
+          // Es un objeto único (Task)
+          const userId = typeof props.activity.assignedTo === 'object' ? props.activity.assignedTo?._id : props.activity.assignedTo
+          form.assignedTo = userId ? [userId] : []
+        }
+      } else {
+        form.assignedTo = []
+      }
+
+      form.priority = props.activity.priority || 'medium'
+      form.status = props.activity.status || 'pending'
+      form.type = props.activity.type || 'task'
+      
+      // Soporte para estimatedHours (Task) o estimatedTime (Activity)
+      form.estimatedTime = props.activity.estimatedTime || (props.activity.estimatedHours ? `${props.activity.estimatedHours}h` : '')
+      
+      form.completionPercentage = props.activity.completionPercentage || 0
+      
+      const defaultDate = new Date().toISOString().slice(0, 16)
+      form.date = props.activity.date ? formatDateTimeLocal(props.activity.date) : (props.activity.createdAt ? formatDateTimeLocal(props.activity.createdAt) : defaultDate)
+      form.dueDate = props.activity.dueDate ? formatDateTimeLocal(props.activity.dueDate) : ''
+    } else {
+      // Valores por defecto para nueva tarea
+      form.title = ''
+      form.description = ''
+      form.clientId = ''
+      form.assignedTo = []
+      form.priority = 'medium'
+      form.status = 'pending'
+      form.type = 'task'
+      form.estimatedTime = ''
+      form.completionPercentage = 0
+      form.date = new Date().toISOString().slice(0, 16)
+      form.dueDate = ''
+    }
+  } catch (err) {
+    console.error('Error in populateForm:', err)
   }
 }
 
 const formatDateTimeLocal = (dateString: any) => {
   if (!dateString) return ''
-  return new Date(dateString).toISOString().slice(0, 16)
+  try {
+    const d = new Date(dateString)
+    if (isNaN(d.getTime())) return ''
+    return d.toISOString().slice(0, 16)
+  } catch (e) {
+    return ''
+  }
 }
 
 const handleSubmit = async () => {
   loading.value = true
   try {
-    const taskData = {
+    const isTask = !!props.boardId || !!props.activity?.boardId || !!props.activity?.boardStatus
+    
+    const taskData: any = {
       title: form.title,
       description: form.description,
-      clientId: form.clientId || undefined,
-      assignedTo: form.assignedTo,
       priority: form.priority,
       status: form.status,
       type: form.type,
-      estimatedTime: form.estimatedTime,
       completionPercentage: form.completionPercentage,
-      date: form.date,
       dueDate: form.dueDate || undefined
+    }
+
+    // Campos específicos según el modelo
+    if (isTask) {
+      taskData.boardId = props.boardId || props.activity?.boardId
+      taskData.boardStatus = props.initialBoardStatus || props.activity?.boardStatus
+      // En Task, assignedTo es usualmente el primer elemento o manejado diferente en el backend
+      taskData.assignedTo = form.assignedTo[0] || null
+      taskData.client = form.clientId || undefined
+      // Convertir estimatedTime (1.5h) a estimatedHours (1.5)
+      const hours = parseFloat(form.estimatedTime.replace('h', ''))
+      if (!isNaN(hours)) taskData.estimatedHours = hours
+    } else {
+      taskData.clientId = form.clientId || undefined
+      taskData.assignedTo = form.assignedTo
+      taskData.estimatedTime = form.estimatedTime
+      taskData.date = form.date
     }
 
     let savedData: any
     
     if (isEditing.value && props.activity?._id) {
-      savedData = await activityService.update(props.activity._id, taskData)
-      showSuccess('Actividad actualizada')
+      if (isTask) {
+        savedData = await tasksStore.updateTask(props.activity._id, taskData)
+      } else {
+        savedData = await activityService.update(props.activity._id, taskData)
+      }
+      showSuccess(isTask ? 'Tarea actualizada' : 'Actividad actualizada')
     } else {
-      savedData = await activityService.create(taskData)
-      showSuccess('Actividad creada con éxito')
+      if (isTask) {
+        savedData = await tasksStore.createTask(taskData)
+      } else {
+        savedData = await activityService.create(taskData)
+      }
+      showSuccess(isTask ? 'Tarea creada con éxito' : 'Actividad creada con éxito')
     }
     
     emit('saved', savedData)
     emit('close')
   } catch (error) {
-    showError('Error al sincronizar la tarea')
+    showError('Error al sincronizar la información')
+    console.error('Submit Error:', error)
   } finally {
     loading.value = false
   }
@@ -330,6 +401,11 @@ const closeOnOutsideClick = (event: Event) => {
     emit('close')
   }
 }
+
+
+watch(() => props.activity, () => {
+  populateForm()
+}, { deep: true })
 
 onMounted(() => {
   populateForm()

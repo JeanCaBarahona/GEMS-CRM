@@ -172,7 +172,7 @@
       </div>
 
       <!-- Cases Cards -->
-      <div v-else class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div 
           v-for="caseItem in filteredCases" 
           :key="caseItem._id"

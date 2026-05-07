@@ -943,7 +943,7 @@
     <!-- Tablero Kanban -->
     <div
       v-else-if="currentView === 'kanban'"
-      class="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-4"
+      class="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4"
     >
       <!-- Columna Pendiente -->
       <div class="bg-gradient-to-b from-slate-50/50 to-white border border-slate-200/60 rounded-xl p-3 sm:p-4 w-full snap-start flex flex-col h-full shadow-sm">
@@ -959,7 +959,7 @@
         
         <div 
           :class="[
-            'flex flex-col gap-3 flex-1 overflow-y-auto overflow-x-visible px-4 pb-6 transition-all duration-300 min-h-0 content-start custom-scrollbar-slim',
+            'flex flex-col gap-3 flex-1 overflow-y-auto overflow-x-visible px-3 pb-6 transition-all duration-300 min-h-0 content-start custom-scrollbar-slim',
             isDragging && draggedActivity?.status !== 'pending' ? 'ring-2 ring-amber-400/50 rounded-lg bg-amber-50/50' : ''
           ]"
           @drop="onDrop($event, 'pending')"
@@ -969,8 +969,8 @@
           <div
             v-for="activity in pendingActivities"
             :key="activity._id"
-            class="bg-white rounded-xl p-3 border border-slate-100 hover:border-amber-400/50 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.07)] hover:-translate-y-1 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.04)] transition-all duration-300 group cursor-move relative shrink-0 flex flex-col"
-            :class="expandedCards.has(activity._id!) ? 'h-auto min-h-[160px] z-20' : 'h-[160px]'"
+            class="bg-white rounded-xl p-3 border border-slate-200 hover:border-amber-400 hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.12)] hover:-translate-y-1 shadow-sm transition-all duration-300 group cursor-move relative shrink-0 flex flex-col"
+            :class="expandedCards.has(activity._id!) ? 'h-auto min-h-[185px] z-20' : 'h-[185px]'"
             draggable="true"
             @dragstart="onDragStart($event, activity)"
             @dragend="onDragEnd"
@@ -986,7 +986,7 @@
               :class="expandedCards.has(activity._id!) ? '' : 'overflow-hidden'"
               @click="editActivity(activity)"
             >
-              <div class="p-3.5 flex flex-col h-full">
+              <div class="p-2.5 flex flex-col h-full">
                 <!-- Top Row -->
                 <div class="flex justify-between items-center mb-1">
                   <span class="text-[7px] font-black uppercase text-amber-600 tracking-widest bg-amber-50 px-1 rounded">{{ activity.dueDate ? formatDate(activity.dueDate) : 'Sin fecha' }}</span>
@@ -994,8 +994,8 @@
 
                 <!-- Middle: Title & Client -->
                 <div class="flex-1 min-w-0 pr-12">
-                  <h3 class="text-slate-800 font-black text-[11px] leading-snug mb-1 line-clamp-2 group-hover:text-amber-600 transition-colors" :title="activity.title">{{ activity.title }}</h3>
-                  <p class="text-slate-400 font-bold text-[8px] uppercase tracking-wider mt-0.5 truncate">{{ getClientName(activity.clientId) }}</p>
+                  <h3 class="text-slate-800 font-black text-[13px] leading-tight line-clamp-2 group-hover:text-amber-600 transition-colors" :title="activity.title">{{ activity.title }}</h3>
+                  <p class="text-slate-400 font-bold text-[10px] uppercase tracking-wider mt-0.5 truncate">{{ getClientName(activity.clientId) }}</p>
                   
                   <!-- Visible Expand Toggle -->
                   <button @click.stop="toggleCardExpansion(activity._id!)" class="mt-1 flex items-center gap-1 text-slate-400 hover:text-amber-500 transition-colors py-0.5">
@@ -1127,7 +1127,7 @@
         
         <div 
           :class="[
-            'flex flex-col gap-3 flex-1 overflow-y-auto overflow-x-visible px-5 pb-6 transition-all duration-300 min-h-0 content-start custom-scrollbar-slim',
+            'flex flex-col gap-3 flex-1 overflow-y-auto overflow-x-visible px-3 pb-6 transition-all duration-300 min-h-0 content-start custom-scrollbar-slim',
             isDragging && draggedActivity?.status !== 'in-progress' ? 'ring-2 ring-blue-400/50 rounded-lg bg-blue-50/50' : ''
           ]"
           @drop="onDrop($event, 'in-progress')"
@@ -1138,7 +1138,7 @@
             v-for="activity in inProgressActivities"
             :key="activity._id"
             class="bg-white rounded-xl p-3 border border-slate-200 hover:border-blue-400 hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.12)] hover:-translate-y-1 shadow-sm transition-all duration-300 group cursor-move relative shrink-0 flex flex-col"
-            :class="expandedCards.has(activity._id!) ? 'h-auto min-h-[160px] z-20' : 'h-[160px]'"
+            :class="expandedCards.has(activity._id!) ? 'h-auto min-h-[185px] z-20' : 'h-[185px]'"
             draggable="true"
             @dragstart="onDragStart($event, activity)"
             @dragend="onDragEnd"
@@ -1154,7 +1154,7 @@
               :class="expandedCards.has(activity._id!) ? '' : 'overflow-hidden'"
               @click="editActivity(activity)"
             >
-              <div class="p-3.5 flex flex-col h-full">
+              <div class="p-2.5 flex flex-col h-full">
                 <!-- Top Row -->
                 <div class="flex justify-between items-center mb-1">
                   <span class="text-[7px] font-black uppercase text-blue-600 tracking-widest bg-blue-50 px-1 rounded">{{ activity.dueDate ? formatDate(activity.dueDate) : 'Sin fecha' }}</span>
@@ -1162,8 +1162,8 @@
 
                 <!-- Middle -->
                 <div class="flex-1 min-w-0 pr-12">
-                  <h3 class="text-slate-800 font-black text-[11px] leading-tight line-clamp-2 group-hover:text-blue-600 transition-colors" :title="activity.title">{{ activity.title }}</h3>
-                  <p class="text-slate-400 font-bold text-[8px] uppercase tracking-wider mt-0.5 truncate">{{ getClientName(activity.clientId) }}</p>
+                  <h3 class="text-slate-800 font-black text-[13px] leading-tight line-clamp-2 group-hover:text-blue-600 transition-colors" :title="activity.title">{{ activity.title }}</h3>
+                  <p class="text-slate-400 font-bold text-[10px] uppercase tracking-wider mt-0.5 truncate">{{ getClientName(activity.clientId) }}</p>
                   
                   <!-- Visible Expand Toggle -->
                   <button @click.stop="toggleCardExpansion(activity._id!)" class="mt-1 flex items-center gap-1 text-slate-400 hover:text-blue-500 transition-colors py-0.5">
@@ -1295,7 +1295,7 @@
         
         <div 
           :class="[
-            'flex flex-col gap-3 flex-1 overflow-y-auto overflow-x-visible px-5 pb-6 transition-all duration-300 min-h-0 content-start custom-scrollbar-slim',
+            'flex flex-col gap-3 flex-1 overflow-y-auto overflow-x-visible px-3 pb-6 transition-all duration-300 min-h-0 content-start custom-scrollbar-slim',
             isDragging && draggedActivity?.status !== 'completed' ? 'ring-2 ring-emerald-400/50 rounded-lg bg-emerald-50/50' : ''
           ]"
           @drop="onDrop($event, 'completed')"
@@ -1306,7 +1306,7 @@
             v-for="activity in completedActivities"
             :key="activity._id"
             class="bg-white rounded-xl p-3 border border-slate-200 hover:border-emerald-400 hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.12)] hover:-translate-y-1 shadow-sm transition-all duration-300 group cursor-move relative shrink-0 opacity-80 hover:opacity-100 flex flex-col"
-            :class="expandedCards.has(activity._id!) ? 'h-auto min-h-[160px] z-20' : 'h-[160px]'"
+            :class="expandedCards.has(activity._id!) ? 'h-auto min-h-[185px] z-20' : 'h-[185px]'"
             draggable="true"
             @dragstart="onDragStart($event, activity)"
             @dragend="onDragEnd"
@@ -1319,7 +1319,7 @@
               :class="expandedCards.has(activity._id!) ? '' : 'overflow-hidden'"
               @click="editActivity(activity)"
             >
-              <div class="p-3.5 flex flex-col h-full">
+              <div class="p-2.5 flex flex-col h-full">
                 <!-- Top Row -->
                 <div class="flex justify-between items-center mb-1">
                   <span class="text-[7px] font-black uppercase text-emerald-600 tracking-widest bg-emerald-50 px-1 rounded">{{ activity.dueDate ? formatDate(activity.dueDate) : 'Sin fecha' }}</span>
@@ -1327,8 +1327,8 @@
 
                 <!-- Middle -->
                 <div class="flex-1 min-w-0 pr-12">
-                  <h3 class="text-slate-500 font-bold text-[11px] leading-snug mb-1 line-clamp-2 line-through decoration-slate-300" :title="activity.title">{{ activity.title }}</h3>
-                  <p class="text-slate-400 font-bold text-[8px] uppercase tracking-wider mt-0.5 truncate">{{ getClientName(activity.clientId) }}</p>
+                  <h3 class="text-slate-500 font-bold text-[13px] leading-snug mb-1 line-clamp-2 line-through decoration-slate-300" :title="activity.title">{{ activity.title }}</h3>
+                  <p class="text-slate-400 font-bold text-[10px] uppercase tracking-wider mt-0.5 truncate">{{ getClientName(activity.clientId) }}</p>
                   
                   <!-- Visible Expand Toggle -->
                   <button @click.stop="toggleCardExpansion(activity._id!)" class="mt-1 flex items-center gap-1 text-slate-400 hover:text-emerald-500 transition-colors py-0.5">
@@ -1433,8 +1433,8 @@
         
         <div 
           :class="[
-            'flex flex-col gap-3 flex-1 overflow-y-auto overflow-x-visible px-5 pb-6 transition-all duration-300 min-h-0 content-start custom-scrollbar-slim',
-            isDragging && draggedActivity?.status !== 'overdue' ? 'ring-2 ring-red-400/50 rounded-lg bg-red-100/50' : ''
+            'flex flex-col gap-3 flex-1 overflow-y-auto overflow-x-visible px-3 pb-6 transition-all duration-300 min-h-0 content-start custom-scrollbar-slim',
+            isDragging && draggedActivity?.status !== 'overdue' ? 'ring-2 ring-red-400/50 rounded-lg bg-red-50/50' : ''
           ]"
           @drop="onDrop($event, 'overdue')"
           @dragover.prevent
@@ -1444,7 +1444,7 @@
             v-for="activity in overdueActivities"
             :key="activity._id"
             class="bg-white rounded-xl p-3 border border-red-200 hover:border-red-500 hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.12)] hover:-translate-y-1 shadow-sm transition-all duration-300 group cursor-move relative shrink-0 flex flex-col"
-            :class="expandedCards.has(activity._id!) ? 'h-auto min-h-[160px] z-20' : 'h-[160px]'"
+            :class="expandedCards.has(activity._id!) ? 'h-auto min-h-[185px] z-20' : 'h-[185px]'"
             draggable="true"
             @dragstart="onDragStart($event, activity)"
             @dragend="onDragEnd"
@@ -1457,7 +1457,7 @@
               :class="expandedCards.has(activity._id!) ? '' : 'overflow-hidden'"
               @click="editActivity(activity)"
             >
-              <div class="p-3.5 flex flex-col h-full">
+              <div class="p-2.5 flex flex-col h-full">
                 <!-- Top Row -->
                 <div class="flex justify-between items-center mb-1">
                   <span class="text-[7px] font-black uppercase text-red-600 tracking-widest bg-red-50 px-1 rounded">{{ activity.dueDate ? formatDate(activity.dueDate) : 'Sin fecha' }}</span>
@@ -1465,8 +1465,9 @@
 
                 <!-- Middle -->
                 <div class="flex-1 min-w-0 pr-12">
-                  <h3 class="text-red-900 font-bold text-[11px] leading-snug mb-1 line-clamp-2 group-hover:text-red-600 transition-colors" :title="activity.title">{{ activity.title }}</h3>
-                  <p class="text-red-500 font-bold text-[8px] uppercase tracking-wider mt-0.5 truncate">{{ getClientName(activity.clientId) }}</p>
+                  <h3 class="text-red-900 font-bold text-[13px] leading-snug mb-1 line-clamp-2 group-hover:text-red-600 transition-colors" :title="activity.title">{{ activity.title }}</h3>
+                  <p class="text-red-500 font-bold text-[10px] uppercase tracking-wider mt-0.5 truncate">{{ getClientName(activity.clientId) }}</p>
+tClientName(activity.clientId) }}</p>
                   
                   <!-- Visible Expand Toggle -->
                   <button @click.stop="toggleCardExpansion(activity._id!)" class="mt-1 flex items-center gap-1 text-slate-400 hover:text-red-500 transition-colors py-0.5">
@@ -2742,6 +2743,8 @@ const editingTimeId = ref<string | null>(null)
 const manualHours = ref(0)
 const manualMinutes = ref(0)
 const editingActivity = ref<ActivityData | null>(null)
+const showCreateModal = ref(false)
+const showEditModal = ref(false)
 const showAssignModalState = ref(false)
 const assigningActivity = ref<ActivityData | null>(null)
 const assignLoading = ref(false)

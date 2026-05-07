@@ -123,7 +123,7 @@
                   <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Detalles y Notas</label>
                   <textarea
                     v-model="form.description"
-                    rows="2"
+                    rows="5"
                     class="w-full px-5 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 placeholder-slate-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all resize-none text-sm font-medium leading-relaxed shadow-sm custom-scrollbar"
                     placeholder="Describe los pasos, criterios de aceptación o contexto..."
                   ></textarea>

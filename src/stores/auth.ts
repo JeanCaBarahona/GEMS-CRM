@@ -303,6 +303,7 @@ export const useAuthStore = defineStore('auth', () => {
     
     if (canViewClients.value) {
       modules.push({ id: 'clients', name: 'Clientes', icon: 'fas fa-users', path: '/clients', canAccess: true })
+      modules.push({ id: 'prospects', name: 'Prospectos IA', icon: 'fas fa-wand-magic-sparkles', path: '/prospectos', canAccess: true })
     }
     
     if (canViewActivities.value) {

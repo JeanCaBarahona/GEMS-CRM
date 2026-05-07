@@ -362,9 +362,11 @@ import {
   ArrowDownIcon
 } from '@heroicons/vue/24/outline';
 import type { ChatRoom, Message } from '@/services/chatService';
+import { useNotifications } from '@/composables/useNotifications';
 
 const chatStore = useChatStore();
 const authStore = useAuthStore();
+const { showError, confirmDelete } = useNotifications();
 
 // State
 const currentRoom = ref<ChatRoom | null>(null);
@@ -614,12 +616,13 @@ const insertEmoji = (emoji: string) => {
 };
 
 const confirmDeleteRoom = async (roomId: string) => {
-  if (!window.confirm('¿Eliminar este chat? Esta acción no se puede deshacer.')) return;
+  const result = await confirmDelete('¿Eliminar este chat? Esta acción no se puede deshacer.');
+  if (!result.isConfirmed) return;
   try {
     await chatStore.deleteChatRoom(roomId);
   } catch (e) {
     console.error('Error deleting room', e);
-    alert('No se pudo eliminar el chat.');
+    showError('No se pudo eliminar el chat.');
   }
 };
 

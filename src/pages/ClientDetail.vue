@@ -374,6 +374,9 @@ import { onMounted, reactive, ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { clientService } from '@/services/clientService'
 import { API_CONFIG } from '@/config/api'
+import { useNotifications } from '@/composables/useNotifications'
+
+const { showError } = useNotifications()
 
 const route = useRoute()
 const id = route.params.id as string
@@ -421,7 +424,7 @@ const fetchDetail = async () => {
     Object.assign(draft, JSON.parse(JSON.stringify(data)))
   } catch (err) {
     console.error('Error cargando detalle del cliente:', err)
-    alert('No se pudo cargar el detalle del cliente. Ver consola para más información.')
+    showError('No se pudo cargar el detalle del cliente.')
   }
 }
 
@@ -460,7 +463,7 @@ const saveOverview = async () => {
     editOverview.value = false
   } catch (err) {
     console.error('Error guardando cambios:', err)
-    alert('No se pudieron guardar los cambios. Ver consola para más información.')
+    showError('No se pudieron guardar los cambios.')
   }
 }
 
@@ -491,7 +494,7 @@ const addNote = async () => {
     newNote.value = ''
   } catch (err) {
     console.error('Error agregando nota:', err)
-    alert('No se pudo agregar la nota. Ver consola para más información.')
+    showError('No se pudo agregar la nota.')
   }
 }
 
@@ -505,7 +508,7 @@ const togglePin = async (n:any) => {
     Object.assign(n, upd)
   } catch (err) {
     console.error('Error actualizando nota:', err)
-    alert('No se pudo actualizar la nota. Ver consola para más información.')
+    showError('No se pudo actualizar la nota.')
   }
 }
 
@@ -516,7 +519,7 @@ const deleteNote = async (noteId:string) => {
     client.notes = (client.notes || []).filter((n:any)=>n._id!==noteId)
   } catch (err) {
     console.error('Error eliminando nota:', err)
-    alert('No se pudo eliminar la nota. Ver consola para más información.')
+    showError('No se pudo eliminar la nota.')
   }
 }
 
@@ -544,7 +547,7 @@ const createService = async () => {
     serviceStatus.value = 'active'
   } catch (err) {
     console.error('Error agregando servicio:', err)
-    alert('No se pudo agregar el servicio. Ver consola para más información.')
+    showError('No se pudo agregar el servicio.')
   }
 }
 const startEditService = (s:any) => {
@@ -569,7 +572,7 @@ const confirmEditService = async () => {
     editingServiceId.value = null
   } catch (err) {
     console.error('Error editando servicio:', err)
-    alert('No se pudo editar el servicio. Ver consola para más información.')
+    showError('No se pudo editar el servicio.')
   }
 }
 const deleteService = async (serviceId:string) => {
@@ -579,7 +582,7 @@ const deleteService = async (serviceId:string) => {
     client.services = (client.services || []).filter((s:any)=>s._id!==serviceId)
   } catch (err) {
     console.error('Error eliminando servicio:', err)
-    alert('No se pudo eliminar el servicio. Ver consola para más información.')
+    showError('No se pudo eliminar el servicio.')
   }
 }
 
@@ -611,7 +614,7 @@ const createCommitment = async () => {
     commitStatus.value = 'pending'
   } catch (err) {
     console.error('Error agregando compromiso:', err)
-    alert('No se pudo agregar el compromiso. Ver consola para más información.')
+    showError('No se pudo agregar el compromiso.')
   }
 }
 const startEditCommitment = (c:any) => {
@@ -640,7 +643,7 @@ const confirmEditCommitment = async () => {
     editingCommitmentId.value = null
   } catch (err) {
     console.error('Error editando compromiso:', err)
-    alert('No se pudo editar el compromiso. Ver consola para más información.')
+    showError('No se pudo editar el compromiso.')
   }
 }
 const deleteCommitment = async (commitmentId:string) => {
@@ -650,7 +653,7 @@ const deleteCommitment = async (commitmentId:string) => {
     client.commitments = (client.commitments || []).filter((c:any)=>c._id!==commitmentId)
   } catch (err) {
     console.error('Error eliminando compromiso:', err)
-    alert('No se pudo eliminar el compromiso. Ver consola para más información.')
+    showError('No se pudo eliminar el compromiso.')
   }
 }
 

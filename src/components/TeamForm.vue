@@ -113,12 +113,14 @@
 import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { teamService, type TeamMember } from '../services/teamService'
 import { rolesService, type Role } from '../services/rolesService'
+import { useNotifications } from '../composables/useNotifications'
 
 // Props
 interface Props {
   member?: TeamMember | null
 }
 
+const { showError } = useNotifications()
 const props = defineProps<Props>()
 
 // Emits
@@ -205,7 +207,7 @@ const handleSubmit = async () => {
     
   } catch (error) {
     console.error('Error saving team member:', error)
-    alert('Error al guardar el miembro del equipo. Por favor, inténtalo de nuevo.')
+    showError('Error al guardar el miembro del equipo.')
   } finally {
     loading.value = false
   }

@@ -5278,17 +5278,8 @@ const deleteGitHubBranch = async () => {
     }
     
     // ⚠️ CONFIRMACIÓN: Eliminar rama es una acción destructiva
-    const confirmed = confirm(
-      `⚠️ ¿Eliminar rama "${branchName}"?\n\n` +
-      `Esto eliminará la rama permanentemente de GitHub.\n` +
-      `Asegúrate de que:\n` +
-      `• El código ya fue mergeado\n` +
-      `• No hay trabajo sin guardar\n` +
-      `• El PR está cerrado o mergeado\n\n` +
-      `Esta acción NO se puede deshacer.`
-    )
-    
-    if (!confirmed) return
+    const confirmResult = await confirmDelete(`¿Eliminar rama "${branchName}" de GitHub? Esta acción no se puede deshacer.`)
+    if (!confirmResult.isConfirmed) return
     
     showLoading('Eliminando rama de GitHub...')
     

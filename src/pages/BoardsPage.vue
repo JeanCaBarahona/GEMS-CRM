@@ -208,9 +208,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBoardsStore } from '@/stores/boards'
+import { useNotifications } from '@/composables/useNotifications'
 
 const router = useRouter()
 const boardsStore = useBoardsStore()
+const { showError } = useNotifications()
 
 const showCreateModal = ref(false)
 const newBoard = ref({
@@ -284,7 +286,7 @@ async function createBoard(): Promise<void> {
     router.push(`/boards/${board._id}`)
   } catch (error: any) {
     console.error('Error creating board:', error)
-    alert(`Error al crear tablero: ${error.response?.data?.message || error.message || 'Error desconocido'}`)
+    showError(`Error al crear tablero: ${error.response?.data?.message || error.message || 'Error desconocido'}`)
   }
 }
 

@@ -65,6 +65,8 @@ function formatMessage(msg) {
   return msg.content
 }
 import { ref } from 'vue'
+import { useNotifications } from '@/composables/useNotifications'
+const { showError } = useNotifications()
 const props = defineProps({
   conversation: Object
 })
@@ -88,7 +90,7 @@ async function sendMessage() {
     emit('message-sent', data.messages[data.messages.length - 1])
     input.value = ''
   } catch (e) {
-    alert('Error enviando mensaje')
+    showError('Error enviando mensaje')
   }
   sending.value = false
 }

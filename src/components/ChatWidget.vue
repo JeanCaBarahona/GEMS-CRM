@@ -265,6 +265,7 @@ import { useChatStore } from '../stores/chatStore'
 import { useAuthStore } from '../stores/auth'
 import CreateRoomModal from './CreateRoomModal.vue'
 import type { ChatRoom, Message } from '../services/chatService'
+import { useNotifications } from '../composables/useNotifications'
 import {
   ChatBubbleLeftRightIcon,
   ChatBubbleLeftEllipsisIcon,
@@ -281,6 +282,7 @@ import {
 
 const chatStore = useChatStore()
 const authStore = useAuthStore()
+const { showError } = useNotifications()
 
 const isOpen = ref(false)
 const currentRoom = ref<ChatRoom | null>(null)
@@ -329,7 +331,7 @@ const sendMessage = async () => {
   } catch (error) {
     console.error('Error sending message:', error)
     // Show user-friendly error
-    alert('Error al enviar mensaje. Intenta nuevamente.')
+    showError('Error al enviar mensaje. Intenta nuevamente.')
   }
 }
 

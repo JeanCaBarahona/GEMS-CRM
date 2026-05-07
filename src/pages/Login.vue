@@ -230,9 +230,11 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import logoCT from '@/assets/logo.png'
 import loginSideImg from '@/assets/login-side.png'
+import { useNotifications } from '@/composables/useNotifications'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { showSuccess } = useNotifications()
 
 // Reactive data
 const credentials = ref({
@@ -289,7 +291,7 @@ const handleForgotPassword = async () => {
   setTimeout(() => {
     forgotPasswordLoading.value = false
     showForgotPassword.value = false
-    alert('Se ha enviado un correo con las instrucciones.')
+    showSuccess('Se ha enviado un correo con las instrucciones.')
   }, 1500)
 }
 

@@ -19,8 +19,8 @@
         <img 
           :src="logoCT" 
           alt="Customer Logo" 
-          class="h-10 w-auto transition-all"
-          :class="isSidebarCollapsed ? 'scale-75' : 'scale-100 pr-12'"
+          class="h-28 w-auto transition-all object-contain scale-110"
+          :class="isSidebarCollapsed ? 'scale-75' : ''"
         />
       </div>
       
@@ -51,6 +51,19 @@
               {{ item.name }}
             </span>
           </router-link>
+        </div>
+
+        <!-- Motivational Quote -->
+        <div v-if="!isSidebarCollapsed" class="px-6 py-8 mt-4 border-t border-slate-50">
+          <div class="relative">
+            <i class="fas fa-quote-left text-primary-200 text-xl absolute -top-4 -left-2 opacity-50"></i>
+            <p class="text-[10px] font-bold text-slate-400 italic leading-relaxed text-center relative z-10">
+              "El éxito es la suma de pequeños esfuerzos repetidos día tras día."
+            </p>
+            <p class="text-[8px] font-black text-primary-400 uppercase tracking-widest text-center mt-2">
+              — Robert Collier
+            </p>
+          </div>
         </div>
 
         <!-- Logout / User Profile Section -->

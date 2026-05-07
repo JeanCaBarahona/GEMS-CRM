@@ -9,19 +9,14 @@
       <!-- Subtle grid pattern -->
       <div class="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] opacity-50"></div>
     </div>
-    <!-- Welcome Header & Motivation -->
-    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
-      <div>
-        <h1 class="text-xl lg:text-2xl font-black text-slate-800 tracking-tight animate-fade-in mb-0.5">
-          ¡Hola, {{ authStore.user?.name?.split(' ')[0] || 'Usuario' }}! 👋
-        </h1>
-        <p class="text-slate-500 text-xs font-medium animate-fade-in animation-delay-300">
-          {{ getWelcomeMessage() }}
-        </p>
-      </div>
-      <div class="flex-shrink-0 animate-fade-in animation-delay-600 hidden lg:block">
-        <MotivationalWidget class="w-[400px] h-auto p-3" />
-      </div>
+    <!-- Welcome Header -->
+    <div class="mb-6">
+      <h1 class="text-xl lg:text-2xl font-black text-slate-800 tracking-tight animate-fade-in mb-0.5">
+        ¡Hola, {{ authStore.user?.name?.split(' ')[0] || 'Usuario' }}! 👋
+      </h1>
+      <p class="text-slate-500 text-xs font-medium animate-fade-in animation-delay-300">
+        {{ getWelcomeMessage() }}
+      </p>
     </div>
 
     <!-- Quick Actions - Horizontal Row (Prioritized) -->
@@ -119,8 +114,31 @@
       <AIInsightsWidget />
     </div>
 
-    <!-- Department-specific sections -->
-    <!-- ...existing code... -->
+    <!-- Motivational Section -->
+    <div class="mt-12 mb-8 flex flex-col items-center animate-fade-in animation-delay-900">
+      <div class="w-full max-w-sm bg-slate-50/50 border border-slate-100 rounded-2xl p-6 transition-all duration-300">
+        <div class="flex flex-col items-center">
+          <!-- Quote Text -->
+          <p class="text-xs font-medium text-slate-500 text-center leading-relaxed mb-4">
+            "El éxito es la suma de pequeños esfuerzos repetidos día tras día."
+          </p>
+
+          <!-- Author & Action -->
+          <div class="flex items-center gap-3">
+            <span class="text-[9px] font-black text-slate-300 uppercase tracking-widest">Robert Collier</span>
+            <div class="w-1 h-1 bg-slate-200 rounded-full"></div>
+            <button 
+              @click="copyQuote" 
+              class="flex items-center gap-1.5 text-slate-400 hover:text-primary-600 transition-colors"
+              title="Copiar frase"
+            >
+              <i class="far fa-copy text-[9px]"></i>
+              <span class="text-[9px] font-black uppercase tracking-wider">Copiar</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -224,6 +242,11 @@ const getWelcomeMessage = () => {
   if (hour < 12) return '¡Buenos días! Comencemos con energía este día.'
   if (hour < 18) return '¡Buenas tardes! ¿Qué actividades tienes planeadas?'
   return '¡Buenas noches! Revisemos el progreso del día.'
+}
+
+const copyQuote = () => {
+  const quote = '"El éxito es la suma de pequeños esfuerzos repetidos día tras día." - Robert Collier'
+  navigator.clipboard.writeText(quote)
 }
 
 onMounted(async () => {

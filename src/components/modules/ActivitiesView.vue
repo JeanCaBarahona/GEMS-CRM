@@ -342,35 +342,81 @@
           <tbody class="divide-y divide-slate-100">
             <tr v-for="activity in filteredActivities" :key="activity._id" class="hover:bg-slate-50/80 transition-colors group">
               <td class="py-6 px-4 pl-8">
-                <div class="font-bold text-slate-800 text-sm tracking-tight">{{ activity.title }}</div>
-                <div class="text-[11px] text-slate-500 line-clamp-1 mt-1.5 max-w-md font-medium">{{ activity.description || 'Sin descripción' }}</div>
-                <!-- Progreso y Tiempo (List View) -->
+                <div class="font-bold text-slate-800 text-sm tracking-tight cursor-pointer hover:text-primary-600 transition-colors" @click="toggleCardExpansion(activity._id!)">{{ activity.title }}</div>
+                <div 
+                  class="text-[11px] text-slate-500 mt-1.5 max-w-md font-medium cursor-pointer transition-all duration-300"
+                  :class="expandedCards.has(activity._id!) ? 'line-clamp-none bg-slate-50 p-2 rounded border border-slate-100 mt-2' : 'line-clamp-1'"
+                  @click="toggleCardExpansion(activity._id!)"
+                >
+                  {{ activity.description || 'Sin descripción' }}
+                </div>
+                
                 <div v-if="activity.estimatedTime || activity.timeSpent || activity.completionPercentage !== undefined" class="mt-4 flex items-center gap-4">
-                  <div class="flex-1 max-w-[140px] bg-slate-100 rounded-full h-1.5 overflow-hidden flex items-center shadow-inner">
+                  <div class="flex-1 max-w-[140px] bg-slate-100 rounded-full h-1.5 overflow-hidden flex items-center shadow-inner relative group/progress">
                     <div class="bg-primary-500 h-1.5 rounded-full transition-all shadow-sm" :style="{ width: `${activity.completionPercentage || 0}%` }"></div>
                   </div>
-                  <div class="flex items-center gap-2 text-[10px] font-black text-slate-400">
-                    <button @click.stop="toggleTimer(activity)" class="w-7 h-7 flex items-center justify-center rounded-lg transition-all shadow-sm" :class="isTimerActive(activity) ? 'text-red-500 bg-red-50 hover:bg-red-100 border border-red-100' : 'text-primary-500 bg-primary-50 hover:bg-primary-100 border border-primary-50'">
-                      <i :class="isTimerActive(activity) ? 'fas fa-stop' : 'fas fa-play' " class="text-[10px]"></i>
-                    </button>
-                    <span :class="isTimerActive(activity) ? 'text-red-500 font-black' : ''" class="ml-1">{{ formatTime(activity.timeSpent) }}</span>
-                    <span v-if="activity.estimatedTime" class="opacity-60">/ {{ activity.estimatedTime }}</span>
-                    
+                  
+                  <div class="flex items-center gap-3">
+                    <!-- Percentage Edit -->
                     <div class="relative">
+                      <div @click.stop="editingPercentageId = activity._id!" class="flex items-center gap-1 text-[10px] font-black text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-100 cursor-pointer hover:bg-white hover:border-primary-300 transition-all">
+                      <span class="text-primary-600">{{ Math.min(activity.completionPercentage || 0, 100) }}%</span>
+                      </div>
+                      <div v-if="editingPercentageId === activity._id" class="absolute bottom-full left-0 mb-2 z-50 bg-white rounded-lg shadow-xl border border-slate-200 p-2 flex items-center gap-2 animate-scale-up origin-bottom-left" @click.stop>
+                        <input 
+                          type="number" 
+                          v-model="activity.completionPercentage" 
+                          max="100"
+                          min="0"
+                          class="w-12 text-[10px] font-bold border-slate-200 rounded p-1"
+                          @input="activity.completionPercentage = Math.min(activity.completionPercentage || 0, 100)"
+                          @keyup.enter="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null"
+                          @blur="editingPercentageId = null"
+                          v-focus
+                        />
+                        <button @click.stop="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null" class="text-emerald-500 hover:text-emerald-600"><i class="fas fa-check"></i></button>
+                      </div>
+                    </div>
+
+                    <!-- Timer & Manual Edit -->
+                    <div class="flex items-center gap-1.5">
+                      <!-- Starter (Iniciador) -->
                       <button 
-                        @click.stop="activeTimePopover = activeTimePopover === activity._id ? null : activity._id" 
-                        class="ml-1 w-6 h-6 rounded-lg flex items-center justify-center bg-slate-100 text-slate-500 hover:bg-primary-100 hover:text-primary-600 transition-all opacity-0 group-hover:opacity-100 border border-transparent hover:border-primary-200" 
-                        title="Añadir minutos (Manual)"
+                        @click.stop="toggleTimer(activity)" 
+                        class="w-7 h-7 flex items-center justify-center rounded-lg transition-all shadow-sm" 
+                        :class="isTimerActive(activity) ? 'text-red-500 bg-red-50 hover:bg-red-100 border border-red-100 animate-pulse' : 'text-primary-500 bg-primary-50 hover:bg-primary-100 border border-primary-50'"
+                        title="Iniciar/Detener Temporizador"
                       >
-                        <i class="fas fa-plus text-[10px]"></i>
+                        <i :class="isTimerActive(activity) ? 'fas fa-stop' : 'fas fa-play'" class="text-[9px]"></i>
                       </button>
-                      
-                      <!-- Popover manual time -->
-                      <div v-if="activeTimePopover === activity._id" class="absolute bottom-full right-0 mb-2 z-50 bg-white/90 backdrop-blur-md border border-slate-200 rounded-xl shadow-xl p-1.5 flex flex-col gap-1 min-w-[80px] animate-fade-in">
-                        <button v-for="m in [15, 30, 60, 120]" :key="m" @click.stop="addManualTime(activity, m)" class="px-2 py-1 hover:bg-primary-50 hover:text-primary-600 rounded-lg text-[10px] font-black transition-colors flex items-center justify-between gap-2">
-                          <span>+{{ m >= 60 ? m/60 + 'h' : m + 'm' }}</span>
-                          <i class="fas fa-plus opacity-30 text-[8px]"></i>
-                        </button>
+
+                      <!-- Manual Time Display (Click to edit) -->
+                      <div class="relative">
+                        <div 
+                          @click.stop="startEditingTime(activity)" 
+                          class="flex items-center gap-1.5 text-[10px] font-black text-slate-700 bg-white px-2 py-1 rounded border border-slate-200 cursor-pointer hover:border-primary-300 transition-all shadow-sm"
+                        >
+                          <i class="far fa-clock text-[8px] text-slate-400"></i>
+                          <span :class="isTimerActive(activity) ? 'text-red-500 font-black' : ''">{{ formatTime(activity.timeSpent) }}</span>
+                        </div>
+
+                        <!-- Inline Manual Time Edit Popover -->
+                        <div v-if="editingTimeId === activity._id" class="absolute bottom-full left-0 mb-2 z-[60] bg-white rounded-xl shadow-2xl border border-slate-200 p-3 min-w-[140px] animate-scale-up origin-bottom-left" @click.stop>
+                          <div class="flex items-center gap-2 mb-2">
+                            <div class="flex flex-col gap-1">
+                              <span class="text-[8px] font-black text-slate-400 uppercase">Horas</span>
+                              <input v-model="manualHours" type="number" min="0" class="w-12 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold focus:bg-white transition-all">
+                            </div>
+                            <div class="flex flex-col gap-1">
+                              <span class="text-[8px] font-black text-slate-400 uppercase">Minutos</span>
+                              <input v-model="manualMinutes" type="number" min="0" max="59" class="w-12 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold focus:bg-white transition-all">
+                            </div>
+                          </div>
+                          <div class="flex gap-1.5">
+                            <button @click="saveManualTime(activity)" class="flex-1 py-1.5 bg-primary-600 text-white rounded-lg text-[9px] font-black uppercase hover:bg-primary-700 transition-all">Guardar</button>
+                            <button @click="editingTimeId = null" class="px-2 py-1.5 bg-slate-100 text-slate-500 rounded-lg text-[9px] font-black uppercase hover:bg-slate-200 transition-all">X</button>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -923,7 +969,8 @@
           <div
             v-for="activity in pendingActivities"
             :key="activity._id"
-            class="bg-white rounded-xl p-3 border border-slate-100 hover:border-amber-400/50 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.07)] hover:-translate-y-1 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.04)] transition-all duration-300 group cursor-move flex flex-col justify-between h-[145px] relative shrink-0"
+            class="bg-white rounded-xl p-3 border border-slate-100 hover:border-amber-400/50 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.07)] hover:-translate-y-1 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.04)] transition-all duration-300 group cursor-move relative shrink-0 flex flex-col"
+            :class="expandedCards.has(activity._id!) ? 'h-auto min-h-[160px] z-20' : 'h-[160px]'"
             draggable="true"
             @dragstart="onDragStart($event, activity)"
             @dragend="onDragEnd"
@@ -935,8 +982,8 @@
             ></div>
 
             <div 
-              class="flex flex-col relative group/card transition-all duration-300 cursor-pointer"
-              :class="expandedCards.has(activity._id!) ? 'min-h-[145px] h-auto pb-4' : 'h-[145px]'"
+              class="flex flex-col relative group/card transition-all duration-300 cursor-pointer h-full"
+              :class="expandedCards.has(activity._id!) ? '' : 'overflow-hidden'"
               @click="editActivity(activity)"
             >
               <div class="p-3.5 flex flex-col h-full">
@@ -947,7 +994,7 @@
 
                 <!-- Middle: Title & Client -->
                 <div class="flex-1 min-w-0 pr-12">
-                  <h3 class="text-slate-800 font-black text-[11px] leading-tight line-clamp-2 group-hover:text-amber-600 transition-colors" :title="activity.title">{{ activity.title }}</h3>
+                  <h3 class="text-slate-800 font-black text-[11px] leading-snug mb-1 line-clamp-2 group-hover:text-amber-600 transition-colors" :title="activity.title">{{ activity.title }}</h3>
                   <p class="text-slate-400 font-bold text-[8px] uppercase tracking-wider mt-0.5 truncate">{{ getClientName(activity.clientId) }}</p>
                   
                   <!-- Visible Expand Toggle -->
@@ -956,47 +1003,70 @@
                     <span class="text-[7px] font-black uppercase tracking-tighter">{{ expandedCards.has(activity._id!) ? 'Ocultar' : 'Detalles' }}</span>
                   </button>
 
-                  <!-- Expandable Description -->
-                  <div v-if="expandedCards.has(activity._id!)" class="mt-2 text-[9px] text-slate-500 leading-relaxed border-t border-slate-50 pt-2 animate-fade-in">
-                    {{ activity.description || 'Sin descripción' }}
+                  <!-- Expandable Description (Enlarged Card Style) -->
+                  <div v-if="expandedCards.has(activity._id!)" class="mt-4 text-[10px] text-slate-600 leading-relaxed border-t border-slate-100 pt-4 animate-scale-up font-medium bg-slate-50/50 -mx-3.5 px-3.5 pb-2 rounded-b-xl">
+                    <div class="flex items-center gap-2 mb-2 text-slate-400">
+                      <i class="fas fa-align-left text-[8px]"></i>
+                      <span class="text-[8px] font-black uppercase tracking-widest">Detalles de actividad</span>
+                    </div>
+                    <p class="whitespace-pre-wrap break-words overflow-hidden">{{ activity.description || 'Sin descripción adicional' }}</p>
                   </div>
                 </div>
 
-                <!-- Bottom Row: Time & Progress -->
-                <div class="mt-auto flex justify-between items-center pt-2">
-                  <div class="flex items-center gap-2">
-                    <!-- Timer -->
-                    <div @click.stop="toggleTimer(activity)" class="flex items-center gap-1.5 text-[10px] font-black text-slate-700 bg-white px-2 py-1 rounded border border-slate-200 cursor-pointer hover:border-amber-300 transition-all shadow-sm" :class="isTimerActive(activity) ? 'bg-red-50 text-red-600 border-red-100 animate-pulse' : ''">
-                      <i :class="isTimerActive(activity) ? 'fas fa-stop-circle text-[8px]' : 'far fa-play-circle text-[8px]'"></i>
-                      <span>{{ formatTime(activity.timeSpent) }}</span>
+                <!-- Bottom Row -->
+                <div class="mt-auto flex items-center justify-between pt-2">
+                  <div class="flex items-center gap-1.5">
+                    <!-- Timer & Manual Edit (Pending) -->
+                    <div class="flex items-center gap-1">
+                      <button 
+                        @click.stop="toggleTimer(activity)" 
+                        class="w-6 h-6 flex items-center justify-center rounded-lg transition-all shadow-sm border text-amber-500 bg-amber-50 border-amber-200 hover:bg-white hover:border-amber-400"
+                      >
+                        <i class="fas fa-play text-[8px]"></i>
+                      </button>
+
+                      <div class="relative">
+                        <div 
+                          @click.stop="startEditingTime(activity)" 
+                          class="flex items-center gap-1 text-[9px] font-black text-slate-700 bg-white px-2 py-1 rounded border border-slate-200 cursor-pointer hover:border-amber-300 transition-all shadow-sm"
+                        >
+                          <i class="far fa-clock text-[8px] text-slate-400"></i>
+                          <span class="whitespace-nowrap">{{ formatTime(activity.timeSpent) }}</span>
+                        </div>
+
+                        <!-- Manual Time Edit Popover -->
+                        <div v-if="editingTimeId === activity._id" class="absolute bottom-full left-0 mb-2 z-[60] bg-white rounded-xl shadow-2xl border border-slate-200 p-3 min-w-[140px] animate-scale-up origin-bottom-left" @click.stop>
+                          <div class="flex items-center gap-2 mb-2">
+                            <div class="flex flex-col gap-1">
+                              <span class="text-[8px] font-black text-slate-400 uppercase">Horas</span>
+                              <input v-model="manualHours" type="number" min="0" class="w-12 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold focus:bg-white transition-all">
+                            </div>
+                            <div class="flex flex-col gap-1">
+                              <span class="text-[8px] font-black text-slate-400 uppercase">Minutos</span>
+                              <input v-model="manualMinutes" type="number" min="0" max="59" class="w-12 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold focus:bg-white transition-all">
+                            </div>
+                          </div>
+                          <div class="flex gap-1.5">
+                            <button @click="saveManualTime(activity)" class="flex-1 py-1.5 bg-primary-600 text-white rounded-lg text-[9px] font-black uppercase hover:bg-primary-700 transition-all">Guardar</button>
+                            <button @click="editingTimeId = null" class="px-2 py-1.5 bg-slate-100 text-slate-500 rounded-lg text-[9px] font-black uppercase hover:bg-slate-200 transition-all">X</button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     
                     <!-- Progress % with Inline Edit -->
                     <div class="relative">
-                      <div @click.stop="editingPercentageId = activity._id!" class="flex items-center gap-1 text-[10px] font-black text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-100 cursor-pointer hover:bg-white hover:border-amber-300 transition-all">
-                        <span class="text-amber-600">{{ activity.completionPercentage || 0 }}%</span>
-                      </div>
-                      
-                      <!-- Inline Tooltip Edit -->
-                      <div v-if="editingPercentageId === activity._id" class="absolute bottom-full left-0 mb-2 z-30 bg-white rounded-lg shadow-xl border border-slate-200 p-2 flex items-center gap-2 animate-scale-up origin-bottom-left" @click.stop>
-                        <input 
-                          type="number" 
-                          v-model="activity.completionPercentage" 
-                          class="w-12 text-[10px] font-bold border-slate-200 rounded p-1"
-                          @keyup.enter="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null"
-                          @blur="editingPercentageId = null"
-                          v-focus
-                        />
-                        <button @click.stop="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null" class="text-emerald-500 hover:text-emerald-600"><i class="fas fa-check"></i></button>
+                      <div @click.stop="editingPercentageId = activity._id!" class="flex items-center gap-1 text-[9px] font-black text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-100 cursor-pointer hover:bg-white hover:border-amber-300 transition-all">
+                        <span class="text-amber-600">{{ Math.min(activity.completionPercentage || 0, 100) }}%</span>
                       </div>
                     </div>
                   </div>
                   
                   <div class="flex -space-x-1.5" @click.stop>
                     <template v-if="Array.isArray(activity.assignedTo) && activity.assignedTo.length">
-                      <div v-for="user in activity.assignedTo.slice(0, 2)" :key="user._id || user" class="relative">
-                        <img v-if="getUserInfo(user).photo" :src="getUserInfo(user).photo" class="w-4 h-4 rounded-full border border-white shadow-sm object-cover" :title="getUserInfo(user).name">
-                        <div v-else class="w-4 h-4 rounded-full bg-slate-200 border border-white flex items-center justify-center text-[8px] font-bold text-slate-500 shadow-sm" :title="getUserInfo(user).name">
+                      <div v-for="user in activity.assignedTo.slice(0, 3)" :key="user._id || user" class="relative">
+                        <img v-if="getUserInfo(user).photo" :src="getUserInfo(user).photo" class="w-5 h-5 rounded-full border border-white shadow-sm object-cover" :title="getUserInfo(user).name">
+                        <div v-else class="w-5 h-5 rounded-full bg-slate-200 border border-white flex items-center justify-center text-[9px] font-bold text-slate-500 shadow-sm" :title="getUserInfo(user).name">
                           {{ getUserInfo(user).name.charAt(0).toUpperCase() }}
                         </div>
                       </div>
@@ -1067,7 +1137,8 @@
           <div
             v-for="activity in inProgressActivities"
             :key="activity._id"
-            class="bg-white rounded-xl p-3 border border-slate-200 hover:border-blue-400 hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.12)] hover:-translate-y-1 shadow-sm transition-all duration-300 group cursor-move flex flex-col justify-between h-[145px] relative shrink-0"
+            class="bg-white rounded-xl p-3 border border-slate-200 hover:border-blue-400 hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.12)] hover:-translate-y-1 shadow-sm transition-all duration-300 group cursor-move relative shrink-0 flex flex-col"
+            :class="expandedCards.has(activity._id!) ? 'h-auto min-h-[160px] z-20' : 'h-[160px]'"
             draggable="true"
             @dragstart="onDragStart($event, activity)"
             @dragend="onDragEnd"
@@ -1079,8 +1150,8 @@
             ></div>
 
             <div 
-              class="flex flex-col relative group/card transition-all duration-300 cursor-pointer"
-              :class="expandedCards.has(activity._id!) ? 'min-h-[145px] h-auto pb-4' : 'h-[145px]'"
+              class="flex flex-col relative group/card transition-all duration-300 cursor-pointer h-full"
+              :class="expandedCards.has(activity._id!) ? '' : 'overflow-hidden'"
               @click="editActivity(activity)"
             >
               <div class="p-3.5 flex flex-col h-full">
@@ -1100,47 +1171,71 @@
                     <span class="text-[7px] font-black uppercase tracking-tighter">{{ expandedCards.has(activity._id!) ? 'Ocultar' : 'Detalles' }}</span>
                   </button>
 
-                  <!-- Expandable Description -->
-                  <div v-if="expandedCards.has(activity._id!)" class="mt-2 text-[9px] text-slate-500 leading-relaxed border-t border-slate-50 pt-2 animate-fade-in">
-                    {{ activity.description || 'Sin descripción' }}
+                  <!-- Expandable Description (Enlarged Card Style) -->
+                  <div v-if="expandedCards.has(activity._id!)" class="mt-4 text-[10px] text-slate-600 leading-relaxed border-t border-slate-100 pt-4 animate-scale-up font-medium bg-slate-50/50 -mx-3.5 px-3.5 pb-2 rounded-b-xl">
+                    <div class="flex items-center gap-2 mb-2 text-slate-400">
+                      <i class="fas fa-align-left text-[8px]"></i>
+                      <span class="text-[8px] font-black uppercase tracking-widest">Detalles de actividad</span>
+                    </div>
+                    <p class="whitespace-pre-wrap break-words overflow-hidden">{{ activity.description || 'Sin descripción adicional' }}</p>
                   </div>
                 </div>
 
                 <!-- Bottom Row -->
-                <div class="mt-auto flex justify-between items-center pt-2">
-                  <div class="flex items-center gap-2">
-                    <!-- Timer -->
-                    <div @click.stop="toggleTimer(activity)" class="flex items-center gap-1.5 text-[10px] font-black text-slate-700 bg-white px-2 py-1 rounded border border-slate-200 cursor-pointer hover:border-blue-300 transition-all shadow-sm" :class="isTimerActive(activity) ? 'bg-red-50 text-red-600 border-red-100 animate-pulse' : ''">
-                      <i :class="isTimerActive(activity) ? 'fas fa-stop-circle text-[8px]' : 'far fa-play-circle text-[8px]'"></i>
-                      <span>{{ formatTime(activity.timeSpent) }}</span>
+                <div class="mt-auto flex items-center justify-between pt-2">
+                  <div class="flex items-center gap-1.5">
+                    <!-- Timer & Manual Edit (En Proceso) -->
+                    <div class="flex items-center gap-1">
+                      <button 
+                        @click.stop="toggleTimer(activity)" 
+                        class="w-6 h-6 flex items-center justify-center rounded-lg transition-all shadow-sm border" 
+                        :class="isTimerActive(activity) ? 'text-red-500 bg-red-50 border-red-200 animate-pulse' : 'text-blue-500 bg-blue-50 border-blue-200 hover:bg-white hover:border-blue-400'"
+                      >
+                        <i :class="isTimerActive(activity) ? 'fas fa-stop' : 'fas fa-play'" class="text-[8px]"></i>
+                      </button>
+
+                      <div class="relative">
+                        <div 
+                          @click.stop="startEditingTime(activity)" 
+                          class="flex items-center gap-1 text-[9px] font-black text-slate-700 bg-white px-2 py-1 rounded border border-slate-200 cursor-pointer hover:border-blue-300 transition-all shadow-sm"
+                        >
+                          <i class="far fa-clock text-[8px] text-slate-400"></i>
+                          <span :class="isTimerActive(activity) ? 'text-red-500' : ''" class="whitespace-nowrap">{{ formatTime(activity.timeSpent) }}</span>
+                        </div>
+
+                        <!-- Manual Time Edit Popover -->
+                        <div v-if="editingTimeId === activity._id" class="absolute bottom-full left-0 mb-2 z-[60] bg-white rounded-xl shadow-2xl border border-slate-200 p-3 min-w-[140px] animate-scale-up origin-bottom-left" @click.stop>
+                          <div class="flex items-center gap-2 mb-2">
+                            <div class="flex flex-col gap-1">
+                              <span class="text-[8px] font-black text-slate-400 uppercase">Horas</span>
+                              <input v-model="manualHours" type="number" min="0" class="w-12 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold focus:bg-white transition-all">
+                            </div>
+                            <div class="flex flex-col gap-1">
+                              <span class="text-[8px] font-black text-slate-400 uppercase">Minutos</span>
+                              <input v-model="manualMinutes" type="number" min="0" max="59" class="w-12 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold focus:bg-white transition-all">
+                            </div>
+                          </div>
+                          <div class="flex gap-1.5">
+                            <button @click="saveManualTime(activity)" class="flex-1 py-1.5 bg-primary-600 text-white rounded-lg text-[9px] font-black uppercase hover:bg-primary-700 transition-all">Guardar</button>
+                            <button @click="editingTimeId = null" class="px-2 py-1.5 bg-slate-100 text-slate-500 rounded-lg text-[9px] font-black uppercase hover:bg-slate-200 transition-all">X</button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     
                     <!-- Progress % with Inline Edit -->
                     <div class="relative">
-                      <div @click.stop="editingPercentageId = activity._id!" class="flex items-center gap-1 text-[10px] font-black text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-100 cursor-pointer hover:bg-white hover:border-blue-300 transition-all">
-                        <span class="text-blue-600">{{ activity.completionPercentage || 0 }}%</span>
-                      </div>
-                      
-                      <!-- Inline Tooltip Edit -->
-                      <div v-if="editingPercentageId === activity._id" class="absolute bottom-full left-0 mb-2 z-30 bg-white rounded-lg shadow-xl border border-slate-200 p-2 flex items-center gap-2 animate-scale-up origin-bottom-left" @click.stop>
-                        <input 
-                          type="number" 
-                          v-model="activity.completionPercentage" 
-                          class="w-12 text-[10px] font-bold border-slate-200 rounded p-1"
-                          @keyup.enter="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null"
-                          @blur="editingPercentageId = null"
-                          v-focus
-                        />
-                        <button @click.stop="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null" class="text-emerald-500 hover:text-emerald-600"><i class="fas fa-check"></i></button>
+                      <div @click.stop="editingPercentageId = activity._id!" class="flex items-center gap-1 text-[9px] font-black text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-100 cursor-pointer hover:bg-white hover:border-blue-300 transition-all">
+                        <span :class="activity.status === 'overdue' ? 'text-red-600' : 'text-blue-600'">{{ Math.min(activity.completionPercentage || 0, 100) }}%</span>
                       </div>
                     </div>
                   </div>
                   
                   <div class="flex -space-x-1.5" @click.stop>
                     <template v-if="Array.isArray(activity.assignedTo) && activity.assignedTo.length">
-                      <div v-for="user in activity.assignedTo.slice(0, 2)" :key="user._id || user" class="relative">
-                        <img v-if="getUserInfo(user).photo" :src="getUserInfo(user).photo" class="w-4 h-4 rounded-full border border-white shadow-sm object-cover" :title="getUserInfo(user).name">
-                        <div v-else class="w-4 h-4 rounded-full bg-slate-200 border border-white flex items-center justify-center text-[8px] font-bold text-slate-500 shadow-sm" :title="getUserInfo(user).name">
+                      <div v-for="user in activity.assignedTo.slice(0, 3)" :key="user._id || user" class="relative">
+                        <img v-if="getUserInfo(user).photo" :src="getUserInfo(user).photo" class="w-5 h-5 rounded-full border border-white shadow-sm object-cover" :title="getUserInfo(user).name">
+                        <div v-else class="w-5 h-5 rounded-full bg-slate-200 border border-white flex items-center justify-center text-[9px] font-bold text-slate-500 shadow-sm" :title="getUserInfo(user).name">
                           {{ getUserInfo(user).name.charAt(0).toUpperCase() }}
                         </div>
                       </div>
@@ -1210,7 +1305,8 @@
           <div
             v-for="activity in completedActivities"
             :key="activity._id"
-            class="bg-white rounded-xl p-3 border border-slate-200 hover:border-emerald-400 hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.12)] hover:-translate-y-1 shadow-sm transition-all duration-300 group cursor-move flex flex-col justify-between h-[145px] relative shrink-0 opacity-80 hover:opacity-100"
+            class="bg-white rounded-xl p-3 border border-slate-200 hover:border-emerald-400 hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.12)] hover:-translate-y-1 shadow-sm transition-all duration-300 group cursor-move relative shrink-0 opacity-80 hover:opacity-100 flex flex-col"
+            :class="expandedCards.has(activity._id!) ? 'h-auto min-h-[160px] z-20' : 'h-[160px]'"
             draggable="true"
             @dragstart="onDragStart($event, activity)"
             @dragend="onDragEnd"
@@ -1219,8 +1315,8 @@
             <div class="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-xl bg-slate-200"></div>
 
             <div 
-              class="flex flex-col relative group/card transition-all duration-300 cursor-pointer"
-              :class="expandedCards.has(activity._id!) ? 'min-h-[145px] h-auto pb-4' : 'h-[145px]'"
+              class="flex flex-col relative group/card transition-all duration-300 cursor-pointer h-full"
+              :class="expandedCards.has(activity._id!) ? '' : 'overflow-hidden'"
               @click="editActivity(activity)"
             >
               <div class="p-3.5 flex flex-col h-full">
@@ -1231,7 +1327,7 @@
 
                 <!-- Middle -->
                 <div class="flex-1 min-w-0 pr-12">
-                  <h3 class="text-slate-500 font-bold text-[11px] leading-tight line-clamp-2 line-through decoration-slate-300" :title="activity.title">{{ activity.title }}</h3>
+                  <h3 class="text-slate-500 font-bold text-[11px] leading-snug mb-1 line-clamp-2 line-through decoration-slate-300" :title="activity.title">{{ activity.title }}</h3>
                   <p class="text-slate-400 font-bold text-[8px] uppercase tracking-wider mt-0.5 truncate">{{ getClientName(activity.clientId) }}</p>
                   
                   <!-- Visible Expand Toggle -->
@@ -1240,26 +1336,54 @@
                     <span class="text-[7px] font-black uppercase tracking-tighter">{{ expandedCards.has(activity._id!) ? 'Ocultar' : 'Detalles' }}</span>
                   </button>
 
-                  <!-- Expandable Description -->
-                  <div v-if="expandedCards.has(activity._id!)" class="mt-2 text-[9px] text-slate-500 leading-relaxed border-t border-slate-50 pt-2 animate-fade-in">
-                    {{ activity.description || 'Sin descripción' }}
+                  <!-- Expandable Description (Enlarged Card Style) -->
+                  <div v-if="expandedCards.has(activity._id!)" class="mt-4 text-[10px] text-slate-600 leading-relaxed border-t border-slate-100 pt-4 animate-scale-up font-medium bg-slate-50/50 -mx-3.5 px-3.5 pb-2 rounded-b-xl">
+                    <div class="flex items-center gap-2 mb-2 text-slate-400">
+                      <i class="fas fa-align-left text-[8px]"></i>
+                      <span class="text-[8px] font-black uppercase tracking-widest">Detalles de actividad</span>
+                    </div>
+                    <p class="whitespace-pre-wrap break-words overflow-hidden">{{ activity.description || 'Sin descripción adicional' }}</p>
                   </div>
                 </div>
 
                 <!-- Bottom Row -->
-                <div class="mt-auto flex justify-between items-center pt-2">
+                <div class="mt-auto flex items-center justify-between pt-2">
                   <div class="flex items-center gap-2">
-                    <div class="flex items-center gap-1.5 text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-100 shadow-sm">
+                    <div class="flex items-center gap-1.5 text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-100 shadow-sm shrink-0">
                       <i class="fas fa-check-circle text-[8px]"></i>
                       <span>COMPLETADO</span>
+                    </div>
+
+                    <!-- Manual Time (Completed) -->
+                    <div class="relative">
+                      <div @click.stop="startEditingTime(activity)" class="flex items-center gap-1.5 text-[9px] font-black text-slate-500 bg-white px-2 py-1 rounded border border-slate-200 cursor-pointer hover:border-emerald-300 transition-all shadow-sm">
+                        <i class="far fa-clock text-[8px] text-slate-400"></i>
+                        <span class="whitespace-nowrap">{{ formatTime(activity.timeSpent) }}</span>
+                      </div>
+                      <div v-if="editingTimeId === activity._id" class="absolute bottom-full left-0 mb-2 z-[60] bg-white rounded-xl shadow-2xl border border-slate-200 p-3 min-w-[140px] animate-scale-up origin-bottom-left" @click.stop>
+                        <div class="flex items-center gap-2 mb-2">
+                          <div class="flex flex-col gap-1">
+                            <span class="text-[8px] font-black text-slate-400 uppercase">Horas</span>
+                            <input v-model="manualHours" type="number" min="0" class="w-12 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold focus:bg-white transition-all">
+                          </div>
+                          <div class="flex flex-col gap-1">
+                            <span class="text-[8px] font-black text-slate-400 uppercase">Minutos</span>
+                            <input v-model="manualMinutes" type="number" min="0" max="59" class="w-12 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold focus:bg-white transition-all">
+                          </div>
+                        </div>
+                        <div class="flex gap-1.5">
+                          <button @click="saveManualTime(activity)" class="flex-1 py-1.5 bg-primary-600 text-white rounded-lg text-[9px] font-black uppercase hover:bg-primary-700 transition-all">Guardar</button>
+                          <button @click="editingTimeId = null" class="px-2 py-1.5 bg-slate-100 text-slate-500 rounded-lg text-[9px] font-black uppercase hover:bg-slate-200 transition-all">X</button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   
                   <div class="flex -space-x-1.5" @click.stop>
                     <template v-if="Array.isArray(activity.assignedTo) && activity.assignedTo.length">
-                      <div v-for="user in activity.assignedTo.slice(0, 2)" :key="user._id || user" class="relative">
-                        <img v-if="getUserInfo(user).photo" :src="getUserInfo(user).photo" class="w-4 h-4 rounded-full border border-white shadow-sm object-cover" :title="getUserInfo(user).name">
-                        <div v-else class="w-4 h-4 rounded-full bg-slate-200 border border-white flex items-center justify-center text-[8px] font-bold text-slate-500 shadow-sm" :title="getUserInfo(user).name">
+                      <div v-for="user in activity.assignedTo.slice(0, 3)" :key="user._id || user" class="relative">
+                        <img v-if="getUserInfo(user).photo" :src="getUserInfo(user).photo" class="w-5 h-5 rounded-full border border-white shadow-sm object-cover" :title="getUserInfo(user).name">
+                        <div v-else class="w-5 h-5 rounded-full bg-slate-200 border border-white flex items-center justify-center text-[9px] font-bold text-slate-500 shadow-sm" :title="getUserInfo(user).name">
                           {{ getUserInfo(user).name.charAt(0).toUpperCase() }}
                         </div>
                       </div>
@@ -1319,7 +1443,8 @@
           <div
             v-for="activity in overdueActivities"
             :key="activity._id"
-            class="bg-white rounded-xl p-3 border border-red-200 hover:border-red-500 hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.12)] hover:-translate-y-1 shadow-sm transition-all duration-300 group cursor-move flex flex-col justify-between h-[145px] relative shrink-0"
+            class="bg-white rounded-xl p-3 border border-red-200 hover:border-red-500 hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.12)] hover:-translate-y-1 shadow-sm transition-all duration-300 group cursor-move relative shrink-0 flex flex-col"
+            :class="expandedCards.has(activity._id!) ? 'h-auto min-h-[160px] z-20' : 'h-[160px]'"
             draggable="true"
             @dragstart="onDragStart($event, activity)"
             @dragend="onDragEnd"
@@ -1328,8 +1453,8 @@
             <div class="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-xl bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.3)]"></div>
 
             <div 
-              class="flex flex-col relative group/card transition-all duration-300 cursor-pointer"
-              :class="expandedCards.has(activity._id!) ? 'min-h-[145px] h-auto pb-4' : 'h-[145px]'"
+              class="flex flex-col relative group/card transition-all duration-300 cursor-pointer h-full"
+              :class="expandedCards.has(activity._id!) ? '' : 'overflow-hidden'"
               @click="editActivity(activity)"
             >
               <div class="p-3.5 flex flex-col h-full">
@@ -1340,7 +1465,7 @@
 
                 <!-- Middle -->
                 <div class="flex-1 min-w-0 pr-12">
-                  <h3 class="text-red-900 font-bold text-[11px] leading-tight line-clamp-2 group-hover:text-red-600 transition-colors" :title="activity.title">{{ activity.title }}</h3>
+                  <h3 class="text-red-900 font-bold text-[11px] leading-snug mb-1 line-clamp-2 group-hover:text-red-600 transition-colors" :title="activity.title">{{ activity.title }}</h3>
                   <p class="text-red-500 font-bold text-[8px] uppercase tracking-wider mt-0.5 truncate">{{ getClientName(activity.clientId) }}</p>
                   
                   <!-- Visible Expand Toggle -->
@@ -1349,47 +1474,70 @@
                     <span class="text-[7px] font-black uppercase tracking-tighter">{{ expandedCards.has(activity._id!) ? 'Ocultar' : 'Detalles' }}</span>
                   </button>
 
-                  <!-- Expandable Description -->
-                  <div v-if="expandedCards.has(activity._id!)" class="mt-2 text-[9px] text-slate-500 leading-relaxed border-t border-slate-50 pt-2 animate-fade-in">
-                    {{ activity.description || 'Sin descripción' }}
+                  <!-- Expandable Description (Enlarged Card Style) -->
+                  <div v-if="expandedCards.has(activity._id!)" class="mt-4 text-[10px] text-slate-600 leading-relaxed border-t border-slate-100 pt-4 animate-scale-up font-medium bg-slate-50/50 -mx-3.5 px-3.5 pb-2 rounded-b-xl">
+                    <div class="flex items-center gap-2 mb-2 text-slate-400">
+                      <i class="fas fa-align-left text-[8px]"></i>
+                      <span class="text-[8px] font-black uppercase tracking-widest">Detalles de actividad</span>
+                    </div>
+                    <p class="whitespace-pre-wrap break-words overflow-hidden">{{ activity.description || 'Sin descripción adicional' }}</p>
                   </div>
                 </div>
 
                 <!-- Bottom Row -->
-                <div class="mt-auto flex justify-between items-center pt-2">
-                  <div class="flex items-center gap-2">
-                    <!-- Timer -->
-                    <div @click.stop="toggleTimer(activity)" class="flex items-center gap-1.5 text-[10px] font-black text-slate-700 bg-white px-2 py-1 rounded border border-slate-200 cursor-pointer hover:border-red-300 transition-all shadow-sm">
-                      <i class="far fa-play-circle text-[8px]"></i>
-                      <span>{{ formatTime(activity.timeSpent) }}</span>
+                <div class="mt-auto flex items-center justify-between pt-2">
+                  <div class="flex items-center gap-1.5">
+                    <!-- Timer & Manual Edit (Vencida) -->
+                    <div class="flex items-center gap-1">
+                      <button 
+                        @click.stop="toggleTimer(activity)" 
+                        class="w-6 h-6 flex items-center justify-center rounded-lg transition-all shadow-sm border text-red-500 bg-red-50 border-red-200 hover:bg-white hover:border-red-400"
+                      >
+                        <i class="fas fa-play text-[8px]"></i>
+                      </button>
+
+                      <div class="relative">
+                        <div 
+                          @click.stop="startEditingTime(activity)" 
+                          class="flex items-center gap-1 text-[9px] font-black text-slate-700 bg-white px-2 py-1 rounded border border-slate-200 cursor-pointer hover:border-red-300 transition-all shadow-sm"
+                        >
+                          <i class="far fa-clock text-[8px] text-slate-400"></i>
+                          <span class="whitespace-nowrap">{{ formatTime(activity.timeSpent) }}</span>
+                        </div>
+
+                        <!-- Manual Time Edit Popover -->
+                        <div v-if="editingTimeId === activity._id" class="absolute bottom-full left-0 mb-2 z-[60] bg-white rounded-xl shadow-2xl border border-slate-200 p-3 min-w-[140px] animate-scale-up origin-bottom-left" @click.stop>
+                          <div class="flex items-center gap-2 mb-2">
+                            <div class="flex flex-col gap-1">
+                              <span class="text-[8px] font-black text-slate-400 uppercase">Horas</span>
+                              <input v-model="manualHours" type="number" min="0" class="w-12 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold focus:bg-white transition-all">
+                            </div>
+                            <div class="flex flex-col gap-1">
+                              <span class="text-[8px] font-black text-slate-400 uppercase">Minutos</span>
+                              <input v-model="manualMinutes" type="number" min="0" max="59" class="w-12 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold focus:bg-white transition-all">
+                            </div>
+                          </div>
+                          <div class="flex gap-1.5">
+                            <button @click="saveManualTime(activity)" class="flex-1 py-1.5 bg-primary-600 text-white rounded-lg text-[9px] font-black uppercase hover:bg-primary-700 transition-all">Guardar</button>
+                            <button @click="editingTimeId = null" class="px-2 py-1.5 bg-slate-100 text-slate-500 rounded-lg text-[9px] font-black uppercase hover:bg-slate-200 transition-all">X</button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     
                     <!-- Progress % with Inline Edit -->
                     <div class="relative">
-                      <div @click.stop="editingPercentageId = activity._id!" class="flex items-center gap-1 text-[10px] font-black text-red-600 bg-red-50 px-2 py-1 rounded border border-red-100 cursor-pointer hover:bg-white hover:border-red-300 transition-all">
-                        <span>{{ activity.completionPercentage || 0 }}%</span>
-                      </div>
-                      
-                      <!-- Inline Tooltip Edit -->
-                      <div v-if="editingPercentageId === activity._id" class="absolute bottom-full left-0 mb-2 z-30 bg-white rounded-lg shadow-xl border border-slate-200 p-2 flex items-center gap-2 animate-scale-up origin-bottom-left" @click.stop>
-                        <input 
-                          type="number" 
-                          v-model="activity.completionPercentage" 
-                          class="w-12 text-[10px] font-bold border-slate-200 rounded p-1"
-                          @keyup.enter="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null"
-                          @blur="editingPercentageId = null"
-                          v-focus
-                        />
-                        <button @click.stop="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null" class="text-emerald-500 hover:text-emerald-600"><i class="fas fa-check"></i></button>
+                      <div @click.stop="editingPercentageId = activity._id!" class="flex items-center gap-1 text-[9px] font-black text-red-600 bg-red-50 px-2 py-1 rounded border border-red-100 cursor-pointer hover:bg-white hover:border-red-300 transition-all">
+                        <span>{{ Math.min(activity.completionPercentage || 0, 100) }}%</span>
                       </div>
                     </div>
                   </div>
                   
                   <div class="flex -space-x-1.5" @click.stop>
                     <template v-if="Array.isArray(activity.assignedTo) && activity.assignedTo.length">
-                      <div v-for="user in activity.assignedTo.slice(0, 2)" :key="user._id || user" class="relative">
-                        <img v-if="getUserInfo(user).photo" :src="getUserInfo(user).photo" class="w-4 h-4 rounded-full border border-white shadow-sm object-cover" :title="getUserInfo(user).name">
-                        <div v-else class="w-4 h-4 rounded-full bg-slate-200 border border-white flex items-center justify-center text-[8px] font-bold text-slate-500 shadow-sm" :title="getUserInfo(user).name">
+                      <div v-for="user in activity.assignedTo.slice(0, 3)" :key="user._id || user" class="relative">
+                        <img v-if="getUserInfo(user).photo" :src="getUserInfo(user).photo" class="w-5 h-5 rounded-full border border-white shadow-sm object-cover" :title="getUserInfo(user).name">
+                        <div v-else class="w-5 h-5 rounded-full bg-slate-200 border border-white flex items-center justify-center text-[9px] font-bold text-slate-500 shadow-sm" :title="getUserInfo(user).name">
                           {{ getUserInfo(user).name.charAt(0).toUpperCase() }}
                         </div>
                       </div>
@@ -2586,8 +2734,13 @@ const taskFilters = ref({
 })
 
 // Modales
-const showCreateModal = ref(false)
-const showEditModal = ref(false)
+const sendingComment = ref(false)
+const showAgentSelector = ref(false)
+
+// Manual Time Edit State
+const editingTimeId = ref<string | null>(null)
+const manualHours = ref(0)
+const manualMinutes = ref(0)
 const editingActivity = ref<ActivityData | null>(null)
 const showAssignModalState = ref(false)
 const assigningActivity = ref<ActivityData | null>(null)
@@ -2836,7 +2989,7 @@ const hasMoreOverdue = computed(() =>
 )
 
 const formatTime = (seconds: number | undefined) => {
-  if (!seconds) return '0h'
+  if (!seconds || seconds === 0) return '0m'
   const h = Math.floor(seconds / 3600)
   const m = Math.floor((seconds % 3600) / 60)
   if (h > 0 && m > 0) return `${h}h ${m}m`
@@ -2890,6 +3043,33 @@ const addManualTime = async (activity: any, mins: number) => {
     activeTimePopover.value = null
   } catch (error) {
     showError('Error al añadir tiempo')
+  }
+}
+
+const startEditingTime = (activity: any) => {
+  editingTimeId.value = activity._id
+  const seconds = activity.timeSpent || 0
+  manualHours.value = Math.floor(seconds / 3600)
+  manualMinutes.value = Math.floor((seconds % 3600) / 60)
+}
+
+const saveManualTime = async (activity: any) => {
+  try {
+    const totalSeconds = (manualHours.value * 3600) + (manualMinutes.value * 60)
+    const updated = await activityService.update(activity._id, {
+      ...activity,
+      timeSpent: totalSeconds
+    })
+    
+    const index = activities.value.findIndex(a => a._id === updated._id)
+    if (index !== -1) {
+      activities.value[index] = updated
+    }
+    
+    showSuccess('Tiempo actualizado manualmente')
+    editingTimeId.value = null
+  } catch (error) {
+    showError('Error al actualizar el tiempo')
   }
 }
 

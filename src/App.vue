@@ -24,14 +24,14 @@
 
         <!-- Logo -->
         <div 
-          class="flex items-center justify-center h-20 px-6 border-b border-slate-100 overflow-hidden transition-all duration-300"
+          class="flex items-center justify-center h-20 overflow-hidden transition-all duration-300"
           :class="isSidebarMini ? 'opacity-0 h-0 border-none' : 'opacity-100 h-20'"
         >
           <img 
             v-if="!isSidebarMini"
             :src="logoCT" 
             alt="Logo" 
-            class="h-12 w-auto transition-opacity duration-300"
+            class="h-28 w-auto transition-opacity duration-300 object-contain scale-110"
           />
         </div>
 

@@ -159,19 +159,35 @@ class CasesService {
 
   // Actualizar caso
   async updateCase(id: string, caseData: Partial<Case>): Promise<Case> {
+    // Campos gestionados por el servidor o por endpoints dedicados
+    const SKIP_FIELDS = new Set([
+      '_id', 'createdAt', 'updatedAt',
+      'comentarios', 'hitos', 'dailyLogs', 'linkedTickets', // arrays gestionados por endpoints dedicados
+    ])
+
     const formData = new FormData()
-    
+
     Object.entries(caseData).forEach(([key, value]) => {
       if (value === undefined || value === null) return
-      
+      if (SKIP_FIELDS.has(key)) return
+
       if (key === 'archivos' && Array.isArray(value)) {
+        // Solo enviamos NUEVOS archivos (Files), los existentes ya están en BD
         value.forEach(v => {
           if (v instanceof File || v instanceof Blob) formData.append('archivos', v)
         })
       } else if ((key === 'asignado_a' || key === 'cliente_id') && typeof value === 'object') {
         if ((value as any)._id) formData.append(key, (value as any)._id)
       } else if (Array.isArray(value)) {
-        value.forEach(v => formData.append(key, v))
+        value.forEach(v => {
+          if (v instanceof File || v instanceof Blob) {
+            formData.append(key, v)
+          } else if (typeof v === 'object' && v !== null) {
+            formData.append(key, (v as any)._id ?? '')
+          } else {
+            formData.append(key, String(v))
+          }
+        })
       } else if (typeof value !== 'object' || value instanceof File || value instanceof Blob) {
         formData.append(key, value as any)
       }

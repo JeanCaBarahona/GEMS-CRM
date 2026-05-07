@@ -100,17 +100,6 @@
         </div>
       </nav>
 
-      <!-- User Profile Mini -->
-      <div class="p-4 border-t border-[#EFEFEF]">
-        <div class="flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-slate-200/50 transition-colors cursor-pointer">
-          <div class="w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 text-[10px] font-bold">
-            {{ authStore.user?.name?.charAt(0) }}
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-[10px] font-bold text-slate-700 truncate">{{ authStore.user?.name }}</p>
-          </div>
-        </div>
-      </div>
     </aside>
 
     <!-- Main Content Area -->
@@ -374,15 +363,6 @@
                 <div class="flex items-center gap-1.5 text-slate-500 font-bold text-xs">
                   <i class="fas fa-eye text-slate-200"></i>
                   {{ selectedWiki.vistas || 0 }} vistas
-                </div>
-              </div>
-              <div class="space-y-1">
-                <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Autor</p>
-                <div class="flex items-center gap-2">
-                  <div class="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[8px] font-bold text-slate-400 uppercase">
-                    {{ selectedWiki.autor?.name?.charAt(0) || 'S' }}
-                  </div>
-                  <span class="text-xs font-semibold text-slate-600">{{ selectedWiki.autor?.name || 'Sistema' }}</span>
                 </div>
               </div>
               <div class="space-y-1 text-right">

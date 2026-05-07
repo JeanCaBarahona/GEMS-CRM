@@ -77,10 +77,20 @@ export const useNotifications = () => {
   const showLoading = (title = 'Sincronizando...') =>
     Swal.fire({
       ...base,
-      title,
+      toast: true,
       allowOutsideClick: false,
       showConfirmButton: false,
-      html: '<div class="crm-loader-line"></div>'
+      customClass: {
+        popup: 'crm-pill-toast crm-pill-loading',
+      },
+      html: `
+        <div class="crm-pill-wrapper">
+          <div class="crm-pill-icon-box crm-pill-spinner-box">
+            <i class="fas fa-circle-notch fa-spin"></i>
+          </div>
+          <span class="crm-pill-message">${title}</span>
+        </div>
+      `,
     })
 
   const closeLoading = () => Swal.close()
@@ -131,6 +141,10 @@ export const injectSwalStyles = () => {
   color: white !important;
   font-size: 0.7rem !important;
   flex-shrink: 0 !important;
+}
+
+.crm-pill-spinner-box {
+  background: #64748b !important;
 }
 
 .crm-pill-message {

@@ -757,10 +757,8 @@ import type { Case } from '../../services/casesService'
 import type { WikiArticle } from '../../services/wikiService'
 import { formatDistanceToNow, format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import Swal from 'sweetalert2'
-
 const authStore = useAuthStore()
-const { showSuccess, showError } = useNotifications()
+const { showSuccess, showError, showWarning, confirmDelete } = useNotifications()
 
 // State
 const viewMode = ref<'board' | 'inbox'>('board')
@@ -908,7 +906,7 @@ const linkResource = async (resourceId: string) => {
     const currentList = selectedTicket.value[field as keyof Ticket] || []
     
     if ((currentList as any[]).some((i: any) => (i._id || i) === resourceId)) {
-       Swal.fire('Atención', 'Este recurso ya está vinculado', 'warning')
+       showWarning('Este recurso ya está vinculado')
        return
     }
 
@@ -918,10 +916,10 @@ const linkResource = async (resourceId: string) => {
     
     if (updatedTicket) {
       selectedTicket.value = updatedTicket
-      Swal.fire({ title: 'Vinculado', icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 })
+      showSuccess('Vinculado')
     }
   } catch (error) {
-    Swal.fire('Error', 'No se pudo vincular el recurso', 'error')
+    showError('No se pudo vincular el recurso')
   } finally {
     isLinking.value = false
     showLinkModal.value = null
@@ -931,16 +929,9 @@ const linkResource = async (resourceId: string) => {
 const unlinkResource = async (type: 'case' | 'wiki', resourceId: string) => {
   if (!selectedTicket.value) return
   
-  const confirm = await Swal.fire({
-    title: '¿Desvincular recurso?',
-    text: "Se eliminará la trazabilidad con este elemento",
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Sí, desvincular',
-    cancelButtonText: 'Cancelar'
-  })
+  const result = await confirmDelete('¿Desvincular recurso? Se eliminará la trazabilidad con este elemento.')
 
-  if (confirm.isConfirmed) {
+  if (result.isConfirmed) {
     try {
       const field = type === 'case' ? 'linkedCases' : 'linkedWikiArticles'
       const updatedList = (selectedTicket.value[field as keyof Ticket] || []).filter((i: any) => (i._id || i) !== resourceId)
@@ -953,7 +944,7 @@ const unlinkResource = async (type: 'case' | 'wiki', resourceId: string) => {
         selectedTicket.value = updatedTicket
       }
     } catch (error) {
-      Swal.fire('Error', 'No se pudo desvincular el recurso', 'error')
+      showError('No se pudo desvincular el recurso')
     }
   }
 }
@@ -1168,7 +1159,7 @@ const loadTeamMembers = async () => {
   try {
     teamMembers.value = await teamService.getActiveMembers()
   } catch (error) {
-    Swal.fire('Error', 'No se pudieron cargar los miembros del equipo', 'error')
+    showError('No se pudieron cargar los miembros del equipo')
   }
 }
 

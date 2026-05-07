@@ -231,12 +231,14 @@ import { ref, computed } from 'vue'
 import axios from 'axios'
 import { API_CONFIG } from '@/config/api'
 import { useAuthStore } from '@/stores/auth'
+import { useNotifications } from '@/composables/useNotifications'
 
 const props = defineProps<{
   activities: any[]
 }>()
 
 const authStore = useAuthStore()
+const { showSuccess, showError } = useNotifications()
 const API_URL = API_CONFIG.BASE_URL.replace('/api', '')
 
 const dailyTasks = computed(() => {
@@ -331,9 +333,9 @@ async function confirmSendReport() {
       }
     })
     showEmailModal.value = false
-    alert(`Reporte enviado exitosamente a ${reportEmail.value}`)
+    showSuccess(`Reporte enviado exitosamente a ${reportEmail.value}`)
   } catch (error: any) {
-    alert(error.response?.data?.error || 'Error al enviar el reporte.')
+    showError(error.response?.data?.error || 'Error al enviar el reporte.')
   } finally {
     sendingEmail.value = false
   }

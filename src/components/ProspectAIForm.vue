@@ -152,6 +152,8 @@
 import { ref } from 'vue'
 import ProspectConversationsList from '@/features/conversations/components/ProspectConversationsListFixed.vue'
 import ProspectConversationDetail from '@/features/conversations/components/ProspectConversationDetail.vue'
+import { useNotifications } from '@/composables/useNotifications'
+const { showSuccess } = useNotifications()
 
 // Estado
 const mode = ref<'simple' | 'architect'>('simple')
@@ -201,7 +203,7 @@ function handleImageUpload(e: Event) {
 
 function copyResult() {
   navigator.clipboard.writeText(result.value)
-  alert('Propuesta copiada al portapapeles')
+  showSuccess('Propuesta copiada al portapapeles')
 }
 
 async function analyzeProspect() {

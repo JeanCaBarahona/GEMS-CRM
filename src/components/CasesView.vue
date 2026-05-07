@@ -181,32 +181,20 @@
             <!-- Wiki Section -->
             <div v-if="activeViewTab === 'wiki'" class="animate-content-in">
               <div v-if="isEditingWiki" class="space-y-4">
-                <div class="bg-slate-50 rounded-xl p-1 border border-slate-200">
-                  <div class="flex gap-2 p-2 border-b border-slate-200 mb-2">
-                    <button @click="wrapSelection('**')" class="w-8 h-8 hover:bg-slate-200 rounded flex items-center justify-center text-xs font-bold">B</button>
-                    <button @click="wrapSelection('*')" class="w-8 h-8 hover:bg-slate-200 rounded flex items-center justify-center text-xs italic">I</button>
-                    <button @click="insertText('# ')" class="w-8 h-8 hover:bg-slate-200 rounded flex items-center justify-center text-xs">H1</button>
-                    <button @click="insertText('- ')" class="w-8 h-8 hover:bg-slate-200 rounded flex items-center justify-center text-xs"><i class="fas fa-list-ul"></i></button>
-                  </div>
-                  <textarea 
-                    v-model="selectedCase.wikiContent" 
-                    ref="wikiEditor"
-                    rows="15" 
-                    placeholder="Escribe la documentación del caso aquí..."
-                    class="w-full p-4 bg-transparent border-none text-sm leading-relaxed outline-none focus:ring-0 resize-none font-medium text-slate-700"
-                  ></textarea>
-                </div>
+                <WikiEditor
+                  v-model="selectedCase.wikiContent"
+                  placeholder="Escribe la documentación del caso aquí..."
+                />
                 <div class="flex justify-end gap-3">
                   <button @click="isEditingWiki = false" class="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-lg">Cancelar</button>
                   <button @click="saveWiki" class="px-6 py-2 bg-slate-900 text-white text-xs font-bold rounded-lg shadow-lg hover:bg-slate-800 transition-all">Guardar cambios</button>
                 </div>
               </div>
               <div v-else class="group relative">
-                <div 
-                  v-if="selectedCase.wikiContent" 
-                  v-html="formatWikiContent(selectedCase.wikiContent)" 
-                  class="text-sm text-slate-700 leading-loose font-medium"
-                ></div>
+                <WikiContent
+                  v-if="selectedCase.wikiContent"
+                  :content="selectedCase.wikiContent"
+                />
                 <div v-else @click="isEditingWiki = true" class="py-12 border-2 border-dashed border-slate-100 rounded-3xl flex flex-col items-center justify-center text-slate-300 hover:border-primary-200 hover:text-primary-300 transition-all cursor-pointer">
                   <i class="fas fa-feather-alt text-3xl mb-4"></i>
                   <p class="text-sm font-bold uppercase tracking-widest">Documentar este caso</p>
@@ -381,48 +369,29 @@
           <!-- Content Section -->
           <div class="prose prose-slate max-w-none min-h-[400px]">
             <template v-if="isEditingWikiItem">
-              <div class="bg-slate-50/50 rounded-2xl p-6 border border-slate-100">
-                <div class="flex gap-4 mb-4 pb-4 border-b border-slate-100">
-                  <button @click="wrapSelection('**')" class="text-xs font-bold text-slate-400 hover:text-slate-900">Negrita</button>
-                  <button @click="wrapSelection('*')" class="text-xs font-bold text-slate-400 hover:text-slate-900">Cursiva</button>
-                  <button @click="insertText('# ')" class="text-xs font-bold text-slate-400 hover:text-slate-900">Título</button>
-                  <button @click="insertText('```\n\n```')" class="text-xs font-bold text-slate-400 hover:text-slate-900">Bloque Código</button>
-                </div>
-                <div v-if="wikiPreviewMode" class="w-full min-h-[400px] p-6 bg-white rounded-xl border border-slate-200 overflow-y-auto mb-4">
-                   <div v-html="formatWikiContent(selectedWiki.contenido)" class="text-sm text-slate-700 leading-loose font-medium document-content"></div>
-                </div>
-                <textarea 
-                  v-else
-                  v-model="selectedWiki.contenido" 
-                  ref="wikiEditor"
-                  rows="20" 
-                  class="w-full bg-transparent border-none outline-none focus:ring-0 text-sm leading-relaxed text-slate-700 font-medium resize-none"
+              <div class="space-y-4">
+                <WikiEditor
+                  v-model="selectedWiki.contenido"
                   placeholder="Comienza a escribir tu documentación..."
-                ></textarea>
-                <div class="flex justify-end gap-3 mt-6 pt-6 border-t border-slate-100">
-                  <div class="mr-auto flex gap-2">
-                    <button @click="wikiPreviewMode = !wikiPreviewMode" class="px-4 py-2 bg-slate-100 text-slate-600 text-[10px] font-bold rounded-lg hover:bg-slate-200 transition-all flex items-center gap-2">
-                      <i :class="wikiPreviewMode ? 'fas fa-edit' : 'fas fa-eye'"></i>
-                      {{ wikiPreviewMode ? 'Volver a Editar' : 'Vista Previa' }}
-                    </button>
-                    <label class="cursor-pointer px-4 py-2 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-lg hover:bg-slate-200 transition-all flex items-center gap-2">
-                      <i class="fas fa-paperclip"></i>
-                      Adjuntar archivos
-                      <input type="file" multiple class="hidden" @change="(e: any) => selectedWiki!.archivos = [...(selectedWiki!.archivos || []), ...Array.from(e.target.files)]">
-                    </label>
-                  </div>
+                />
+                <div class="flex justify-end gap-3 pt-2">
+                  <label class="mr-auto cursor-pointer px-4 py-2 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-lg hover:bg-slate-200 transition-all flex items-center gap-2">
+                    <i class="fas fa-paperclip"></i>
+                    Adjuntar archivos
+                    <input type="file" multiple class="hidden" @change="(e: any) => selectedWiki!.archivos = [...(selectedWiki!.archivos || []), ...Array.from(e.target.files)]">
+                  </label>
                   <button @click="isEditingWikiItem = false" class="px-4 py-2 text-xs font-bold text-slate-400 hover:text-slate-900">Cancelar</button>
                   <button @click="handleUpdateWiki" class="px-6 py-2 bg-slate-900 text-white text-xs font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all">Guardar página</button>
                 </div>
               </div>
             </template>
             <template v-else>
-              <div v-if="selectedWiki.categoria === 'codigo'" class="relative">
+              <div v-if="selectedWiki.categoria === 'codigo' && !isHtmlContent(selectedWiki.contenido)" class="relative">
                 <div class="bg-[#F8F9FA] rounded-2xl p-8 border border-slate-100 overflow-x-auto">
                   <pre class="font-mono text-xs leading-relaxed text-slate-700 m-0">{{ selectedWiki.contenido }}</pre>
                 </div>
               </div>
-              <div v-else class="text-sm text-slate-700 leading-loose font-medium document-content" v-html="formatWikiContent(selectedWiki.contenido)"></div>
+              <WikiContent v-else :content="selectedWiki.contenido" />
               
               <!-- Attached Files Section -->
               <div v-if="selectedWiki.archivos && selectedWiki.archivos.length > 0" class="mt-12 pt-8 border-t border-slate-100">
@@ -670,16 +639,11 @@
                   </div>
 
                   <div class="space-y-1">
-                    <div class="flex items-center justify-between pl-1">
-                      <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Contenido Técnico</label>
-                      <button @click="wikiPreviewMode = !wikiPreviewMode" class="text-[9px] font-bold text-primary-500 hover:text-primary-600 transition-colors">
-                        {{ wikiPreviewMode ? 'Volver al Editor' : 'Ver Vista Previa' }}
-                      </button>
-                    </div>
-                    <div v-if="wikiPreviewMode" class="w-full min-h-[300px] p-5 bg-white border border-slate-100 rounded-xl overflow-y-auto">
-                      <div v-html="formatWikiContent(newWiki.contenido)" class="text-xs text-slate-700 leading-relaxed font-medium"></div>
-                    </div>
-                    <textarea v-else v-model="newWiki.contenido" rows="10" placeholder="Pega el código o escribe el proceso..." class="w-full p-5 bg-[#1E1E1E] text-emerald-400 font-mono text-xs rounded-xl border-none outline-none"></textarea>
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Contenido</label>
+                    <WikiEditor
+                      v-model="newWiki.contenido"
+                      placeholder="Comienza a escribir tu documentación..."
+                    />
                   </div>
                 </div>
              </template>
@@ -804,6 +768,8 @@ import { useNotifications } from '../composables/useNotifications'
 import { useAuthStore } from '../stores/auth'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
+import WikiEditor from './wiki/WikiEditor.vue'
+import WikiContent from './wiki/WikiContent.vue'
 
 const { showSuccess, showError, showLoading, closeLoading, confirmDelete } = useNotifications()
 const authStore = useAuthStore()
@@ -827,8 +793,6 @@ const isEditingWikiItem = ref(false)
 const showCreateModal = ref(false)
 const showAddDailyLog = ref(false)
 const wikiTagsRaw = ref('')
-const wikiEditor = ref<HTMLTextAreaElement | null>(null)
-const wikiPreviewMode = ref(false)
 const modalMode = ref<'create' | 'edit'>('create')
 
 // Ticket Linking State
@@ -985,33 +949,38 @@ const selectCase = (c: Case) => {
 
 const handleCreateCase = async () => {
   if (!newCase.value.titulo) return showError('Requerido', 'El título es obligatorio.')
-  showLoading('Creando página...'); try {
+  showLoading('Creando página...')
+  try {
     let created = await casesService.createCase(newCase.value);
-    
+
     // Link ticket if selected
     if (newCase.value.linkedTicketId) {
       created = await casesService.linkTicket(created._id!, newCase.value.linkedTicketId)
     }
     
-    cases.value.unshift(created); selectedCase.value = created; showCreateModal.value = false; showSuccess('¡Éxito!', 'Proyecto creado.')
-  } catch (err: any) { showError('Error', err.message) } finally { closeLoading() }
+    cases.value.unshift(created); selectedCase.value = created; showCreateModal.value = false
+    closeLoading(); showSuccess('¡Éxito!', 'Proyecto creado.')
+  } catch (err: any) { closeLoading(); showError('Error', err.message) }
 }
 
 const saveWiki = async () => {
-  if (!selectedCase.value?._id) return; showLoading('Guardando...'); try {
+  if (!selectedCase.value?._id) return
+  showLoading('Guardando...')
+  try {
     const updated = await casesService.updateCase(selectedCase.value._id, { wikiContent: selectedCase.value.wikiContent });
     const idx = cases.value.findIndex(c => c._id === updated._id);
     if (idx !== -1) cases.value[idx] = updated;
     selectedCase.value = updated; // Actualizar referencia local
     isEditingWiki.value = false;
-    showSuccess('Éxito', 'Documentación actualizada.')
-  } catch (err: any) { showError('Error', err.message) } finally { closeLoading() }
+    closeLoading(); showSuccess('Éxito', 'Documentación actualizada.')
+  } catch (err: any) { closeLoading(); showError('Error', err.message) }
 }
 
 const handleCreateWiki = async () => {
   if (!newWiki.value.titulo) return showError('Requerido', 'El título es obligatorio.')
   newWiki.value.tags = wikiTagsRaw.value.split(',').map(t => t.trim()).filter(t => t)
-  showLoading('Publicando...'); try {
+  showLoading('Publicando...')
+  try {
     let created = await wikiService.create(newWiki.value);
     
     // Link ticket if selected
@@ -1019,24 +988,28 @@ const handleCreateWiki = async () => {
       created = await wikiService.linkTicket(created._id!, newWiki.value.linkedTicketId)
     }
     
-    wikiArticles.value.unshift(created); selectedWiki.value = created; showCreateModal.value = false; showSuccess('¡Éxito!', 'Artículo publicado.')
-  } catch (err: any) { showError('Error', err.message) } finally { closeLoading() }
+    wikiArticles.value.unshift(created); selectedWiki.value = created; showCreateModal.value = false
+    closeLoading(); showSuccess('¡Éxito!', 'Artículo publicado.')
+  } catch (err: any) { closeLoading(); showError('Error', err.message) }
 }
 
 const handleUpdateWiki = async () => {
-  if (!selectedWiki.value?._id) return; showLoading('Actualizando...'); try {
+  if (!selectedWiki.value?._id) return
+  showLoading('Actualizando...')
+  try {
     const updated = await wikiService.update(selectedWiki.value._id, selectedWiki.value);
     const idx = wikiArticles.value.findIndex(w => w._id === updated._id);
     if (idx !== -1) wikiArticles.value[idx] = updated;
     selectedWiki.value = updated; // Actualizar referencia local
     isEditingWikiItem.value = false;
-    showSuccess('Éxito', 'Wiki actualizada.')
-  } catch (err: any) { showError('Error', err.message) } finally { closeLoading() }
+    closeLoading(); showSuccess('Éxito', 'Wiki actualizada.')
+  } catch (err: any) { closeLoading(); showError('Error', err.message) }
 }
 
 const deleteWikiItem = async () => {
   if (!selectedWiki.value?._id) return; const result = await confirmDelete(selectedWiki.value.titulo); if (result.isConfirmed) {
-    showLoading('Eliminando...'); try { await wikiService.delete(selectedWiki.value._id); wikiArticles.value = wikiArticles.value.filter(w => w._id !== selectedWiki.value?._id); selectedWiki.value = wikiArticles.value[0] || null; showSuccess('Eliminado', 'Artículo removido.') } catch (err: any) { showError('Error', err.message) } finally { closeLoading() }
+    showLoading('Eliminando...')
+    try { await wikiService.delete(selectedWiki.value._id); wikiArticles.value = wikiArticles.value.filter(w => w._id !== selectedWiki.value?._id); selectedWiki.value = wikiArticles.value[0] || null; closeLoading(); showSuccess('Eliminado', 'Artículo removido.') } catch (err: any) { closeLoading(); showError('Error', err.message) }
   }
 }
 
@@ -1059,8 +1032,8 @@ const handleAddDailyLog = async () => {
     
     showAddDailyLog.value = false
     newLog.value = { que_se_hizo: '', sentimiento: '😐' }
-    showSuccess('Registrado', 'Actividad añadida correctamente.')
-  } catch (err: any) { showError('Error', err.message) } finally { closeLoading() }
+    closeLoading(); showSuccess('Registrado', 'Actividad añadida correctamente.')
+  } catch (err: any) { closeLoading(); showError('Error', err.message) }
 }
 
 // Helpers
@@ -1075,38 +1048,8 @@ const getWikiIcon = (cat?: string) => ({ proceso: 'fas fa-cogs', codigo: 'fas fa
 const getWikiCatClass = (cat?: string) => ({ proceso: 'bg-blue-50 text-blue-600', codigo: 'bg-emerald-50 text-emerald-600', manual: 'bg-purple-50 text-purple-600' }[cat || ''] || 'bg-slate-50 text-slate-500')
 const formatDateRelative = (date: any) => date ? formatDistanceToNow(new Date(date), { addSuffix: true, locale: es }) : ''
 const getFileIcon = (name: string) => casesService.getFileIcon(name)
-const formatWikiContent = (content?: string) => content ? content.replace(/\n/g, '<br>') : ''
+const isHtmlContent = (content?: string) => !!content && /<[a-z][\s\S]*>/i.test(content)
 const copyToClipboard = (text: string) => { navigator.clipboard.writeText(text); showSuccess('Copiado', 'Contenido en el portapapeles.') }
-
-const insertText = (text: string) => {
-  if (!wikiEditor.value) return
-  const start = wikiEditor.value.selectionStart
-  const end = wikiEditor.value.selectionEnd
-  
-  if (viewMode.value === 'cases' && selectedCase.value) {
-    const content = selectedCase.value.wikiContent || ''
-    selectedCase.value.wikiContent = content.substring(0, start) + text + content.substring(end)
-  } else if (viewMode.value === 'wiki' && selectedWiki.value) {
-    const content = selectedWiki.value.contenido || ''
-    selectedWiki.value.contenido = content.substring(0, start) + text + content.substring(end)
-  }
-}
-
-const wrapSelection = (symbol: string) => {
-  if (!wikiEditor.value) return
-  const start = wikiEditor.value.selectionStart
-  const end = wikiEditor.value.selectionEnd
-  
-  if (viewMode.value === 'cases' && selectedCase.value) {
-    const content = selectedCase.value.wikiContent || ''
-    const selection = content.substring(start, end)
-    selectedCase.value.wikiContent = content.substring(0, start) + symbol + selection + symbol + content.substring(end)
-  } else if (viewMode.value === 'wiki' && selectedWiki.value) {
-    const content = selectedWiki.value.contenido || ''
-    const selection = content.substring(start, end)
-    selectedWiki.value.contenido = content.substring(0, start) + symbol + selection + symbol + content.substring(end)
-  }
-}
 
 const openEditCase = () => {
   if (!selectedCase.value) return
@@ -1124,8 +1067,8 @@ const handleUpdateCase = async () => {
     if (idx !== -1) cases.value[idx] = updated
     selectedCase.value = updated
     showCreateModal.value = false
-    showSuccess('Éxito', 'Caso actualizado correctamente.')
-  } catch (err: any) { showError('Error', err.message) } finally { closeLoading() }
+    closeLoading(); showSuccess('Éxito', 'Caso actualizado correctamente.')
+  } catch (err: any) { closeLoading(); showError('Error', err.message) }
 }
 const deleteCurrentCase = async () => {
   if (!selectedCase.value?._id) return
@@ -1136,8 +1079,8 @@ const deleteCurrentCase = async () => {
       await casesService.deleteCase(selectedCase.value._id)
       cases.value = cases.value.filter(c => c._id !== selectedCase.value?._id)
       selectedCase.value = cases.value[0] || null
-      showSuccess('Eliminado', 'El caso ha sido removido.')
-    } catch (err: any) { showError('Error', err.message) } finally { closeLoading() }
+      closeLoading(); showSuccess('Eliminado', 'El caso ha sido removido.')
+    } catch (err: any) { closeLoading(); showError('Error', err.message) }
   }
 }
 
@@ -1152,8 +1095,8 @@ const uploadFilesToCase = async (e: any) => {
     const idx = cases.value.findIndex(c => c._id === updated._id)
     if (idx !== -1) cases.value[idx] = updated
     selectedCase.value = updated
-    showSuccess('Éxito', 'Archivos añadidos correctamente.')
-  } catch (err: any) { showError('Error', err.message) } finally { closeLoading() }
+    closeLoading(); showSuccess('Éxito', 'Archivos añadidos correctamente.')
+  } catch (err: any) { closeLoading(); showError('Error', err.message) }
 }
 // Ticket Linking Logic (The "Mas Acertado" Search)
 const openLinkTicketModal = async () => {
@@ -1223,9 +1166,8 @@ const handleLinkTicket = async (ticket: any) => {
       if (idx !== -1) wikiArticles.value[idx] = updated
     }
     showLinkModal.value = false
-    showSuccess('Vinculado', 'Ticket asociado correctamente')
-  } catch (err: any) { showError('Error', err.message) }
-  finally { closeLoading() }
+    closeLoading(); showSuccess('Vinculado', 'Ticket asociado correctamente')
+  } catch (err: any) { closeLoading(); showError('Error', err.message) }
 }
 
 const handleUnlinkTicket = async (ticketId: string) => {
@@ -1249,9 +1191,8 @@ const handleUnlinkTicket = async (ticketId: string) => {
       const idx = wikiArticles.value.findIndex(w => w._id === updated._id)
       if (idx !== -1) wikiArticles.value[idx] = updated
     }
-    showSuccess('Desvinculado', 'Vínculo eliminado')
-  } catch (err: any) { showError('Error', err.message) }
-  finally { closeLoading() }
+    closeLoading(); showSuccess('Desvinculado', 'Vínculo eliminado')
+  } catch (err: any) { closeLoading(); showError('Error', err.message) }
 }
 
 const getTicketStatusClass = (status: string) => {

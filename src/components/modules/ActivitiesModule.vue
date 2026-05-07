@@ -199,6 +199,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useNotifications } from '@/composables/useNotifications'
+
+const { confirmDelete } = useNotifications()
 
 // Props
 defineProps<{
@@ -323,12 +326,12 @@ const toggleActivityStatus = (activity: any) => {
   }
 }
 
-const deleteActivity = (activity: any) => {
-  if (confirm(`¿Estás seguro de que quieres eliminar la actividad "${activity.title}"?`)) {
-    const index = activities.value.findIndex(a => a.id === activity.id)
-    if (index !== -1) {
-      activities.value.splice(index, 1)
-    }
+const deleteActivity = async (activity: any) => {
+  const result = await confirmDelete(`¿Eliminar la actividad "${activity.title}"?`)
+  if (!result.isConfirmed) return
+  const index = activities.value.findIndex(a => a.id === activity.id)
+  if (index !== -1) {
+    activities.value.splice(index, 1)
   }
 }
 

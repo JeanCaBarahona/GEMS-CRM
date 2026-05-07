@@ -431,6 +431,9 @@
 import { ref, reactive } from 'vue'
 import { casesService, type Case } from '../services/casesService'
 import { API_CONFIG } from '../config/api'
+import { useNotifications } from '../composables/useNotifications'
+
+const { confirmDelete } = useNotifications()
 
 // Props
 const props = defineProps<{
@@ -495,13 +498,13 @@ const handleFileUpload = async (event: Event) => {
 }
 
 const deleteFile = async (fileIndex: number) => {
-  if (confirm('¿Estás seguro de que deseas eliminar este archivo?')) {
-    try {
-      await casesService.deleteFile(props.caseItem._id!, fileIndex)
-      emit('updated')
-    } catch (error) {
-      console.error('Error deleting file:', error)
-    }
+  const result = await confirmDelete('¿Eliminar este archivo?')
+  if (!result.isConfirmed) return
+  try {
+    await casesService.deleteFile(props.caseItem._id!, fileIndex)
+    emit('updated')
+  } catch (error) {
+    console.error('Error deleting file:', error)
   }
 }
 

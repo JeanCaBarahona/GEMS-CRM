@@ -70,14 +70,30 @@ class WikiService {
   }
 
   async update(id: string, data: Partial<WikiArticle>): Promise<WikiArticle> {
+    // Campos gestionados por el servidor o por endpoints dedicados — no se envían al actualizar
+    const SKIP_FIELDS = new Set(['_id', 'autor', 'linkedTickets', 'vistas', 'createdAt', 'updatedAt'])
+
     const formData = new FormData()
     Object.entries(data).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        if (Array.isArray(value)) {
-          value.forEach(v => formData.append(key, v))
-        } else {
-          formData.append(key, value as any)
-        }
+      if (value === undefined || value === null) return
+      if (SKIP_FIELDS.has(key)) return
+
+      if (key === 'archivos' && Array.isArray(value)) {
+        value.forEach(v => {
+          if (v instanceof File || v instanceof Blob) formData.append('archivos', v)
+        })
+      } else if (Array.isArray(value)) {
+        value.forEach(v => {
+          if (v instanceof File || v instanceof Blob) {
+            formData.append(key, v)
+          } else if (typeof v === 'object' && v !== null) {
+            formData.append(key, (v as any)._id ?? '')
+          } else {
+            formData.append(key, String(v))
+          }
+        })
+      } else if (typeof value !== 'object' || value instanceof File || value instanceof Blob) {
+        formData.append(key, value as any)
       }
     })
 
@@ -85,7 +101,7 @@ class WikiService {
       method: 'PUT',
       body: formData,
     })
-    
+
     if (!response.ok) throw new Error('Error al actualizar artículo')
     return await response.json()
   }

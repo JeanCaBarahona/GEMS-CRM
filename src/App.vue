@@ -6,66 +6,85 @@
     <!-- Show main app if authenticated -->
   <div v-else class="min-h-screen bg-slate-50">
       <!-- Navigation Sidebar -->
-      <div class="fixed inset-y-0 left-0 z-50 w-56 sm:w-64 bg-white border-r border-slate-200 shadow-sm transform transition-transform duration-300 ease-in-out lg:translate-x-0" 
-           :class="{ '-translate-x-full': !sidebarOpen && !isDesktop }">
-        
+      <div 
+        class="fixed inset-y-0 left-0 z-50 bg-white border-r border-slate-200 shadow-sm transition-all duration-300 ease-in-out lg:translate-x-0" 
+        :class="[
+          !sidebarOpen && !isDesktop ? '-translate-x-full' : 'translate-x-0',
+          isSidebarMini ? 'w-20' : 'w-64'
+        ]"
+      >
+        <!-- Toggle Button (Minimalist) -->
+        <button 
+          @click="isSidebarMini = !isSidebarMini"
+          class="hidden lg:flex absolute -right-3 top-7 w-6 h-6 bg-white text-slate-400 rounded-md items-center justify-center shadow-sm border border-slate-200 z-[60] transition-all hover:text-primary-600 hover:border-primary-300 active:scale-95"
+          :class="isSidebarMini ? 'rotate-180' : ''"
+        >
+          <i class="fas fa-chevron-left text-[9px]"></i>
+        </button>
+
         <!-- Logo -->
-        <div class="flex items-center justify-center h-20 px-6 border-b border-slate-100">
+        <div 
+          class="flex items-center justify-center h-20 px-6 border-b border-slate-100 overflow-hidden transition-all duration-300"
+          :class="isSidebarMini ? 'opacity-0 h-0 border-none' : 'opacity-100 h-20'"
+        >
           <img 
+            v-if="!isSidebarMini"
             :src="logoCT" 
-            alt="Customer CRM Logo" 
-            class="h-12 w-auto"
+            alt="Logo" 
+            class="h-12 w-auto transition-opacity duration-300"
           />
         </div>
 
         <!-- User Info -->
-        <div class="px-6 py-5 border-b border-slate-100">
-          <div class="flex items-center">
+        <div class="px-3 py-5 border-b border-slate-100 overflow-hidden transition-all" :class="isSidebarMini ? 'flex justify-center' : 'px-6'">
+          <div class="flex items-center min-w-0">
             <UserAvatar
               :name="authStore.user?.name || 'Usuario'"
               :avatar="authStore.user?.avatar"
               size="md"
               :clickable="true"
               @click="router.push('/profile')"
-              class="shadow-sm border border-slate-200"
+              class="shadow-sm border border-slate-200 flex-shrink-0"
             />
-            <div class="ml-3">
-              <p class="text-slate-800 text-sm font-bold">{{ authStore.user?.name }}</p>
-              <p class="text-slate-500 text-xs font-medium">{{ getRoleDisplayName(authStore.user?.role) }}</p>
+            <div v-if="!isSidebarMini" class="ml-3 min-w-0 transition-opacity duration-300">
+              <p class="text-slate-800 text-sm font-black truncate">{{ authStore.user?.name }}</p>
+              <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest truncate">{{ getRoleDisplayName(authStore.user?.role) }}</p>
             </div>
           </div>
         </div>
 
         <!-- Navigation Menu -->
-        <nav class="mt-6 flex-1 px-4 overflow-y-auto max-h-[calc(100vh-210px)]">
+        <nav class="mt-6 flex-1 px-3 overflow-y-auto max-h-[calc(100vh-250px)] custom-scrollbar">
           <div class="space-y-1.5">
             <router-link
               v-for="module in availableModules"
               :key="module.id"
               :to="module.path"
               :class="[
-                'w-full flex items-center px-4 py-3 text-left rounded-xl transition-all duration-200 text-sm font-bold',
+                'w-full flex items-center py-3 rounded-xl transition-all duration-200 text-sm font-bold group',
                 $route.path === module.path
-                  ? 'bg-primary-500 text-white shadow-md shadow-primary-500/20 shadow-[0_4px_10px_rgba(82,194,239,0.2)]' 
-                  : 'text-slate-500 hover:bg-slate-50 hover:text-primary-600'
+                  ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/20' 
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-primary-600',
+                isSidebarMini ? 'justify-center px-0' : 'px-4'
               ]"
+              :title="isSidebarMini ? module.name : ''"
             >
-              <i :class="[module.icon, 'w-5 h-5 mr-3 flex items-center justify-center opacity-80', $route.path === module.path ? 'text-white' : 'text-slate-400']"></i>
-              {{ module.name }}
+              <i :class="[module.icon, 'w-5 h-5 flex items-center justify-center opacity-80 transition-transform group-hover:scale-110', !isSidebarMini ? 'mr-3' : '', $route.path === module.path ? 'text-white' : 'text-slate-400 group-hover:text-primary-500']"></i>
+              <span v-if="!isSidebarMini" class="transition-opacity duration-300 whitespace-nowrap overflow-hidden">{{ module.name }}</span>
             </router-link>
           </div>
         </nav>
 
         <!-- Logout Button -->
-        <div class="absolute bottom-0 left-0 right-0 px-6 py-4 border-t border-slate-100 bg-white">
+        <div class="absolute bottom-0 left-0 right-0 px-3 py-4 border-t border-slate-100 bg-white overflow-hidden transition-all" :class="isSidebarMini ? 'flex justify-center' : 'px-6'">
           <button
             @click="handleLogout"
             class="flex items-center text-slate-400 hover:text-rose-500 transition-all duration-200 group"
           >
-            <div class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-rose-50 transition-colors mr-2">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-rose-50 transition-colors" :class="!isSidebarMini ? 'mr-2' : ''">
               <i class="fas fa-power-off text-sm"></i>
             </div>
-            <span class="text-[10px] font-black uppercase tracking-[0.15em] opacity-60 group-hover:opacity-100">Cerrar Sesión</span>
+            <span v-if="!isSidebarMini" class="text-[10px] font-black uppercase tracking-[0.15em] opacity-60 group-hover:opacity-100 whitespace-nowrap overflow-hidden">Cerrar Sesión</span>
           </button>
         </div>
       </div>
@@ -83,7 +102,10 @@
       </div>
 
       <!-- Main Content -->
-      <div class="lg:ml-64 flex flex-col h-screen">
+      <div 
+        class="flex flex-col h-screen transition-all duration-300 ease-in-out"
+        :class="isSidebarMini ? 'lg:ml-20' : 'lg:ml-64'"
+      >
         <!-- Floating User Avatar (Sober & Professional) -->
         <div class="fixed top-4 right-6 z-50">
           <div class="relative">
@@ -143,7 +165,7 @@
         </div>
 
         <!-- Main Content Area -->
-        <main class="p-4 flex-1 min-h-0 overflow-y-auto">
+        <main class="p-4 flex-1 min-h-0 overflow-y-auto custom-scrollbar">
           <router-view class="h-full" />
         </main>
       </div>
@@ -173,6 +195,7 @@ const chatStore = useChatStore()
 
 // Reactive data
 const sidebarOpen = ref(true)
+const isSidebarMini = ref(false)
 const showUserMenu = ref(false)
 const isDesktop = ref(true)
 // Removed navbar mini-popup; use NewMessageToast instead

@@ -1,110 +1,123 @@
 <template>
   <div class="min-h-screen bg-slate-50 text-slate-800">
     <!-- Sidebar -->
-    <div class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200">
+    <div 
+      class="fixed inset-y-0 left-0 z-50 bg-white border-r border-slate-200 transition-all duration-300 ease-in-out group/sidebar"
+      :class="isSidebarCollapsed ? 'w-20' : 'w-64'"
+    >
+      <!-- Collapse Toggle Button -->
+      <button 
+        @click="isSidebarCollapsed = !isSidebarCollapsed"
+        class="absolute -right-4 top-8 w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center shadow-xl z-[100] transition-all hover:bg-primary-700 active:scale-95 border-2 border-white"
+        :class="isSidebarCollapsed ? 'rotate-180' : ''"
+      >
+        <i class="fas fa-chevron-left text-xs"></i>
+      </button>
+
       <!-- Logo -->
-        <div class="flex items-center px-6 py-8">
-          <img 
-            :src="logoCT" 
-            alt="Customer Logo" 
-            class="h-12 w-auto"
-          />
-        </div>
+      <div class="flex items-center justify-center h-20 transition-all duration-300 overflow-hidden">
+        <img 
+          :src="logoCT" 
+          alt="Customer Logo" 
+          class="h-10 w-auto transition-all"
+          :class="isSidebarCollapsed ? 'scale-75' : 'scale-100 pr-12'"
+        />
+      </div>
       
       <!-- Navigation -->
-      <nav class="flex-1 px-4 py-6 space-y-2 flex flex-col justify-between h-full">
-        <div>
-            <router-link
-              v-for="item in navigation"
-              :key="item.name"
-              :to="item.path"
-              class="flex items-center px-4 py-3 mb-1 rounded-lg text-sm font-medium transition-colors outline-none"
-              :class="[
-                $route.path === item.path 
-                  ? 'bg-primary text-white shadow-lg shadow-primary-500/20' 
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-              ]"
-            >
-              <component :is="item.icon" class="w-5 h-5 mr-3" :class="$route.path === item.path ? 'text-white' : 'text-slate-400'" />
-              <span>{{ item.name }}</span>
-            </router-link>
-          </div>
-        <!-- Minimal logout icon at bottom with tooltip -->
-        <div class="flex justify-center mt-8 mb-2">
-          <button
-            @click="$emit('logout')"
-            class="p-2 rounded-lg hover:bg-dark-800/60 transition-colors group"
-            aria-label="Cerrar sesión"
-            style="position:relative;"
+      <nav class="flex-1 px-3 py-6 space-y-2 flex flex-col justify-between h-[calc(100vh-160px)]">
+        <div class="space-y-1">
+          <router-link
+            v-for="item in navigation"
+            :key="item.name"
+            :to="item.path"
+            class="flex items-center rounded-xl text-sm font-medium transition-all group outline-none h-12"
+            :class="[
+              $route.path === item.path 
+                ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/20' 
+                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900',
+              isSidebarCollapsed ? 'justify-center px-0' : 'px-4'
+            ]"
+            :title="isSidebarCollapsed ? item.name : ''"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-7 h-7 text-gray-300 hover:text-red-400">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
-            </svg>
-            <span class="absolute left-1/2 top-full mt-2 -translate-x-1/2 px-2 py-1 bg-black/80 text-xs text-white rounded opacity-0 pointer-events-none group-hover:opacity-100 group-focus:opacity-100 transition-opacity duration-200" style="white-space:nowrap;">Cerrar sesión</span>
-          </button>
+            <div class="flex-shrink-0 w-6 h-6 flex items-center justify-center">
+              <i v-if="item.icon === 'logo'" class="fas fa-th-large text-lg"></i>
+              <component v-else :is="item.icon" class="w-5 h-5 transition-transform group-hover:scale-110" />
+            </div>
+            <span 
+              v-show="!isSidebarCollapsed" 
+              class="ml-3 transition-opacity duration-300 whitespace-nowrap overflow-hidden font-bold"
+            >
+              {{ item.name }}
+            </span>
+          </router-link>
         </div>
-      </nav>
-      
-      <!-- User Profile -->
-      <div class="px-4 py-6 border-t border-slate-100 mt-auto">
-        <div class="flex flex-col gap-4">
-          <div class="flex items-center group">
-            <!-- Profile Avatar -->
-            <div class="w-10 h-10 rounded-full overflow-hidden shadow-sm flex items-center justify-center bg-slate-100 border border-slate-200 group-hover:border-primary-300 transition-colors">
-              <!-- Personalized Photo -->
+
+        <!-- Logout / User Profile Section -->
+        <div class="border-t border-slate-100 pt-4 mt-auto">
+          <div 
+            class="flex items-center group transition-all"
+            :class="isSidebarCollapsed ? 'justify-center' : 'px-1'"
+          >
+            <div class="w-10 h-10 rounded-xl overflow-hidden shadow-sm flex items-center justify-center bg-slate-100 border border-slate-200 group-hover:border-primary-300 transition-all flex-shrink-0">
               <img 
                 v-if="user?.photo"
                 :src="resolveImageUrl(user.photo)"
-                alt="Foto de perfil" 
+                alt="Foto" 
                 class="w-full h-full object-cover transition-transform group-hover:scale-110"
                 @error="onAvatarError"
               />
-              <!-- Predefined Avatar -->
               <img 
                 v-else-if="user?.avatar && getAvatarById(user.avatar)"
                 :src="getAvatarById(user.avatar)?.path"
-                :alt="getAvatarById(user.avatar)?.name" 
                 class="w-full h-full object-cover transition-transform group-hover:scale-110"
               />
-              <!-- Fallback Initials -->
-              <span v-else class="text-xs font-black text-slate-500 uppercase">{{ getUserInitials() }}</span>
+              <span v-else class="text-[10px] font-black text-slate-500 uppercase">{{ getUserInitials() }}</span>
             </div>
-            <div class="ml-3 min-w-0">
-              <p class="text-sm font-black text-slate-800 truncate">{{ user?.name || 'Usuario' }}</p>
-              <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate">{{ getRoleDisplayName() }}</p>
+            <div 
+              v-show="!isSidebarCollapsed"
+              class="ml-3 min-w-0 transition-opacity duration-300"
+            >
+              <p class="text-xs font-black text-slate-800 truncate">{{ user?.name || 'Usuario' }}</p>
+              <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest truncate">{{ getRoleDisplayName() }}</p>
             </div>
           </div>
 
-          <div class="flex items-center gap-2">
-            <!-- Profile Config -->
+          <div 
+            class="mt-4 flex gap-2"
+            :class="isSidebarCollapsed ? 'flex-col items-center' : 'flex-row'"
+          >
             <router-link
               to="/profile"
-              class="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-slate-50 hover:bg-primary-50 text-slate-500 hover:text-primary-600 rounded-xl transition-all border border-slate-100 hover:border-primary-200 group"
-              title="Configurar Perfil"
+              class="flex items-center justify-center bg-slate-50 hover:bg-primary-50 text-slate-500 hover:text-primary-600 rounded-xl transition-all border border-slate-100 hover:border-primary-200 group"
+              :class="isSidebarCollapsed ? 'w-10 h-10' : 'flex-1 h-10'"
+              title="Ajustes"
             >
-              <i class="fas fa-cog text-sm group-hover:rotate-90 transition-transform duration-500"></i>
-              <span class="text-[11px] font-black uppercase tracking-widest">Ajustes</span>
+              <i class="fas fa-cog text-sm group-hover:rotate-90 transition-all"></i>
+              <span v-show="!isSidebarCollapsed" class="ml-2 text-[10px] font-black uppercase tracking-widest">Perfil</span>
             </router-link>
             
-            <!-- Logout -->
             <button
               @click="$emit('logout')"
               class="w-10 h-10 flex items-center justify-center bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-xl transition-all border border-slate-100 hover:border-rose-200"
-              title="Cerrar sesión"
+              title="Salir"
             >
               <i class="fas fa-sign-out-alt"></i>
             </button>
           </div>
         </div>
-      </div>
+      </nav>
     </div>
     
     <!-- Main Content -->
-    <div class="ml-64">
+    <div 
+      class="transition-all duration-300 ease-in-out"
+      :class="isSidebarCollapsed ? 'ml-20' : 'ml-64'"
+    >
       <!-- Header -->
-      <header class="min-h-[64px] bg-white border-b border-slate-200 flex flex-wrap items-center px-4 sm:px-8 justify-between relative z-30">
+      <header class="min-h-[64px] bg-white/80 backdrop-blur-md border-b border-slate-200 flex flex-wrap items-center px-4 sm:px-8 justify-between sticky top-0 z-30">
         <div class="flex items-center flex-1 min-w-0">
-          <!-- Menu Button (hamburger icon) -->
+          <!-- Menu Button (hamburger icon for mobile) -->
           <button
             class="flex-shrink-0 mr-2 sm:mr-4 p-2 rounded-lg text-slate-500 hover:bg-slate-100 focus:outline-none z-30 lg:hidden"
             @click="$emit('toggleSidebar')"
@@ -117,8 +130,8 @@
           
           <!-- Título y descripción -->
           <div class="flex flex-col justify-center min-w-0">
-            <h1 class="text-xl font-bold text-slate-800 whitespace-nowrap truncate">{{ pageTitle }}</h1>
-            <p class="text-slate-500 text-xs truncate">{{ pageDescription }}</p>
+            <h1 class="text-lg font-black text-slate-800 whitespace-nowrap truncate tracking-tight">{{ pageTitle }}</h1>
+            <p v-show="!isSidebarCollapsed" class="text-slate-400 text-[10px] font-bold uppercase tracking-wider truncate">{{ pageDescription }}</p>
           </div>
         </div>
         <!-- Notifications -->
@@ -126,19 +139,17 @@
           <OnlineUsersPopover />
           
           <!-- Chat Unread Badge -->
-          <router-link to="/chat" class="relative p-2 text-gray-400 hover:text-white transition-colors">
+          <router-link to="/chat" class="relative p-2 text-slate-400 hover:text-primary-600 transition-colors">
             <ChatBubbleLeftRightIcon class="w-6 h-6" />
-            <span v-if="chatUnread > 0" class="absolute -top-1 -right-1 w-5 h-5 bg-pink-600 text-white text-xs rounded-full flex items-center justify-center">
+            <span v-if="chatUnread > 0" class="absolute -top-1 -right-1 w-5 h-5 bg-rose-600 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white">
               {{ chatUnread > 99 ? '99+' : chatUnread }}
             </span>
           </router-link>
-          
-          <!-- Notifications removed - Sistema de tareas tipo Azure -->
         </div>
       </header>
       
       <!-- Page Content -->
-      <main class="p-8">
+      <main class="p-4 sm:p-8">
         <router-view />
       </main>
     </div>
@@ -180,6 +191,7 @@ const chatStore = useChatStore()
 const authStore = useAuthStore()
 
 const avatarError = ref(false)
+const isSidebarCollapsed = ref(false)
 
 // Acceso al usuario actual
 const user = computed(() => authStore.user)

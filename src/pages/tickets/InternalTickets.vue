@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col h-full min-h-0 gap-4">
     <!-- Header Controls (New Ticket & Refresh) -->
-    <div class="flex-shrink-0 flex items-center justify-end">
+    <div class="flex-shrink-0 flex items-center justify-end pr-12">
       
       <div class="flex items-center gap-3">
         <!-- View Toggle -->
@@ -34,9 +34,10 @@
 
         <button
           @click="showNewTicketModal = true"
-          class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-lg shadow-sm transition-colors text-sm flex items-center gap-2"
+          class="w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:text-primary-600 hover:bg-primary-50 border border-slate-200 hover:border-primary-200 transition-all active:bg-primary-100"
+          title="Nuevo Ticket"
         >
-          <i class="fas fa-plus"></i> Nuevo Ticket
+          <i class="fas fa-plus text-xs"></i>
         </button>
       </div>
     </div>
@@ -95,7 +96,7 @@
         <div 
           v-for="col in columns" 
           :key="col.id" 
-          class="flex flex-col min-w-[320px] max-w-[320px] bg-slate-50/50 rounded-[2rem] border border-slate-200/60 shadow-inner"
+          class="flex flex-col min-w-[320px] max-w-[320px] bg-gradient-to-b from-slate-50/50 to-white rounded-[2rem] border border-slate-200/60 shadow-inner"
         >
           <!-- Column Header -->
           <div class="flex-shrink-0 p-5 flex items-center justify-between">
@@ -121,7 +122,7 @@
               v-for="ticket in getTicketsByStatus(col.id)" 
               :key="ticket._id"
               @click="openTicketDetail(ticket)"
-              class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm hover:shadow-xl hover:border-primary-300 hover:-translate-y-1 transition-all duration-300 cursor-pointer group relative overflow-hidden flex flex-col gap-3"
+            class="bg-white rounded-2xl p-4 border border-slate-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.04)] hover:shadow-xl hover:border-primary-300/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer group relative overflow-hidden flex flex-col gap-3"
             >
               <!-- Priority indicator & Number -->
               <div class="flex items-center justify-between">
@@ -488,7 +489,8 @@
     </div>
 
     <!-- Modal Nuevo Ticket (Para uso interno) -->
-    <div v-if="showNewTicketModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click.self="showNewTicketModal = false">
+    <Teleport to="body">
+    <div v-if="showNewTicketModal" class="fixed -inset-1 bg-slate-950/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4" @click.self="showNewTicketModal = false">
       <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md animate-fade-in overflow-hidden">
         <div class="bg-slate-50 p-5 border-b border-slate-100 flex items-center justify-between">
            <div class="flex items-center gap-3">
@@ -553,6 +555,7 @@
         </div>
       </div>
     </div>
+    </Teleport>
 
   </div>
 </template>

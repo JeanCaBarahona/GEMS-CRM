@@ -84,93 +84,66 @@
 
       <!-- Main Content -->
       <div class="lg:ml-64 flex flex-col h-screen">
-        <!-- Header -->
-        <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-40 lg:ml-0 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
-          <div class="flex items-center justify-between px-6 py-4">
-            <div class="pl-12 lg:pl-0">
-              <h2 class="text-2xl font-black text-slate-800 tracking-tight">{{ getCurrentModuleName() }}</h2>
-              <p class="text-slate-500 text-sm font-medium">{{ getCurrentModuleDescription() }}</p>
-            </div>
-            
-            <!-- Header Actions -->
-            <div class="flex items-center space-x-4">
-              <!-- Chat icon in header -->
-              <!-- Chat module hidden by user request -->
-              <!-- <div class="relative">
-                <router-link
-                  to="/chat"
-                  class="relative inline-flex items-center justify-center w-10 h-10 rounded-full text-slate-400 hover:text-primary-500 hover:bg-primary-50 transition-colors"
-                  title="Ir al chat"
+        <!-- Floating User Avatar (Sober & Professional) -->
+        <div class="fixed top-4 right-6 z-50">
+          <div class="relative">
+            <button
+              @click="showUserMenu = !showUserMenu"
+              class="relative p-0.5 bg-white/80 backdrop-blur-md border border-slate-200 rounded-2xl hover:border-primary-300 transition-all active:scale-95 group shadow-[0_4px_12px_-4px_rgba(0,0,0,0.08)]"
+            >
+              <UserAvatar
+                :name="authStore.user?.name || 'Usuario'"
+                :avatar="authStore.user?.avatar"
+                size="md"
+                class="saturate-110 rounded-[14px]"
+              />
+              <!-- Status dot -->
+              <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full shadow-sm"></div>
+            </button>
+
+            <!-- User Dropdown (Glassmorphism) -->
+            <div
+              v-if="showUserMenu"
+              class="absolute right-0 top-full mt-3 w-64 bg-white/90 backdrop-blur-xl border border-white/40 rounded-3xl shadow-2xl z-50 overflow-hidden font-medium animate-fade-in ring-1 ring-black/5"
+            >
+              <!-- Header: email -->
+              <div class="px-6 py-5 border-b border-slate-100 bg-white/50">
+                <span class="block text-sm text-slate-800 font-bold mb-0.5">{{ authStore.user?.name }}</span>
+                <span class="block text-[10px] text-slate-500 truncate uppercase tracking-widest font-black opacity-60">
+                  {{ authStore.user?.email }}
+                </span>
+              </div>
+
+              <!-- Menu items -->
+              <div class="py-2">
+                <button 
+                  @click="navigateToProfile"
+                  class="w-full text-left px-6 py-3 text-slate-700 hover:bg-primary-50 hover:text-primary-600 transition-colors text-xs flex items-center font-bold"
                 >
-                  <i class="fas fa-comments text-lg"></i>
-                  <span
-                    v-if="chatStore.getUnreadCount > 0"
-                    class="absolute top-0 right-0 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold border-2 border-white"
-                  >
-                    {{ chatStore.getUnreadCount > 99 ? '99+' : chatStore.getUnreadCount }}
-                  </span>
-                </router-link>
-              </div> -->
-              <!-- User Menu -->
-              <div class="relative">
-                <button
-                  @click="showUserMenu = !showUserMenu"
-                  class="flex items-center space-x-2 px-2 py-1 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-colors"
-                >
-                  <UserAvatar
-                    :name="authStore.user?.name || 'Usuario'"
-                    :avatar="authStore.user?.avatar"
-                    size="sm"
-                    class="shadow-sm saturate-110"
-                  />
-                  <i class="fas fa-chevron-down text-slate-400 text-xs ml-1"></i>
+                  <i class="fas fa-user w-5 opacity-50"></i>
+                  Mi Perfil
                 </button>
-
-                <!-- User Dropdown -->
-                <div
-                  v-if="showUserMenu"
-                  class="absolute right-0 top-full mt-2 w-72 sm:w-80 max-w-[calc(100vw-16px)] bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden font-medium animate-fade-in"
+                <button
+                  class="w-full text-left px-6 py-3 text-slate-700 hover:bg-primary-50 hover:text-primary-600 transition-colors text-xs flex items-center font-bold"
                 >
-                  <!-- Header: email -->
-                  <div class="px-5 py-4 border-b border-slate-100 bg-slate-50/50">
-                    <span class="block text-sm text-slate-800 font-bold mb-0.5">{{ authStore.user?.name }}</span>
-                    <span class="block text-xs text-slate-500 truncate" :title="authStore.user?.email || ''">
-                      {{ authStore.user?.email }}
-                    </span>
-                  </div>
-
-                  <!-- Menu items -->
-                  <div class="py-2">
-                    <button 
-                      @click="navigateToProfile"
-                      class="w-full text-left px-5 py-2.5 text-slate-700 hover:bg-slate-50 hover:text-primary-600 transition-colors text-sm flex items-center font-bold"
-                    >
-                      <i class="fas fa-user w-5"></i>
-                      Mi Perfil
-                    </button>
-                    <button
-                      class="w-full text-left px-5 py-2.5 text-slate-700 hover:bg-slate-50 hover:text-primary-600 transition-colors text-sm flex items-center font-bold"
-                    >
-                      <i class="fas fa-cog w-5"></i>
-                      Configuración
-                    </button>
-                    <div class="border-t border-slate-100 my-1"></div>
-                    <button 
-                      @click="handleLogout"
-                      class="w-full text-left px-5 py-2.5 text-red-500 hover:bg-red-50 transition-colors text-sm flex items-center font-bold"
-                    >
-                      <i class="fas fa-sign-out-alt w-5"></i>
-                      Cerrar Sesión
-                    </button>
-                  </div>
-                </div>
+                  <i class="fas fa-cog w-5 opacity-50"></i>
+                  Configuración
+                </button>
+                <div class="border-t border-slate-100 my-1 opacity-50"></div>
+                <button 
+                  @click="handleLogout"
+                  class="w-full text-left px-6 py-3 text-rose-500 hover:bg-rose-50 transition-colors text-xs flex items-center font-bold"
+                >
+                  <i class="fas fa-sign-out-alt w-5 opacity-50"></i>
+                  Cerrar Sesión
+                </button>
               </div>
             </div>
           </div>
-        </header>
+        </div>
 
         <!-- Main Content Area -->
-        <main class="p-6 flex-1 min-h-0 overflow-y-auto">
+        <main class="p-4 flex-1 min-h-0 overflow-y-auto">
           <router-view class="h-full" />
         </main>
       </div>

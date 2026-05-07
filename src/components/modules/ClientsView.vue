@@ -3,20 +3,20 @@
     <!-- Header con controles -->
     <div class="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-white">Gestión de Clientes</h1>
-        <p class="text-gray-400 mt-1">Administra tu cartera de clientes</p>
+        <h1 class="text-2xl font-black text-slate-800 tracking-tight">Gestión de Clientes</h1>
+        <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Administra tu cartera de clientes</p>
       </div>
       
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-4 pr-20">
         <!-- Botón de vista -->
         <div class="flex bg-gray-800 rounded-lg p-1">
           <button
             @click="viewMode = 'grid'"
             :class="[
-              'px-3 py-2 text-sm font-medium rounded-md transition-colors',
+              'px-3 py-1.5 text-xs font-bold rounded-md transition-all',
               viewMode === 'grid' 
-                ? 'bg-purple-600 text-white' 
-                : 'text-gray-400 hover:text-white'
+                ? 'bg-white text-primary-600 shadow-sm border border-slate-200' 
+                : 'text-slate-500 hover:text-slate-700'
             ]"
           >
             <i class="fas fa-th mr-2"></i>
@@ -50,9 +50,9 @@
         <!-- Botón crear -->
         <button
           @click="$emit('create')"
-          class="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-200 flex items-center gap-2"
+          class="px-5 py-2.5 bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-all duration-200 flex items-center gap-2 font-black text-xs uppercase tracking-widest shadow-lg shadow-primary-200"
         >
-          <i class="fas fa-plus"></i>
+          <i class="fas fa-plus text-[10px]"></i>
           Nuevo Cliente
         </button>
       </div>
@@ -85,7 +85,7 @@
       <div
         v-for="client in filteredClients"
         :key="client._id"
-        class="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/20 hover:border-purple-500/40 transition-all duration-200 hover:shadow-lg hover:shadow-purple-500/10 group"
+        class="bg-white rounded-2xl p-6 border border-slate-100 hover:border-primary-200 transition-all duration-300 hover:shadow-xl shadow-[0_2px_12px_-3px_rgba(0,0,0,0.04)] group"
       >
         <!-- Header del cliente -->
         <div class="flex items-start justify-between mb-4">
@@ -96,10 +96,10 @@
               </span>
             </div>
             <div>
-              <h3 class="text-white font-semibold text-lg group-hover:text-purple-300 transition-colors">
+              <h3 class="text-slate-800 font-black text-lg group-hover:text-primary-600 transition-colors">
                 {{ client.name }}
               </h3>
-              <p class="text-gray-400 text-sm">{{ client.company || 'Sin empresa' }}</p>
+              <p class="text-slate-400 font-bold text-xs uppercase tracking-wider">{{ client.company || 'Sin empresa' }}</p>
             </div>
           </div>
           
@@ -114,35 +114,35 @@
 
         <!-- Información de contacto -->
         <div class="space-y-2 mb-4">
-          <div class="flex items-center gap-2 text-gray-300">
-            <i class="fas fa-envelope w-4"></i>
-            <span class="text-sm">{{ client.email }}</span>
+          <div class="flex items-center gap-2 text-slate-500">
+            <i class="fas fa-envelope w-4 text-primary-400"></i>
+            <span class="text-xs font-medium">{{ client.email }}</span>
           </div>
-          <div v-if="client.phone" class="flex items-center gap-2 text-gray-300">
-            <i class="fas fa-phone w-4"></i>
-            <span class="text-sm">{{ client.phone }}</span>
+          <div v-if="client.phone" class="flex items-center gap-2 text-slate-500">
+            <i class="fas fa-phone w-4 text-primary-400"></i>
+            <span class="text-xs font-medium">{{ client.phone }}</span>
           </div>
-          <div v-if="client.address" class="flex items-center gap-2 text-gray-300">
-            <i class="fas fa-map-marker-alt w-4"></i>
-            <span class="text-sm">{{ client.address }}</span>
+          <div v-if="client.address" class="flex items-center gap-2 text-slate-500">
+            <i class="fas fa-map-marker-alt w-4 text-primary-400"></i>
+            <span class="text-xs font-medium">{{ client.address }}</span>
           </div>
         </div>
 
         <!-- Acciones -->
-        <div class="flex items-center justify-between pt-4 border-t border-gray-700">
-          <span class="text-xs text-gray-500">
+        <div class="flex items-center justify-between pt-4 border-t border-slate-50">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
             {{ formatDate(client.createdAt) }}
           </span>
           <div class="flex items-center gap-2">
             <button
               @click="$emit('edit', client)"
-              class="p-2 text-gray-400 hover:text-purple-400 hover:bg-purple-500/20 rounded-lg transition-all duration-200"
+              class="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-200"
             >
               <i class="fas fa-edit"></i>
             </button>
             <button
               @click="deleteClient(client._id!)"
-              class="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-200"
+              class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all duration-200"
             >
               <i class="fas fa-trash"></i>
             </button>
@@ -152,20 +152,20 @@
     </div>
 
     <!-- Vista Lista -->
-    <div v-else-if="viewMode === 'list'" class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-purple-500/20 overflow-hidden">
+    <div v-else-if="viewMode === 'list'" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full">
-          <thead class="bg-gray-900/50">
+          <thead class="bg-slate-50">
             <tr>
-              <th class="text-left py-4 px-6 text-gray-300 font-medium">Cliente</th>
-              <th class="text-left py-4 px-6 text-gray-300 font-medium">Contacto</th>
-              <th class="text-left py-4 px-6 text-gray-300 font-medium">Empresa</th>
-              <th class="text-left py-4 px-6 text-gray-300 font-medium">Estado</th>
-              <th class="text-left py-4 px-6 text-gray-300 font-medium">Fecha</th>
-              <th class="text-left py-4 px-6 text-gray-300 font-medium">Acciones</th>
+              <th class="text-left py-4 px-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cliente</th>
+              <th class="text-left py-4 px-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Contacto</th>
+              <th class="text-left py-4 px-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Empresa</th>
+              <th class="text-left py-4 px-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado</th>
+              <th class="text-left py-4 px-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha</th>
+              <th class="text-left py-4 px-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Acciones</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-700">
+          <tbody class="divide-y divide-slate-100">
             <tr
               v-for="client in filteredClients"
               :key="client._id"
@@ -173,22 +173,22 @@
             >
               <td class="py-4 px-6">
                 <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                    <span class="text-white font-bold text-sm">
+                  <div class="w-10 h-10 bg-primary-50 border border-primary-100 rounded-xl flex items-center justify-center">
+                    <span class="text-primary-600 font-black text-sm">
                       {{ getInitials(client.name) }}
                     </span>
                   </div>
                   <div>
-                    <div class="text-white font-medium">{{ client.name }}</div>
+                    <div class="text-slate-800 font-black text-sm">{{ client.name }}</div>
                   </div>
                 </div>
               </td>
               <td class="py-4 px-6">
-                <div class="text-gray-300 text-sm">{{ client.email }}</div>
-                <div v-if="client.phone" class="text-gray-400 text-xs">{{ client.phone }}</div>
+                <div class="text-slate-600 text-xs font-bold">{{ client.email }}</div>
+                <div v-if="client.phone" class="text-slate-400 text-[10px] font-medium">{{ client.phone }}</div>
               </td>
               <td class="py-4 px-6">
-                <span class="text-gray-300 text-sm">{{ client.company || '-' }}</span>
+                <span class="text-slate-500 text-xs font-bold uppercase tracking-tight">{{ client.company || '-' }}</span>
               </td>
               <td class="py-4 px-6">
                 <span 
@@ -349,13 +349,13 @@ const getInitials = (name: string): string => {
 const getStatusColor = (status: string): string => {
   switch (status) {
     case 'active':
-      return 'bg-green-500/20 text-green-300'
+      return 'bg-emerald-50 text-emerald-600 border-emerald-100'
     case 'inactive':
-      return 'bg-red-500/20 text-red-300'
+      return 'bg-rose-50 text-rose-600 border-rose-100'
     case 'prospect':
-      return 'bg-yellow-500/20 text-yellow-300'
+      return 'bg-amber-50 text-amber-600 border-amber-100'
     default:
-      return 'bg-gray-500/20 text-gray-300'
+      return 'bg-slate-50 text-slate-500 border-slate-100'
   }
 }
 

@@ -5,7 +5,7 @@
     
     <!-- Unified Header: Only visible for Public/Guest view (Authenticated view uses Layout.vue header) -->
     <header v-if="!authStore.isAuthenticated" class="bg-white border-b border-slate-100 flex-shrink-0">
-      <div class="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
+      <div class="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between pr-24">
          <div class="flex items-center gap-3">
            <div class="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-xl shadow-slate-200">
              <i class="fas fa-headset text-sm"></i>

@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-6">
+  <div class="space-y-4">
     <!-- Header con controles -->
     <div class="flex flex-wrap items-center justify-between gap-4 bg-slate-50/50 p-2 rounded-xl border border-slate-100 shadow-sm">
       <div class="flex items-center gap-4 flex-wrap">
@@ -73,20 +73,19 @@
 
       <div class="flex items-center gap-3">
         <!-- Stats (Only Desktop) -->
-        <div class="hidden lg:flex items-center gap-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 mr-2">
+        <div class="hidden lg:flex items-center gap-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 mr-2 pr-12">
           <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> {{ pendingActivities.length }}</span>
           <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-primary-400"></span> {{ inProgressActivities.length }}</span>
         </div>
 
-        <!-- Botón crear -->
+        <!-- Botón crear (Sober y Profesional) -->
         <button
           v-if="authStore.canCreateActivities"
           @click="showCreateModal = true"
-          class="px-4 py-1.5 bg-primary text-white rounded-lg hover:bg-primary-600 transition-all font-bold flex items-center gap-2 shadow-sm text-xs hover:scale-[1.02] active:scale-[0.98]"
+          class="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:text-primary-600 hover:bg-primary-50 border border-slate-200 hover:border-primary-200 transition-all active:bg-primary-100"
+          title="Nueva Actividad"
         >
-          <i class="fas fa-plus"></i>
-          <span class="hidden sm:inline">Nueva Actividad</span>
-          <span class="sm:hidden">Nueva</span>
+          <i class="fas fa-plus text-xs"></i>
         </button>
       </div>
     </div>
@@ -836,7 +835,7 @@
       class="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-4"
     >
       <!-- Columna Pendiente -->
-      <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 w-full snap-start flex flex-col h-full shadow-sm">
+      <div class="bg-gradient-to-b from-slate-50/50 to-white border border-slate-200/60 rounded-xl p-3 sm:p-4 w-full snap-start flex flex-col h-full shadow-sm">
         <div class="flex items-center gap-3 mb-4">
           <div class="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center border border-amber-200 shadow-sm">
             <i class="far fa-clock text-amber-500 text-sm"></i>
@@ -859,7 +858,7 @@
           <div
             v-for="activity in pendingActivities"
             :key="activity._id"
-            class="bg-white rounded-xl p-3 border border-slate-200 hover:border-amber-400 hover:shadow-xl hover:-translate-y-0.5 hover:scale-[1.01] shadow-sm transition-all duration-300 group cursor-move overflow-hidden flex flex-col justify-between h-[145px] relative shrink-0"
+            class="bg-white rounded-xl p-3 border border-slate-100 hover:border-amber-400/50 hover:shadow-xl hover:-translate-y-0.5 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.04)] transition-all duration-300 group cursor-move overflow-hidden flex flex-col justify-between h-[145px] relative shrink-0"
             draggable="true"
             @dragstart="onDragStart($event, activity)"
             @dragend="onDragEnd"
@@ -980,7 +979,7 @@
       </div>
 
     <!-- Columna En Proceso -->
-    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 w-full snap-start flex flex-col h-full shadow-sm">
+    <div class="bg-gradient-to-b from-slate-50/50 to-white border border-slate-200/60 rounded-xl p-3 sm:p-4 w-full snap-start flex flex-col h-full shadow-sm">
         <div class="flex items-center gap-3 mb-4">
           <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center border border-blue-200">
             <i class="fas fa-play text-blue-500 text-sm"></i>
@@ -1363,6 +1362,7 @@
   </div>
 
     <!-- Modales -->
+    <Teleport to="body">
     <!-- Modal de crear/editar actividad -->
     <ActivityFormModal
       v-if="showCreateModal || showEditModal"
@@ -1389,6 +1389,7 @@
       @close="showQuickTaskModal = false; selectedDateForQuickTask = null"
       @create="handleQuickTaskCreate"
     />
+    </Teleport>
 
     <!-- Modal de Configuración de Tareas Rápidas -->
     <Teleport to="body">

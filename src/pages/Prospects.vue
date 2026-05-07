@@ -14,29 +14,61 @@
         </p>
       </div>
 
-      <!-- Stats Bar -->
-      <div class="hidden md:flex items-center gap-2">
-        <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl border bg-slate-100 text-slate-700 border-slate-200">
-          <i class="fas fa-users text-[10px] opacity-70"></i>
-          <span class="text-[10px] font-black uppercase tracking-wider">Total</span>
-          <span class="text-[12px] font-black ml-1">{{ prospects.length }}</span>
+      <div class="flex items-center gap-3">
+        <!-- Stats Bar -->
+        <div class="hidden lg:flex items-center gap-2">
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl border bg-slate-100 text-slate-700 border-slate-200">
+            <i class="fas fa-users text-[10px] opacity-70"></i>
+            <span class="text-[10px] font-black uppercase tracking-wider">Total</span>
+            <span class="text-[12px] font-black ml-1">{{ prospects.length }}</span>
+          </div>
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl border bg-amber-50 text-amber-700 border-amber-200">
+            <i class="fas fa-fire text-[10px] opacity-70"></i>
+            <span class="text-[10px] font-black uppercase tracking-wider">Activos</span>
+            <span class="text-[12px] font-black ml-1">{{ activosCount }}</span>
+          </div>
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl border bg-emerald-50 text-emerald-700 border-emerald-200">
+            <i class="fas fa-trophy text-[10px] opacity-70"></i>
+            <span class="text-[10px] font-black uppercase tracking-wider">Ganados</span>
+            <span class="text-[12px] font-black ml-1">{{ ganadosCount }}</span>
+          </div>
         </div>
-        <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl border bg-amber-50 text-amber-700 border-amber-200">
-          <i class="fas fa-fire text-[10px] opacity-70"></i>
-          <span class="text-[10px] font-black uppercase tracking-wider">Activos</span>
-          <span class="text-[12px] font-black ml-1">{{ activosCount }}</span>
+
+        <!-- View Toggle -->
+        <div class="flex bg-slate-100 rounded-xl p-1">
+          <button
+            @click="viewMode = 'list'"
+            :class="[
+              'px-3 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-1.5',
+              viewMode === 'list' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700',
+            ]"
+          >
+            <i class="fas fa-list text-[10px]"></i>Lista
+          </button>
+          <button
+            @click="viewMode = 'kanban'"
+            :class="[
+              'px-3 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-1.5',
+              viewMode === 'kanban' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700',
+            ]"
+          >
+            <i class="fas fa-columns text-[10px]"></i>Pipeline
+          </button>
         </div>
-        <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl border bg-emerald-50 text-emerald-700 border-emerald-200">
-          <i class="fas fa-trophy text-[10px] opacity-70"></i>
-          <span class="text-[10px] font-black uppercase tracking-wider">Ganados</span>
-          <span class="text-[12px] font-black ml-1">{{ ganadosCount }}</span>
-        </div>
+
+        <!-- Import button -->
+        <button
+          @click="showImport = true"
+          class="px-3 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-[10px] font-black rounded-xl transition-all flex items-center gap-1.5"
+        >
+          <i class="fas fa-file-import text-[10px]"></i>
+          Importar
+        </button>
       </div>
     </div>
 
-    <!-- 3-pane layout -->
-    <div class="flex-1 grid grid-cols-12 gap-4 min-h-0">
-      <!-- Left: List -->
+    <!-- LIST VIEW: 3-pane -->
+    <div v-if="viewMode === 'list'" class="flex-1 grid grid-cols-12 gap-4 min-h-0">
       <div class="col-span-12 md:col-span-4 lg:col-span-3 min-h-0 h-[calc(100vh-160px)] md:h-auto">
         <ProspectsList
           :prospects="prospects"
@@ -44,10 +76,9 @@
           :loading="loading"
           @select="selectProspect"
           @new="openGenerator"
+          @import="showImport = true"
         />
       </div>
-
-      <!-- Right: Detail or Generator -->
       <div class="col-span-12 md:col-span-8 lg:col-span-9 min-h-0 h-[calc(100vh-160px)] md:h-auto">
         <transition name="fade" mode="out-in">
           <ProspectGenerator
@@ -75,17 +106,51 @@
         </transition>
       </div>
     </div>
+
+    <!-- KANBAN VIEW -->
+    <div v-else class="flex-1 min-h-0 h-[calc(100vh-160px)]">
+      <ProspectKanban
+        :prospects="prospects"
+        @select="openDetailFromKanban"
+        @status-change="onKanbanStatusChange"
+      />
+    </div>
+
+    <!-- Modals -->
+    <ProspectImport
+      v-if="showImport"
+      :is-open="showImport"
+      @close="showImport = false"
+      @imported="onImported"
+    />
+
+    <!-- Detail dialog from kanban -->
+    <div
+      v-if="kanbanDetailProspect"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm"
+      @click.self="kanbanDetailProspect = null"
+    >
+      <div class="bg-transparent w-full max-w-4xl h-[85vh]">
+        <ProspectDetail
+          :prospect="kanbanDetailProspect"
+          @updated="onProspectUpdated"
+          @delete="confirmDeleteProspect"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { prospectService } from '@/services/prospectService'
-import type { Prospect } from '@/types/prospect'
+import type { Prospect, ProspectStatus } from '@/types/prospect'
 import { useNotifications } from '@/composables/useNotifications'
 import ProspectsList from '@/components/prospects/ProspectsList.vue'
 import ProspectDetail from '@/components/prospects/ProspectDetail.vue'
 import ProspectGenerator from '@/components/prospects/ProspectGenerator.vue'
+import ProspectKanban from '@/components/prospects/ProspectKanban.vue'
+import ProspectImport from '@/components/prospects/ProspectImport.vue'
 
 const { showError, showSuccess, confirmDelete } = useNotifications()
 
@@ -93,6 +158,9 @@ const prospects = ref<Prospect[]>([])
 const selected = ref<Prospect | null>(null)
 const loading = ref(true)
 const showGenerator = ref(false)
+const showImport = ref(false)
+const viewMode = ref<'list' | 'kanban'>('list')
+const kanbanDetailProspect = ref<Prospect | null>(null)
 
 const activosCount = computed(
   () => prospects.value.filter((p) => ['nuevo', 'calificado', 'propuesta', 'seguimiento'].includes(p.status ?? 'nuevo')).length
@@ -132,6 +200,7 @@ const onProspectUpdated = (updated: Prospect) => {
   const idx = prospects.value.findIndex((p) => p._id === updated._id)
   if (idx !== -1) prospects.value[idx] = updated
   if (selected.value?._id === updated._id) selected.value = updated
+  if (kanbanDetailProspect.value?._id === updated._id) kanbanDetailProspect.value = updated
 }
 
 const confirmDeleteProspect = async (prospect: Prospect) => {
@@ -141,10 +210,26 @@ const confirmDeleteProspect = async (prospect: Prospect) => {
     await prospectService.delete(prospect._id)
     prospects.value = prospects.value.filter((p) => p._id !== prospect._id)
     if (selected.value?._id === prospect._id) selected.value = null
+    if (kanbanDetailProspect.value?._id === prospect._id) kanbanDetailProspect.value = null
     showSuccess('Prospecto eliminado')
   } catch (err: any) {
     showError(err?.message || 'No se pudo eliminar')
   }
+}
+
+const onImported = async () => {
+  await loadProspects()
+}
+
+const openDetailFromKanban = (prospect: Prospect) => {
+  kanbanDetailProspect.value = prospect
+}
+
+const onKanbanStatusChange = (prospect: Prospect, status: ProspectStatus) => {
+  prospectService.setStatus(prospect._id, status)
+  const updated = { ...prospect, status }
+  onProspectUpdated(updated)
+  showSuccess(`Movido a "${status}"`)
 }
 
 onMounted(() => {

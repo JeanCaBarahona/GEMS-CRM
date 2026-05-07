@@ -7,13 +7,23 @@
           Prospectos
           <span class="ml-1 text-xs font-bold text-slate-400">({{ filtered.length }})</span>
         </h3>
-        <button
-          @click="$emit('new')"
-          class="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-lg shadow-violet-500/30 hover:scale-105 active:scale-95 transition-transform flex items-center justify-center"
-          title="Nuevo prospecto"
-        >
-          <i class="fas fa-plus text-xs"></i>
-        </button>
+        <div class="flex items-center gap-1">
+          <button
+            v-if="$attrs.onImport"
+            @click="$emit('import')"
+            class="w-8 h-8 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-500 transition-all flex items-center justify-center"
+            title="Importar CSV"
+          >
+            <i class="fas fa-file-import text-xs"></i>
+          </button>
+          <button
+            @click="$emit('new')"
+            class="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-lg shadow-violet-500/30 hover:scale-105 active:scale-95 transition-transform flex items-center justify-center"
+            title="Nuevo prospecto"
+          >
+            <i class="fas fa-plus text-xs"></i>
+          </button>
+        </div>
       </div>
 
       <div class="relative">
@@ -143,6 +153,7 @@ const props = defineProps<Props>()
 defineEmits<{
   select: [prospect: Prospect]
   new: []
+  import: []
 }>()
 
 const search = ref('')

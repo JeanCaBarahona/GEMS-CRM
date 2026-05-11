@@ -87,10 +87,10 @@
             <i class="fas fa-flag text-[10px] text-slate-400 group-hover:text-primary-500"></i>
             <select v-model="filterPriority" class="bg-transparent text-[11px] font-black text-slate-600 outline-none cursor-pointer">
               <option value="">Prioridades</option>
-              <option value="urgent">Urgent</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
+              <option value="urgent">P1 · Crítico (&lt;15min)</option>
+              <option value="high">P2 · Alto (&lt;1h)</option>
+              <option value="medium">P3 · Medio (&lt;4h)</option>
+              <option value="low">P4 · Bajo (&lt;24h)</option>
             </select>
           </div>
 
@@ -137,7 +137,7 @@
           class="flex flex-col flex-1 min-w-[350px] bg-gradient-to-b from-slate-50/50 to-white rounded-[2rem] border border-slate-200/60 shadow-inner"
         >
           <!-- Column Header -->
-          <div class="flex-shrink-0 p-5 flex items-center justify-between">
+          <div class="flex-shrink-0 p-5 pb-3 flex items-center justify-between">
             <div class="flex items-center gap-3">
               <div :class="col.textColor" class="w-8 h-8 rounded-xl bg-white shadow-sm border border-slate-100 flex items-center justify-center">
                 <i :class="col.icon" class="text-xs"></i>
@@ -147,10 +147,18 @@
                 <p class="text-[9px] font-bold text-slate-400">{{ getTicketsByStatus(col.id).length }} tickets</p>
               </div>
             </div>
-            <div class="flex items-center gap-2">
-               <button class="w-6 h-6 rounded-lg hover:bg-slate-200/50 text-slate-400 transition-colors">
-                 <i class="fas fa-ellipsis-h text-[10px]"></i>
-               </button>
+          </div>
+
+          <!-- Búsqueda específica para Resueltos -->
+          <div v-if="col.id === 'resolved'" class="px-5 pb-2">
+            <div class="relative">
+              <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 text-[10px]"></i>
+              <input
+                v-model="resolvedSearchQuery"
+                type="text"
+                placeholder="Buscar en resueltos..."
+                class="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-bold text-slate-700 placeholder-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 outline-none transition-all"
+              />
             </div>
           </div>
 
@@ -162,19 +170,20 @@
               @click="openTicketDetail(ticket)"
             class="bg-white rounded-2xl p-4 border border-slate-100 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] hover:border-primary-300/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer group relative flex flex-col gap-3"
             >
-              <!-- Card Content (already there) -->
+              <!-- Card Content -->
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
                   <span class="text-[9px] font-black font-mono text-primary-600 bg-primary-50 px-2 py-0.5 rounded-lg border border-primary-100 shadow-sm">
                     #{{ ticket.ticketNumber }}
                   </span>
-                  <div v-if="ticket.priority === 'urgent'" class="flex items-center gap-1 px-1.5 py-0.5 bg-rose-50 text-rose-500 rounded-md border border-rose-100 animate-pulse">
-                    <span class="w-1 h-1 bg-rose-500 rounded-full"></span>
-                    <span class="text-[8px] font-black uppercase">Crítico</span>
-                  </div>
                 </div>
-                <span :class="getPriorityBadgeClass(ticket.priority)" class="text-[8px] font-black px-2 py-1 rounded-full uppercase tracking-tighter border">
-                  {{ ticket.priority }}
+                <span
+                  :class="getPriorityBadgeClass(ticket.priority)"
+                  class="text-[9px] font-black px-2 py-1 rounded-md uppercase tracking-wider border flex items-center gap-1"
+                  :title="`${PRIORITY_META[ticket.priority]?.label || ''} — SLA ${getPrioritySla(ticket.priority)}`"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full" :class="ticket.priority === 'urgent' ? 'bg-rose-500 animate-pulse' : ticket.priority === 'high' ? 'bg-orange-500' : ticket.priority === 'medium' ? 'bg-amber-500' : 'bg-blue-500'"></span>
+                  {{ getPriorityCode(ticket.priority) }}
                 </span>
               </div>
 
@@ -309,8 +318,12 @@
                   </div>
                 </td>
                 <td class="px-4 py-5">
-                   <span :class="getPriorityBadgeClass(ticket.priority)" class="px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase border shadow-sm">
-                     {{ ticket.priority }}
+                   <span
+                     :class="getPriorityBadgeClass(ticket.priority)"
+                     class="px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase border shadow-sm"
+                     :title="getPrioritySla(ticket.priority)"
+                   >
+                     {{ getPriorityCode(ticket.priority) }} · {{ PRIORITY_META[ticket.priority]?.label || ticket.priority }}
                    </span>
                 </td>
                 <td class="px-4 py-5">
@@ -812,16 +825,19 @@ const newTicketData = ref({
 })
 
 const columnLimits = reactive<Record<string, number>>({
+  new: 10,
   open: 10,
-  waiting: 10,
   resolved: 10
 })
 
 const columns = [
-  { id: 'open', title: 'En Proceso', icon: 'fas fa-spinner', color: 'bg-blue-400', textColor: 'text-blue-500' },
-  { id: 'waiting', title: 'Pendiente Cliente', icon: 'fas fa-hourglass-half', color: 'bg-orange-400', textColor: 'text-orange-500' },
-  { id: 'resolved', title: 'Resueltos', icon: 'fas fa-check-circle', color: 'bg-emerald-400', textColor: 'text-emerald-500' }
+  { id: 'new', title: 'Nuevos', icon: 'fas fa-inbox', color: 'bg-violet-500', textColor: 'text-violet-500' },
+  { id: 'open', title: 'En Proceso', icon: 'fas fa-spinner', color: 'bg-blue-500', textColor: 'text-blue-500' },
+  { id: 'resolved', title: 'Resueltos', icon: 'fas fa-check-circle', color: 'bg-emerald-500', textColor: 'text-emerald-500' }
 ]
+
+// Filtro adicional para columna Resueltos
+const resolvedSearchQuery = ref('')
 
 // Computed
 const filteredTickets = computed(() => {
@@ -1018,9 +1034,35 @@ const updateTicketStatus = async (newStatus: string) => {
 }
 
 const getTicketsByStatus = (status: string) => {
-  const all = filteredTickets.value.filter(t => t.status === status)
+  // Para "new", incluimos los que tengan status 'new' O 'waiting' (legacy)
+  // así no se pierden tickets con el status antiguo. El usuario los moverá a open o resolved.
+  let all = filteredTickets.value.filter(t =>
+    status === 'new' ? (t.status === 'new' || t.status === 'waiting') : t.status === status
+  )
+
+  // Filtro adicional de búsqueda solo en la columna Resueltos
+  if (status === 'resolved' && resolvedSearchQuery.value.trim()) {
+    const q = resolvedSearchQuery.value.toLowerCase()
+    all = all.filter(t =>
+      (t.subject && t.subject.toLowerCase().includes(q)) ||
+      (t.ticketNumber && t.ticketNumber.toLowerCase().includes(q)) ||
+      (t.submittedBy?.name && t.submittedBy.name.toLowerCase().includes(q))
+    )
+  }
+
   return all.slice(0, columnLimits[status] || 10)
 }
+
+// Helpers para el sistema de prioridad P1-P4
+const PRIORITY_META: Record<string, { code: string; label: string; sla: string }> = {
+  urgent: { code: 'P1', label: 'Crítico', sla: '< 15 min' },
+  high:   { code: 'P2', label: 'Alto',    sla: '< 1 hora' },
+  medium: { code: 'P3', label: 'Medio',   sla: '< 4 horas' },
+  low:    { code: 'P4', label: 'Bajo',    sla: '< 24 horas' },
+}
+
+const getPriorityCode = (priority?: string) => PRIORITY_META[priority || 'low']?.code || 'P4'
+const getPrioritySla = (priority?: string) => PRIORITY_META[priority || 'low']?.sla || ''
 
 const hasMoreInColumn = (status: string) => {
   const allInColumn = filteredTickets.value.filter(t => t.status === status).length
@@ -1103,11 +1145,12 @@ const createNewTicket = async () => {
 }
 
 const getPriorityBadgeClass = (priority: string) => {
+  // P1 Rojo, P2 Naranja, P3 Amarillo, P4 Azul (según política Soporte N1)
   switch(priority) {
-    case 'urgent': return 'bg-rose-50 text-rose-600 border-rose-100'
-    case 'high': return 'bg-orange-50 text-orange-600 border-orange-100'
-    case 'medium': return 'bg-amber-50 text-amber-600 border-amber-100'
-    default: return 'bg-emerald-50 text-emerald-600 border-emerald-100'
+    case 'urgent': return 'bg-rose-50 text-rose-700 border-rose-200'   // P1 Crítico
+    case 'high':   return 'bg-orange-50 text-orange-700 border-orange-200' // P2 Alto
+    case 'medium': return 'bg-amber-50 text-amber-700 border-amber-200'  // P3 Medio
+    default:       return 'bg-blue-50 text-blue-700 border-blue-200'      // P4 Bajo
   }
 }
 

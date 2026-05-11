@@ -573,10 +573,10 @@
              <template v-else>
                 <div class="space-y-4">
                   <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Título del Artículo</label>
-                    <input v-model="newWiki.titulo" placeholder="Ej: Manual de Despliegue" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:bg-white">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Título (síntoma exacto o pregunta del usuario)</label>
+                    <input v-model="newWiki.titulo" placeholder="Ej: 'No puedo iniciar sesión - error 401'" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:bg-white">
                   </div>
-                  
+
                   <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1">
                       <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Categoría</label>
@@ -587,14 +587,39 @@
                       </select>
                     </div>
                     <div class="space-y-1">
-                      <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Tags</label>
-                      <input v-model="wikiTagsRaw" placeholder="react, api, fix" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none">
+                      <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Tags (palabras clave para búsqueda)</label>
+                      <input v-model="wikiTagsRaw" placeholder="login, 401, credenciales, autenticacion" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none">
+                    </div>
+                  </div>
+
+                  <!-- Warning de duplicados -->
+                  <div v-if="wikiDuplicates.length > 0" class="rounded-xl border-2 border-amber-200 bg-amber-50 p-3 animate-fade-in">
+                    <div class="flex items-start gap-2 mb-2">
+                      <i class="fas fa-triangle-exclamation text-amber-600 mt-0.5"></i>
+                      <div class="flex-1">
+                        <p class="text-[11px] font-black text-amber-900">Posibles artículos similares</p>
+                        <p class="text-[10px] text-amber-700 font-medium">Antes de crear, revisa si ya existe documentación sobre esto:</p>
+                      </div>
+                    </div>
+                    <div class="space-y-1.5 pl-6">
+                      <button
+                        v-for="dup in wikiDuplicates"
+                        :key="dup._id"
+                        type="button"
+                        @click="openDuplicate(dup)"
+                        class="w-full text-left bg-white hover:bg-amber-100/50 border border-amber-200 rounded-lg px-3 py-2 transition-all"
+                      >
+                        <p class="text-[11px] font-black text-slate-800 truncate">{{ dup.titulo }}</p>
+                        <p v-if="dup.tags?.length" class="text-[9px] text-slate-500 font-bold mt-0.5">
+                          <span v-for="t in dup.tags.slice(0, 4)" :key="t" class="inline-block mr-1.5">#{{ t }}</span>
+                        </p>
+                      </button>
                     </div>
                   </div>
 
                   <div class="space-y-1">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Resumen Ejecutivo</label>
-                    <input v-model="newWiki.descripcion" placeholder="¿De qué trata este artículo?" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium outline-none">
+                    <input v-model="newWiki.descripcion" placeholder="¿De qué trata este artículo? (1 línea)" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium outline-none">
                   </div>
 
                   <div class="space-y-1">
@@ -893,16 +918,62 @@ const openCreateModal = () => {
 
 const resetForm = () => {
   newCase.value = { titulo: '', tipo: 'seguimiento', prioridad: 'media', descripcion: '', cliente_id: '', categoria: '', tags: [], archivos: [], linkedTicketId: '' }
-  newWiki.value = { titulo: '', categoria: 'proceso', contenido: '', descripcion: '', tags: [], archivos: [], linkedTicketId: '' }
+  newWiki.value = { titulo: '', categoria: 'proceso', contenido: WIKI_TEMPLATE, descripcion: '', tags: [], archivos: [], linkedTicketId: '' }
   wikiTagsRaw.value = ''
   creationTicketSearch.value = ''
   creationTicketResults.value = []
 }
 
+const WIKI_TEMPLATE = `<h2>Síntomas</h2>
+<p><em>Describe los mensajes de error, comportamiento observado, logs o códigos HTTP que permiten identificar este problema.</em></p>
+<p></p>
+<h2>Causa raíz</h2>
+<p><em>Explica el origen del fallo: configuración incorrecta, bug conocido, dependencia caída, etc.</em></p>
+<p></p>
+<h2>Solución</h2>
+<ol>
+  <li>Paso 1: …</li>
+  <li>Paso 2: …</li>
+  <li>Paso 3: …</li>
+</ol>
+<p></p>
+<h2>Tags / palabras clave</h2>
+<p><em>Añádelas en el campo "Tags" del formulario para facilitar la búsqueda.</em></p>`
+
 const openCreateWiki = () => {
   viewMode.value = 'wiki'
+  // Pre-llena con plantilla solo si está vacío (no pisa contenido en edición)
+  if (!newWiki.value.contenido) newWiki.value.contenido = WIKI_TEMPLATE
   showCreateModal.value = true
 }
+
+// Detector de duplicados de Wiki
+const wikiDuplicates = computed(() => {
+  const title = (newWiki.value.titulo || '').trim().toLowerCase()
+  const tags = (wikiTagsRaw.value || '')
+    .split(',')
+    .map((t) => t.trim().toLowerCase())
+    .filter(Boolean)
+
+  if (title.length < 4 && tags.length === 0) return []
+
+  return wikiArticles.value
+    .filter((w) => {
+      // No incluir la wiki que estamos editando
+      if (modalMode.value === 'edit' && selectedWiki.value?._id === w._id) return false
+
+      const wTitle = (w.titulo || '').toLowerCase()
+      const wTags = (w.tags || []).map((t) => t.toLowerCase())
+
+      // Match por título (substring de 4+ chars)
+      const titleMatch = title.length >= 4 && (wTitle.includes(title) || title.includes(wTitle))
+      // Match por tags (al menos 1 tag en común)
+      const tagMatch = tags.length > 0 && tags.some((t) => wTags.includes(t))
+
+      return titleMatch || tagMatch
+    })
+    .slice(0, 3)
+})
 
 const exportToPDF = () => {
   const content = viewMode.value === 'cases' ? selectedCase.value?.wikiContent : selectedWiki.value?.contenido
@@ -961,6 +1032,11 @@ const handleCreateCase = async () => {
     cases.value.unshift(created); selectedCase.value = created; showCreateModal.value = false
     closeLoading(); showSuccess('¡Éxito!', 'Proyecto creado.')
   } catch (err: any) { closeLoading(); showError('Error', err.message) }
+}
+
+const openDuplicate = (dup: WikiArticle) => {
+  selectedWiki.value = dup
+  showCreateModal.value = false
 }
 
 const saveWiki = async () => {

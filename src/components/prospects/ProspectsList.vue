@@ -111,17 +111,27 @@
                 <h4 class="text-xs font-black text-slate-900 truncate leading-tight">
                   {{ prospect.prospectName }}
                 </h4>
-                <ProspectStatusBadge :status="prospect.status" mini />
+                <div class="flex items-center gap-1 flex-shrink-0">
+                  <span :title="`Lead score: ${scoreOf(prospect)}/100`" class="text-[10px]" v-if="tempOf(prospect)">
+                    {{ tempOf(prospect) }}
+                  </span>
+                  <ProspectStatusBadge :status="prospect.status" mini />
+                </div>
               </div>
               <p v-if="prospect.company" class="text-[10px] font-bold text-slate-500 truncate mb-1">
                 <i class="fas fa-building text-[9px] mr-1 opacity-60"></i>
                 {{ prospect.company }}
               </p>
               <div class="flex items-center justify-between gap-2">
-                <span class="text-[10px] text-slate-400 font-medium flex items-center gap-1">
-                  <i class="fas fa-comment text-[9px]"></i>
-                  {{ prospect.messages?.length || 0 }} msg
-                </span>
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] text-slate-400 font-medium flex items-center gap-1">
+                    <i class="fas fa-comment text-[9px]"></i>
+                    {{ prospect.messages?.length || 0 }}
+                  </span>
+                  <span v-if="prospect.estimatedValue" class="text-[10px] text-emerald-600 font-black flex items-center gap-0.5">
+                    ${{ formatMoneyShort(prospect.estimatedValue) }}
+                  </span>
+                </div>
                 <span v-if="prospect.lastUpdated" class="text-[10px] text-slate-400 font-medium">
                   {{ formatRelative(prospect.lastUpdated) }}
                 </span>
@@ -140,6 +150,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import type { Prospect, ProspectStatus } from '@/types/prospect'
 import { PROSPECT_STATUSES } from '@/types/prospect'
+import { prospectService } from '@/services/prospectService'
 import ProspectStatusBadge from './ProspectStatusBadge.vue'
 
 interface Props {
@@ -210,5 +221,18 @@ const formatRelative = (date: string | number) => {
   } catch {
     return ''
   }
+}
+
+const formatMoneyShort = (n: number) => {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M'
+  if (n >= 1_000) return (n / 1_000).toFixed(0) + 'k'
+  return String(n)
+}
+
+const scoreOf = (p: Prospect) => prospectService.computeLeadScore(p, prospectService.getTasks(p._id))
+const tempOf = (p: Prospect) => {
+  const s = scoreOf(p)
+  const t = prospectService.computeTemperature(p, s)
+  return t === 'hot' ? '🔥' : t === 'warm' ? '☀️' : ''
 }
 </script>

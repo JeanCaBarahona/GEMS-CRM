@@ -18,23 +18,32 @@
         </p>
       </div>
 
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-3 flex-wrap">
         <!-- Stats Bar -->
         <div class="hidden lg:flex items-center gap-2">
-          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl border bg-slate-100 text-slate-700 border-slate-200">
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl border bg-slate-100 text-slate-700 border-slate-200" title="Total de prospectos">
             <i class="fas fa-users text-[10px] opacity-70"></i>
             <span class="text-[10px] font-black uppercase tracking-wider">Total</span>
             <span class="text-[12px] font-black ml-1">{{ prospects.length }}</span>
           </div>
-          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl border bg-amber-50 text-amber-700 border-amber-200">
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl border bg-amber-50 text-amber-700 border-amber-200" title="Activos: nuevo/calificado/propuesta/seguimiento">
             <i class="fas fa-fire text-[10px] opacity-70"></i>
             <span class="text-[10px] font-black uppercase tracking-wider">Activos</span>
             <span class="text-[12px] font-black ml-1">{{ activosCount }}</span>
           </div>
-          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl border bg-emerald-50 text-emerald-700 border-emerald-200">
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl border bg-emerald-50 text-emerald-700 border-emerald-200" title="Cerrados como ganados">
             <i class="fas fa-trophy text-[10px] opacity-70"></i>
             <span class="text-[10px] font-black uppercase tracking-wider">Ganados</span>
             <span class="text-[12px] font-black ml-1">{{ ganadosCount }}</span>
+          </div>
+          <div
+            v-if="forecastWeighted > 0"
+            class="flex items-center gap-2 px-3 py-1.5 rounded-xl border bg-gradient-to-br from-violet-50 to-fuchsia-50 text-violet-700 border-violet-200"
+            :title="`Pipeline bruto: $${formatMoney(pipelineGross)} · Forecast ponderado por probabilidad`"
+          >
+            <i class="fas fa-chart-line text-[10px] opacity-70"></i>
+            <span class="text-[10px] font-black uppercase tracking-wider">Forecast</span>
+            <span class="text-[12px] font-black ml-1">${{ formatMoney(forecastWeighted) }}</span>
           </div>
         </div>
 
@@ -149,6 +158,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { prospectService } from '@/services/prospectService'
 import type { Prospect, ProspectStatus } from '@/types/prospect'
+import { forecastValue } from '@/types/prospect'
 import { useNotifications } from '@/composables/useNotifications'
 import ProspectsList from '@/components/prospects/ProspectsList.vue'
 import ProspectDetail from '@/components/prospects/ProspectDetail.vue'
@@ -170,6 +180,17 @@ const activosCount = computed(
   () => prospects.value.filter((p) => ['nuevo', 'calificado', 'propuesta', 'seguimiento'].includes(p.status ?? 'nuevo')).length
 )
 const ganadosCount = computed(() => prospects.value.filter((p) => p.status === 'ganado').length)
+const activeProspects = computed(() =>
+  prospects.value.filter((p) => ['nuevo', 'calificado', 'propuesta', 'seguimiento'].includes(p.status ?? 'nuevo'))
+)
+const pipelineGross = computed(() => activeProspects.value.reduce((sum, p) => sum + (p.estimatedValue || 0), 0))
+const forecastWeighted = computed(() => Math.round(forecastValue(activeProspects.value)))
+
+const formatMoney = (n: number) => {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M'
+  if (n >= 1_000) return (n / 1_000).toFixed(0) + 'k'
+  return String(n)
+}
 
 const loadProspects = async () => {
   loading.value = true

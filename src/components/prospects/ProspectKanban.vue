@@ -49,21 +49,29 @@
                 {{ initials(prospect) }}
               </div>
               <div class="flex-1 min-w-0">
-                <h4 class="text-[11px] font-black text-slate-900 truncate leading-tight">
-                  {{ prospect.prospectName }}
-                </h4>
+                <div class="flex items-center gap-1">
+                  <h4 class="text-[11px] font-black text-slate-900 truncate leading-tight flex-1">
+                    {{ prospect.prospectName }}
+                  </h4>
+                  <span v-if="tempOf(prospect)" class="text-[10px]" :title="`Score: ${scoreOf(prospect)}/100`">{{ tempOf(prospect) }}</span>
+                </div>
                 <p v-if="prospect.company" class="text-[10px] font-bold text-slate-500 truncate mt-0.5">
                   {{ prospect.company }}
                 </p>
               </div>
             </div>
 
-            <div class="flex items-center justify-between text-[9px] text-slate-400 font-medium">
-              <span class="flex items-center gap-1">
-                <i class="fas fa-comment text-[8px]"></i>
-                {{ prospect.messages?.length || 0 }}
-              </span>
-              <span v-if="prospect.lastUpdated">
+            <div class="flex items-center justify-between text-[9px] font-medium">
+              <div class="flex items-center gap-2 text-slate-400">
+                <span class="flex items-center gap-1">
+                  <i class="fas fa-comment text-[8px]"></i>
+                  {{ prospect.messages?.length || 0 }}
+                </span>
+                <span v-if="prospect.estimatedValue" class="text-emerald-600 font-black">
+                  ${{ formatMoney(prospect.estimatedValue) }}
+                </span>
+              </div>
+              <span v-if="prospect.lastUpdated" class="text-slate-400">
                 {{ formatRelative(prospect.lastUpdated) }}
               </span>
             </div>
@@ -87,6 +95,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import type { Prospect, ProspectStatus } from '@/types/prospect'
 import { PROSPECT_STATUSES } from '@/types/prospect'
+import { prospectService } from '@/services/prospectService'
 
 interface Props {
   prospects: Prospect[]
@@ -184,5 +193,12 @@ const formatRelative = (date: string | number) => {
   } catch {
     return ''
   }
+}
+
+const scoreOf = (p: Prospect) => prospectService.computeLeadScore(p, prospectService.getTasks(p._id))
+const tempOf = (p: Prospect) => {
+  const s = scoreOf(p)
+  const t = prospectService.computeTemperature(p, s)
+  return t === 'hot' ? '🔥' : t === 'warm' ? '☀️' : ''
 }
 </script>

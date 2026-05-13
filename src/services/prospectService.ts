@@ -405,41 +405,32 @@ class ProspectService {
   }
 
   // ──────────── AI Helpers ────────────
+  /**
+   * Llama a Gemini a través del proxy del backend.
+   * La API key NO está en el frontend (seguridad). Vive en GEMINI_API_KEY
+   * del backend y el endpoint /api/ai/gemini-generate la usa internamente.
+   */
   async generateWithGemini(input: {
     prompt: string
     images?: Array<{ mimeType: string; data: string }>
   }): Promise<string> {
-    const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY
-    if (!apiKey) {
-      throw new Error('Falta la variable de entorno VITE_GEMINI_API_KEY')
-    }
-
-    const parts: any[] = [{ text: input.prompt }]
-    if (input.images?.length) {
-      input.images.forEach((img) => {
-        parts.push({ inline_data: { mime_type: img.mimeType, data: img.data } })
-      })
-    }
-
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`
-    const response = await fetch(url, {
+    const response = await fetch(`${API_CONFIG.BASE_URL}/ai/gemini-generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 4096 },
+        prompt: input.prompt,
+        images: input.images,
       }),
     })
 
     if (!response.ok) {
-      const errText = await response.text().catch(() => '')
-      throw new Error(`Error Gemini (${response.status}): ${errText.slice(0, 120)}`)
+      const errPayload = await response.json().catch(() => ({}))
+      throw new Error(errPayload.error || `Error IA (${response.status})`)
     }
 
     const data = await response.json()
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
-    if (!text) throw new Error('Gemini no devolvió contenido')
-    return text as string
+    if (!data?.text) throw new Error('La IA no devolvió contenido')
+    return data.text as string
   }
 
   async summarize(prospect: Prospect): Promise<string> {

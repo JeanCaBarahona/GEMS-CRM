@@ -158,8 +158,9 @@ const defaultInsights: InsightsData = {
   ]
 }
 
-// API Key desde variables de entorno
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY
+// La API key de Gemini vive solo en el backend.
+// El proxy /api/ai/gemini-generate es lo único que llamamos desde el front.
+import { API_CONFIG } from '@/config/api'
 const authStore = useAuthStore()
 
 // Cache key for localStorage
@@ -202,14 +203,7 @@ const generateInsights = async (background = false) => {
     loading.value = true
   }
   error.value = ''
-  
-  // Verificar API key
-  if (!API_KEY) {
-    error.value = 'Gemini API Key no configurada'
-    if (!background) loading.value = false
-    return
-  }
-  
+
   // Check cache first (solo si no es manual)
   if (background) {
     const cached = getCachedInsights()
@@ -273,43 +267,29 @@ const generateInsights = async (background = false) => {
     
     Evita introducciones, ve directo al formato.`
 
-    let response
-    let errorDetail = null
-
+    // Proxy seguro: backend hace el fallback automático entre modelos
+    let aiText = ''
     try {
-      // Intento 1: Gemini 2.5 Flash (El estándar actual en 2026)
-      response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/ai/gemini-generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        body: JSON.stringify({ prompt })
       })
 
       if (!response.ok) {
-        errorDetail = await response.json().catch(() => ({}))
-        console.warn('Fallo con 2.5 Flash, intentando con 3.1 Lite...', errorDetail)
-        
-        // Intento 2: Gemini 3.1 Flash Lite (Fallback de ultra-baja latencia)
-        response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${API_KEY}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-        })
+        const err = await response.json().catch(() => ({}))
+        console.error('AI proxy error:', err)
+        throw new Error(err.error || `Error de IA (${response.status})`)
       }
-    } catch (e) {
-      console.error('Error de red inicial:', e)
-      throw new Error('Error de conexión con la IA')
+
+      const result = await response.json()
+      aiText = result.text || ''
+    } catch (e: any) {
+      console.error('Error de conexión con IA:', e)
+      throw new Error(e?.message || 'Error de conexión con la IA')
     }
 
-    if (!response.ok) {
-      const finalError = await response.json().catch(() => ({}))
-      console.error('Gemini API Error FINAL:', finalError)
-      throw new Error(`Error de API: ${response.status}`)
-    }
-
-    const result = await response.json()
-    const aiText = result.candidates?.[0]?.content?.parts?.[0]?.text || ''
-    
-    if (!aiText) throw new Error('Gemini no devolvió contenido')
+    if (!aiText) throw new Error('La IA no devolvió contenido')
 
     // Parsing simple pero efectivo
     const lines = aiText.split('\n')

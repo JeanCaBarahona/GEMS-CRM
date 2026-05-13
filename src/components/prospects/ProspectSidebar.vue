@@ -194,22 +194,22 @@ const startEditValue = async () => {
   valueInputRef.value?.focus()
 }
 
-const saveValue = () => {
+const saveValue = async () => {
   const v = valueInput.value ?? 0
-  prospectService.setMetadata(props.prospect._id, { estimatedValue: v })
-  emit('updated', { ...props.prospect, estimatedValue: v })
   editingValue.value = false
+  emit('updated', { ...props.prospect, estimatedValue: v })
+  await prospectService.setMetadata(props.prospect._id, { estimatedValue: v })
 }
 
-const updateSource = (source: ProspectSource | '') => {
+const updateSource = async (source: ProspectSource | '') => {
   const value = (source || undefined) as ProspectSource | undefined
-  prospectService.setMetadata(props.prospect._id, { source: value })
   emit('updated', { ...props.prospect, source: value })
+  await prospectService.setMetadata(props.prospect._id, { source: value })
 }
 
-const updateMeta = (meta: Partial<{ contactName: string; contactEmail: string; contactPhone: string }>) => {
-  prospectService.setMetadata(props.prospect._id, meta)
+const updateMeta = async (meta: Partial<{ contactName: string; contactEmail: string; contactPhone: string }>) => {
   emit('updated', { ...props.prospect, ...meta })
+  await prospectService.setMetadata(props.prospect._id, meta)
 }
 
 // Inline mini-component for editable text fields

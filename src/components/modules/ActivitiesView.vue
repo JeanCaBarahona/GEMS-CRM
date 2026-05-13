@@ -2994,38 +2994,56 @@ const sortActivities = (list: ActivityData[]) => {
   })
 }
 
+/**
+ * Una actividad con status='overdue' pero que no debería estar vencida
+ * (fecha futura) la "rescatamos" visualmente y la mostramos en la columna
+ * que le corresponde según su progreso. Evita que desaparezca del kanban
+ * durante el sweep de reconciliación.
+ */
+const visualStatusFor = (a: any): 'pending' | 'in-progress' | 'completed' | 'overdue' | 'cancelled' => {
+  if (a.status === 'overdue' && !shouldBeOverdue(a)) {
+    // Mal marcada: la mostramos según su progreso
+    if (isActivityDone(a)) return 'completed'
+    const pct = typeof a.completionPercentage === 'number' ? a.completionPercentage : 0
+    return pct > 0 ? 'in-progress' : 'pending'
+  }
+  return a.status
+}
+
 const pendingActivities = computed(() => {
-  const sorted = sortActivities(filteredActivities.value.filter(a => a.status === 'pending'))
+  const sorted = sortActivities(filteredActivities.value.filter(a => visualStatusFor(a) === 'pending'))
   return sorted.slice(0, columnLimits.value.pending)
 })
 
-const hasMorePending = computed(() => 
-  filteredActivities.value.filter(a => a.status === 'pending').length > columnLimits.value.pending
+const hasMorePending = computed(() =>
+  filteredActivities.value.filter(a => visualStatusFor(a) === 'pending').length > columnLimits.value.pending
 )
 
 const inProgressActivities = computed(() => {
-  const sorted = sortActivities(filteredActivities.value.filter(a => a.status === 'in-progress'))
+  const sorted = sortActivities(filteredActivities.value.filter(a => visualStatusFor(a) === 'in-progress'))
   return sorted.slice(0, columnLimits.value.inProgress)
 })
 
-const hasMoreInProgress = computed(() => 
-  filteredActivities.value.filter(a => a.status === 'in-progress').length > columnLimits.value.inProgress
+const hasMoreInProgress = computed(() =>
+  filteredActivities.value.filter(a => visualStatusFor(a) === 'in-progress').length > columnLimits.value.inProgress
 )
 
 const completedActivities = computed(() => {
-  const sorted = sortActivities(filteredActivities.value.filter(a => a.status === 'completed'))
+  const sorted = sortActivities(filteredActivities.value.filter(a => visualStatusFor(a) === 'completed'))
   return sorted.slice(0, columnLimits.value.completed)
 })
 
-const hasMoreCompleted = computed(() => 
-  filteredActivities.value.filter(a => a.status === 'completed').length > columnLimits.value.completed
+const hasMoreCompleted = computed(() =>
+  filteredActivities.value.filter(a => visualStatusFor(a) === 'completed').length > columnLimits.value.completed
 )
 
-// Filtro defensivo: ocultamos del Kanban cualquier actividad marcada como overdue
-// que en realidad ya esté terminada (100% o status final), evitando el bug visual
-// donde tareas completadas aparecen en la columna de vencidas.
+// Filtro defensivo del Kanban: solo muestra en "Vencidas" lo que REALMENTE
+// debería estar vencido AHORA MISMO (terminada=no, fecha pasada=sí).
+// Esto blinda la vista contra status='overdue' obsoletos en BD provenientes de
+// versiones anteriores con bugs, hasta que reconcileCompletedActivities los
+// limpie en el backend.
 const trulyOverdueActivities = computed(() =>
-  filteredActivities.value.filter((a) => a.status === 'overdue' && !isActivityDone(a))
+  filteredActivities.value.filter((a) => a.status === 'overdue' && shouldBeOverdue(a))
 )
 
 const overdueActivities = computed(() => {
@@ -3270,6 +3288,25 @@ const isPastDueDate = (dueDateIso: string): boolean => {
 }
 
 /**
+ * Verdad única sobre si una tarea DEBE estar vencida AHORA MISMO.
+ * Solo retorna true cuando se cumplen TODAS las condiciones:
+ * - Tiene dueDate válida
+ * - No está terminada (status != completed/cancelled, completion < 100)
+ * - La fecha ya pasó realmente (end-of-day local + 1h margen)
+ *
+ * Esta es la función que se debe usar para CUALQUIER decisión visual o
+ * de backend sobre el estado "vencida". El campo `status === 'overdue'`
+ * del backend NO debe considerarse confiable porque puede haber sido
+ * guardado por versiones viejas con bugs.
+ */
+const shouldBeOverdue = (activity: any): boolean => {
+  if (!activity) return false
+  if (!activity.dueDate) return false
+  if (isActivityDone(activity)) return false
+  return isPastDueDate(activity.dueDate)
+}
+
+/**
  * Formatea una fecha respetando el locale del browser. Funciona automáticamente
  * para es-CO, es-MX, es-CR y cualquier otro.
  */
@@ -3289,18 +3326,39 @@ const formatDueDate = (dueDateIso: string): string => {
 }
 
 /**
- * Auto-corrige inconsistencias: si una actividad está marcada como 'overdue' pero
- * tiene 100% de progreso, la regresamos a 'completed'. Evita el bug visual donde
- * una tarea terminada aparece en la columna de vencidas.
+ * Auto-corrige TODAS las inconsistencias del campo status:
+ * 1. status='overdue' pero la tarea está al 100%/completed → debe ser 'completed'
+ * 2. status='overdue' pero la fecha real aún NO ha pasado → revertir a 'pending'/'in-progress'
+ *
+ * El caso #2 es crítico: si en algún momento del pasado (con bugs viejos) una
+ * actividad fue marcada erróneamente como overdue, este sweep la libera.
+ *
+ * Para decidir a qué status revertir cuando una "overdue futura" se libera,
+ * usamos completionPercentage: 0% → pending, 1-99% → in-progress.
  */
 const reconcileCompletedActivities = async () => {
-  const inconsistent = activities.value.filter(
+  // Caso 1: 100% pero status overdue → completed
+  const overdueButDone = activities.value.filter(
     (a) => a.status === 'overdue' && typeof a.completionPercentage === 'number' && a.completionPercentage >= 100
   )
-  if (!inconsistent.length) return
 
-  console.warn(`🔧 Reconciliando ${inconsistent.length} actividades mal marcadas como vencidas (100% completadas)`)
-  for (const activity of inconsistent) {
+  // Caso 2: overdue pero la fecha NO ha pasado → pending o in-progress
+  const overdueButFuture = activities.value.filter(
+    (a) => a.status === 'overdue' && !isActivityDone(a) && !isPastDueDate(a.dueDate || '')
+  )
+
+  const totalToFix = overdueButDone.length + overdueButFuture.length
+  if (!totalToFix) return
+
+  if (overdueButDone.length) {
+    console.warn(`🔧 Reconciliando ${overdueButDone.length} actividades mal marcadas como vencidas (100% completadas)`)
+  }
+  if (overdueButFuture.length) {
+    console.warn(`🔧 Reconciliando ${overdueButFuture.length} actividades mal marcadas como vencidas (fecha aún en el futuro)`)
+  }
+
+  // Fix caso 1
+  for (const activity of overdueButDone) {
     if (!activity._id) continue
     try {
       await activityService.updateStatus(activity._id, 'completed')
@@ -3308,6 +3366,20 @@ const reconcileCompletedActivities = async () => {
       if (idx !== -1) activities.value[idx].status = 'completed'
     } catch (err) {
       console.warn('No se pudo reconciliar actividad:', activity._id, err)
+    }
+  }
+
+  // Fix caso 2: revertir status según el progreso
+  for (const activity of overdueButFuture) {
+    if (!activity._id) continue
+    const pct = typeof activity.completionPercentage === 'number' ? activity.completionPercentage : 0
+    const targetStatus: 'pending' | 'in-progress' = pct > 0 ? 'in-progress' : 'pending'
+    try {
+      await activityService.updateStatus(activity._id, targetStatus)
+      const idx = activities.value.findIndex((a) => a._id === activity._id)
+      if (idx !== -1) activities.value[idx].status = targetStatus
+    } catch (err) {
+      console.warn('No se pudo reconciliar actividad (futura):', activity._id, err)
     }
   }
 }

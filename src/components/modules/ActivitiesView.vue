@@ -118,7 +118,13 @@
             @blur="setTimeout(() => showQuickTaskHints = false, 200)"
             type="text"
             placeholder="¿Qué necesitas hacer? (Enter para crear, Esc para limpiar)"
-            class="w-full px-3 py-1.5 bg-white border border-indigo-200 rounded-lg text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none font-medium text-xs shadow-sm"
+            class="w-full pl-3 pr-16 py-1.5 bg-white border border-indigo-200 rounded-lg text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none font-medium text-xs shadow-sm"
+          />
+          <VoiceDictateButton
+            v-model="quickTaskTitle"
+            :show-label="false"
+            size="xs"
+            class="!absolute right-1.5 top-1/2 -translate-y-1/2"
           />
           
           <!-- Hints para atajos de teclado -->
@@ -2661,6 +2667,7 @@ import { API_CONFIG } from '../../config/api'
 import type { Client, TeamMember } from '../../types'
 import { casesService } from '../../services/casesService'
 import { wikiService } from '../../services/wikiService'
+import VoiceDictateButton from '@/components/ui/VoiceDictateButton.vue'
 import ActivityFormModal from '../forms/ActivityFormModal.vue'
 import AssignActivityModal from '../modals/AssignActivityModal.vue'
 import CustomSelect from '../ui/CustomSelect.vue'

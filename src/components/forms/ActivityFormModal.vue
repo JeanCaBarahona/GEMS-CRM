@@ -32,7 +32,10 @@
             
             <!-- Título -->
             <div class="space-y-2">
-              <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Título de la Actividad</label>
+              <div class="flex items-center justify-between ml-1">
+                <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest">Título de la Actividad</label>
+                <VoiceDictateButton v-model="form.title" size="xs" />
+              </div>
               <input
                 v-model="form.title"
                 type="text"
@@ -120,7 +123,10 @@
               <!-- Columna Derecha: Descripción y Tiempo -->
               <div class="space-y-4">
                 <div class="space-y-2">
-                  <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Detalles y Notas</label>
+                  <div class="flex items-center justify-between ml-1">
+                    <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest">Detalles y Notas</label>
+                    <VoiceDictateButton v-model="form.description" size="xs" />
+                  </div>
                   <textarea
                     v-model="form.description"
                     rows="5"
@@ -219,6 +225,7 @@
 import { ref, reactive, onMounted, computed, watch } from 'vue'
 import AssignedUsersSelector from '../AssignedUsersSelector.vue'
 import CustomSelect from '../ui/CustomSelect.vue'
+import VoiceDictateButton from '@/components/ui/VoiceDictateButton.vue'
 import { activityService } from '../../services/activityService'
 import { useBoardsStore } from '../../stores/boards'
 import { useTasksStore } from '../../stores/tasks'

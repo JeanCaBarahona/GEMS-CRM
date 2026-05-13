@@ -48,7 +48,11 @@ const routes = [
     path: '/tickets',
     name: 'Tickets',
     component: InternalTickets,
-    meta: { requiresAuth: true }
+    meta: {
+      requiresAuth: true,
+      // Colaborador (employee) NO tiene acceso a Tickets
+      requiredRoles: ['admin', 'manager', 'support']
+    }
   },
   {
     path: '/login',

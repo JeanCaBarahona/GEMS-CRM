@@ -106,7 +106,8 @@ export const useAuthStore = defineStore('auth', () => {
   })
   
   const canViewTickets = computed(() => {
-    return ['admin', 'manager', 'support', 'employee'].includes(user.value?.role || '')
+    // Colaborador (employee) NO tiene acceso a Tickets por decisión del equipo
+    return ['admin', 'manager', 'support'].includes(user.value?.role || '')
   })
   
   // Equipo: Admin, Manager y Empleado pueden ver  

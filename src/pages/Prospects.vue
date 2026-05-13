@@ -3,14 +3,18 @@
     <!-- Page Header -->
     <div class="flex items-center justify-between gap-4 flex-shrink-0">
       <div>
-        <div class="flex items-center gap-2.5 mb-1">
+        <div class="flex items-center gap-2.5 mb-1 flex-wrap">
           <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-white shadow-lg shadow-violet-500/20">
             <i class="fas fa-wand-magic-sparkles text-xs"></i>
           </div>
           <h1 class="text-xl font-black text-slate-900">Prospectos IA</h1>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200 text-[10px] font-black uppercase tracking-wider">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+            En desarrollo
+          </span>
         </div>
-        <p class="text-xs font-medium text-slate-500 ml-12">
-          Convierte conversaciones en propuestas comerciales con IA
+        <p class="text-xs font-medium text-amber-700 ml-12 font-bold">
+          ⚠️ Módulo en construcción — no usar en producción aún
         </p>
       </div>
 

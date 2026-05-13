@@ -3226,15 +3226,20 @@ const isActivityDone = (activity: any): boolean => {
 }
 
 /**
- * Una actividad está vencida solo cuando ya pasó el FIN DEL DÍA local del dueDate.
+ * Lógica de vencimiento multi-zona horaria (CR / MX / CO).
  *
- * Por qué: el backend guarda dueDate en UTC ("2026-05-12T00:00:00Z"). Si el usuario
- * está en UTC-5 (Colombia), eso se interpreta como "11 may 7 PM" en su zona, lo que
- * provocaba que tareas con vencimiento "mañana" aparecieran vencidas hoy.
+ * El backend guarda dueDate como ISO UTC ("2026-05-12T00:00:00Z"). El usuario
+ * realmente está pensando en términos del DÍA del calendario que eligió
+ * (ej. "12 de mayo"), no en un instante exacto.
  *
- * Solución: tomamos solo año/mes/día del dueDate y lo comparamos contra el final
- * del día local (23:59:59) en la zona del usuario. Margen extra de 1 hora para
- * cubrir desfases de relojes entre cliente y servidor.
+ * Estrategia:
+ * 1. Extraemos el día del calendario usando UTC components (lo que el backend
+ *    "intentó guardar") — esto evita que en Colombia veamos "11 may" cuando
+ *    el backend guardó "12 may UTC".
+ * 2. Construimos "fin de ese día" pero en la zona horaria del usuario.
+ *    Así un comercial en Bogotá ve vencimiento al final del 12 may COL,
+ *    uno en CDMX al final del 12 may MEX y uno en San José al final del 12 may CR.
+ * 3. Margen de 1 hora para tolerar desfases de relojes.
  */
 const SAFETY_MARGIN_MS = 60 * 60 * 1000 // 1 hora
 
@@ -3243,10 +3248,37 @@ const isPastDueDate = (dueDateIso: string): boolean => {
   const due = new Date(dueDateIso)
   if (isNaN(due.getTime())) return false
 
-  // Fin del día local del dueDate (23:59:59.999 en la zona del usuario)
-  const endOfDueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate(), 23, 59, 59, 999)
+  // Día calendario "intencional" según el backend (UTC components)
+  const year = due.getUTCFullYear()
+  const month = due.getUTCMonth()
+  const day = due.getUTCDate()
 
-  return Date.now() > endOfDueDay.getTime() + SAFETY_MARGIN_MS
+  // Fin de ESE día (23:59:59.999) en la zona horaria local del usuario.
+  // Esto se adapta automáticamente al usuario sin necesidad de conocer su zona:
+  // - Comercial en Colombia (UTC-5): 23:59 COL = 04:59 UTC del día siguiente
+  // - Comercial en México/CR (UTC-6): 23:59 MEX = 05:59 UTC del día siguiente
+  const endOfDueDayLocal = new Date(year, month, day, 23, 59, 59, 999)
+
+  return Date.now() > endOfDueDayLocal.getTime() + SAFETY_MARGIN_MS
+}
+
+/**
+ * Formatea una fecha respetando el locale del browser. Funciona automáticamente
+ * para es-CO, es-MX, es-CR y cualquier otro.
+ */
+const formatDueDate = (dueDateIso: string): string => {
+  if (!dueDateIso) return ''
+  const due = new Date(dueDateIso)
+  if (isNaN(due.getTime())) return ''
+  try {
+    return new Intl.DateTimeFormat(navigator.language || 'es', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }).format(new Date(due.getUTCFullYear(), due.getUTCMonth(), due.getUTCDate()))
+  } catch {
+    return due.toLocaleDateString()
+  }
 }
 
 /**

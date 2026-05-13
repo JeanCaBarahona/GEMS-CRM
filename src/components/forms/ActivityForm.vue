@@ -3,9 +3,12 @@
     <!-- Información básica -->
     <div class="grid grid-cols-1 gap-6">
       <div>
-        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-          Título de la Actividad *
-        </label>
+        <div class="flex items-center justify-between mb-2">
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+            Título de la Actividad *
+          </label>
+          <VoiceDictateButton v-model="form.title" size="xs" />
+        </div>
         <input
           v-model="form.title"
           type="text"
@@ -53,9 +56,12 @@
 
     <!-- Descripción -->
     <div>
-      <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-        Descripción *
-      </label>
+      <div class="flex items-center justify-between mb-2">
+        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+          Descripción *
+        </label>
+        <VoiceDictateButton v-model="form.description" size="xs" />
+      </div>
       <textarea
         v-model="form.description"
         rows="4"
@@ -120,6 +126,7 @@
 
 <script setup lang="ts">
 import AssignedUsersSelector from '../AssignedUsersSelector.vue'
+import VoiceDictateButton from '@/components/ui/VoiceDictateButton.vue'
 // import eliminado: computed
 // ...eliminado: helpers de chips y búsqueda, ahora en AssignedUsersSelector
 import { ref, reactive, onMounted, watch } from 'vue'

@@ -66,20 +66,7 @@
           <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
             Diagnóstico del prospecto <span class="text-rose-500">*</span>
           </label>
-          <button
-            v-if="speechSupported"
-            type="button"
-            @click="toggleRecording"
-            :class="[
-              'px-2.5 py-1 rounded-lg text-[10px] font-black flex items-center gap-1.5 transition-all',
-              isRecording
-                ? 'bg-rose-100 text-rose-700 border border-rose-200 animate-pulse'
-                : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200',
-            ]"
-          >
-            <i :class="['fas', isRecording ? 'fa-stop' : 'fa-microphone', 'text-[10px]']"></i>
-            {{ isRecording ? 'Detener' : 'Dictar' }}
-          </button>
+          <VoiceDictateButton v-model="inputText" />
         </div>
         <div class="relative">
           <textarea
@@ -87,12 +74,7 @@
             rows="5"
             placeholder="Describe la empresa, sector, problemas detectados, oportunidades, contexto comercial... o haz click en Dictar y habla."
             class="w-full px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10 outline-none transition-all resize-none leading-relaxed"
-            :class="{ 'ring-2 ring-rose-300 border-rose-300': isRecording }"
           ></textarea>
-          <div v-if="isRecording" class="absolute bottom-2 right-2 flex items-center gap-1.5 px-2 py-1 bg-rose-500 text-white rounded-full text-[9px] font-black">
-            <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-            Grabando
-          </div>
         </div>
         <div class="flex justify-between items-center mt-1.5 px-1">
           <span class="text-[10px] text-slate-400 font-bold">{{ inputText.length }} caracteres</span>
@@ -198,9 +180,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { prospectService } from '@/services/prospectService'
 import { useNotifications } from '@/composables/useNotifications'
+import VoiceDictateButton from '@/components/ui/VoiceDictateButton.vue'
 
 const emit = defineEmits<{
   created: [prospectId: string]
@@ -227,74 +210,6 @@ interface ImageItem {
 const images = ref<ImageItem[]>([])
 
 const canGenerate = computed(() => inputText.value.trim().length >= 15)
-
-// ────── Speech Recognition (Web Speech API) ──────
-const SpeechRecognitionImpl =
-  (typeof window !== 'undefined' && ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)) || null
-const speechSupported = !!SpeechRecognitionImpl
-const isRecording = ref(false)
-let recognition: any = null
-let recordingBaseline = ''
-
-const startRecording = () => {
-  if (!SpeechRecognitionImpl) return
-  recognition = new SpeechRecognitionImpl()
-  recognition.lang = 'es-CO'
-  recognition.continuous = true
-  recognition.interimResults = true
-  recordingBaseline = inputText.value ? inputText.value.trimEnd() + ' ' : ''
-  let finalTranscript = ''
-
-  recognition.onresult = (event: any) => {
-    let interim = ''
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      const transcript = event.results[i][0].transcript
-      if (event.results[i].isFinal) finalTranscript += transcript + ' '
-      else interim += transcript
-    }
-    inputText.value = (recordingBaseline + finalTranscript + interim).trimStart()
-  }
-
-  recognition.onerror = (event: any) => {
-    console.warn('Speech recognition error:', event.error)
-    if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-      showError('Permiso de micrófono denegado')
-    }
-    isRecording.value = false
-  }
-
-  recognition.onend = () => {
-    isRecording.value = false
-  }
-
-  try {
-    recognition.start()
-    isRecording.value = true
-  } catch (e) {
-    console.warn('No se pudo iniciar grabación', e)
-    isRecording.value = false
-  }
-}
-
-const stopRecording = () => {
-  if (recognition) {
-    try {
-      recognition.stop()
-    } catch (e) {
-      /* ignore */
-    }
-  }
-  isRecording.value = false
-}
-
-const toggleRecording = () => {
-  if (isRecording.value) stopRecording()
-  else startRecording()
-}
-
-onBeforeUnmount(() => {
-  stopRecording()
-})
 
 const onFilesSelected = (e: Event) => {
   const target = e.target as HTMLInputElement

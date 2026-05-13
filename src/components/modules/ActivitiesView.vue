@@ -3226,6 +3226,30 @@ const isActivityDone = (activity: any): boolean => {
 }
 
 /**
+ * Una actividad está vencida solo cuando ya pasó el FIN DEL DÍA local del dueDate.
+ *
+ * Por qué: el backend guarda dueDate en UTC ("2026-05-12T00:00:00Z"). Si el usuario
+ * está en UTC-5 (Colombia), eso se interpreta como "11 may 7 PM" en su zona, lo que
+ * provocaba que tareas con vencimiento "mañana" aparecieran vencidas hoy.
+ *
+ * Solución: tomamos solo año/mes/día del dueDate y lo comparamos contra el final
+ * del día local (23:59:59) en la zona del usuario. Margen extra de 1 hora para
+ * cubrir desfases de relojes entre cliente y servidor.
+ */
+const SAFETY_MARGIN_MS = 60 * 60 * 1000 // 1 hora
+
+const isPastDueDate = (dueDateIso: string): boolean => {
+  if (!dueDateIso) return false
+  const due = new Date(dueDateIso)
+  if (isNaN(due.getTime())) return false
+
+  // Fin del día local del dueDate (23:59:59.999 en la zona del usuario)
+  const endOfDueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate(), 23, 59, 59, 999)
+
+  return Date.now() > endOfDueDay.getTime() + SAFETY_MARGIN_MS
+}
+
+/**
  * Auto-corrige inconsistencias: si una actividad está marcada como 'overdue' pero
  * tiene 100% de progreso, la regresamos a 'completed'. Evita el bug visual donde
  * una tarea terminada aparece en la columna de vencidas.
@@ -3254,13 +3278,12 @@ const updateOverdueActivities = async () => {
     // Primero corregimos inconsistencias antes de marcar nuevas vencidas
     await reconcileCompletedActivities()
 
-    const today = new Date()
     const overdueActivitiesToUpdate = activities.value.filter((activity) => {
       // Defensas múltiples:
-      if (!activity.dueDate) return false                    // 1. necesita fecha límite
-      if (isActivityDone(activity)) return false             // 2. no marcar terminadas (incluye 100%)
-      if (activity.status === 'overdue') return false        // 3. ya está vencida
-      if (new Date(activity.dueDate) >= today) return false  // 4. todavía no vence
+      if (!activity.dueDate) return false              // 1. necesita fecha límite
+      if (isActivityDone(activity)) return false       // 2. no marcar terminadas (incluye 100%)
+      if (activity.status === 'overdue') return false  // 3. ya está vencida
+      if (!isPastDueDate(activity.dueDate)) return false // 4. fin del día local + margen aún no pasó
       return true
     })
 
@@ -3423,9 +3446,8 @@ const getDaysOverdue = (dueDate: string): number => {
   return Math.max(0, diffDays)
 }
 
-const isOverdue = (dueDate: string): boolean => {
-  return new Date(dueDate) < new Date()
-}
+// Wrapper backwards-compatible: usa la misma logica de "fin del día local + margen"
+const isOverdue = (dueDate: string): boolean => isPastDueDate(dueDate)
 
 const deleteActivity = async (activityId: string) => {
   const activity = activities.value.find(a => a._id === activityId)

@@ -3014,13 +3014,20 @@ const hasMoreCompleted = computed(() =>
   filteredActivities.value.filter(a => a.status === 'completed').length > columnLimits.value.completed
 )
 
+// Filtro defensivo: ocultamos del Kanban cualquier actividad marcada como overdue
+// que en realidad ya esté terminada (100% o status final), evitando el bug visual
+// donde tareas completadas aparecen en la columna de vencidas.
+const trulyOverdueActivities = computed(() =>
+  filteredActivities.value.filter((a) => a.status === 'overdue' && !isActivityDone(a))
+)
+
 const overdueActivities = computed(() => {
-  const sorted = sortActivities(filteredActivities.value.filter(a => a.status === 'overdue'))
+  const sorted = sortActivities(trulyOverdueActivities.value)
   return sorted.slice(0, columnLimits.value.overdue)
 })
 
-const hasMoreOverdue = computed(() => 
-  filteredActivities.value.filter(a => a.status === 'overdue').length > columnLimits.value.overdue
+const hasMoreOverdue = computed(() =>
+  trulyOverdueActivities.value.length > columnLimits.value.overdue
 )
 
 const formatTime = (seconds: number | undefined) => {
@@ -3206,31 +3213,76 @@ const loadActivities = async () => {
   }
 }
 
+/**
+ * Considera una actividad "terminada" (no debe volverse overdue) si:
+ * - Su status es 'completed' o 'cancelled', o
+ * - Su completionPercentage es 100 (puede haber bug donde el status no se actualizó)
+ */
+const isActivityDone = (activity: any): boolean => {
+  if (!activity) return false
+  if (activity.status === 'completed' || activity.status === 'cancelled') return true
+  if (typeof activity.completionPercentage === 'number' && activity.completionPercentage >= 100) return true
+  return false
+}
+
+/**
+ * Auto-corrige inconsistencias: si una actividad está marcada como 'overdue' pero
+ * tiene 100% de progreso, la regresamos a 'completed'. Evita el bug visual donde
+ * una tarea terminada aparece en la columna de vencidas.
+ */
+const reconcileCompletedActivities = async () => {
+  const inconsistent = activities.value.filter(
+    (a) => a.status === 'overdue' && typeof a.completionPercentage === 'number' && a.completionPercentage >= 100
+  )
+  if (!inconsistent.length) return
+
+  console.warn(`🔧 Reconciliando ${inconsistent.length} actividades mal marcadas como vencidas (100% completadas)`)
+  for (const activity of inconsistent) {
+    if (!activity._id) continue
+    try {
+      await activityService.updateStatus(activity._id, 'completed')
+      const idx = activities.value.findIndex((a) => a._id === activity._id)
+      if (idx !== -1) activities.value[idx].status = 'completed'
+    } catch (err) {
+      console.warn('No se pudo reconciliar actividad:', activity._id, err)
+    }
+  }
+}
+
 const updateOverdueActivities = async () => {
   try {
-    const today = new Date()
-    const overdueActivitiesToUpdate = activities.value.filter(activity => 
-      activity.dueDate && 
-      new Date(activity.dueDate) < today && 
-      activity.status !== 'completed' && 
-  activity.status !== 'cancelled' &&
-      activity.status !== 'overdue'
-    )
+    // Primero corregimos inconsistencias antes de marcar nuevas vencidas
+    await reconcileCompletedActivities()
 
-    // Actualizar cada actividad vencida en el backend
+    const today = new Date()
+    const overdueActivitiesToUpdate = activities.value.filter((activity) => {
+      // Defensas múltiples:
+      if (!activity.dueDate) return false                    // 1. necesita fecha límite
+      if (isActivityDone(activity)) return false             // 2. no marcar terminadas (incluye 100%)
+      if (activity.status === 'overdue') return false        // 3. ya está vencida
+      if (new Date(activity.dueDate) >= today) return false  // 4. todavía no vence
+      return true
+    })
+
     for (const activity of overdueActivitiesToUpdate) {
-      if (activity._id) {
+      if (!activity._id) continue
+      // Re-check antes de cada llamada (por si cambió el estado durante el loop)
+      const fresh = activities.value.find((a) => a._id === activity._id)
+      if (!fresh || isActivityDone(fresh) || fresh.status === 'overdue') continue
+
+      try {
         await activityService.updateStatus(activity._id, 'overdue')
-        // Actualizar en el estado local
-        const activityIndex = activities.value.findIndex(a => a._id === activity._id)
-        if (activityIndex !== -1) {
-          activities.value[activityIndex].status = 'overdue'
+        const idx = activities.value.findIndex((a) => a._id === activity._id)
+        if (idx !== -1 && !isActivityDone(activities.value[idx])) {
+          activities.value[idx].status = 'overdue'
         }
+      } catch (err) {
+        console.warn('No se pudo marcar como vencida:', activity._id, err)
       }
     }
 
     if (overdueActivitiesToUpdate.length > 0) {
-      console.log(`✅ Se actualizaron ${overdueActivitiesToUpdate.length} actividades vencidas`)
+      console.log(`✅ Se marcaron ${overdueActivitiesToUpdate.length} actividades como vencidas`)
     }
   } catch (err) {
     console.error('❌ Error al actualizar actividades vencidas:', err)

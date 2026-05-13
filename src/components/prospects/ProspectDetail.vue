@@ -200,11 +200,19 @@ interface ProspectExtras {
 
 const extras = ref<ProspectExtras>({ notes: [], tasks: [], timeline: [] })
 
-const loadExtras = () => {
+const loadExtras = async () => {
+  // Carga rápida desde localStorage para respuesta instantánea
   extras.value = {
     notes: prospectService.getNotes(props.prospect._id),
     tasks: prospectService.getTasks(props.prospect._id),
     timeline: prospectService.getTimeline(props.prospect._id),
+  }
+  // Y en paralelo sincroniza con backend (silencioso si falla)
+  try {
+    const fresh = await prospectService.syncExtras(props.prospect)
+    extras.value = fresh
+  } catch {
+    /* mantiene la versión local */
   }
 }
 
@@ -256,8 +264,8 @@ const tabs = computed(() => [
 ])
 
 // ─── Status actions ───
-const updateStatus = (status: ProspectStatus) => {
-  prospectService.setStatus(props.prospect._id, status)
+const updateStatus = async (status: ProspectStatus) => {
+  await prospectService.setStatus(props.prospect._id, status)
   emit('updated', { ...props.prospect, status })
   showSuccess(`Estado: ${PROSPECT_STATUSES.find((s) => s.value === status)?.label}`)
   loadExtras()
@@ -269,11 +277,10 @@ const openOutreach = (channel: OutreachChannel) => {
   outreachOpen.value = true
 }
 
-const onOutreachUpdated = (updated: Prospect) => {
-  // Registrar evento en timeline
+const onOutreachUpdated = async (updated: Prospect) => {
   const eventType = outreachChannel.value === 'email' ? 'outreach_email'
     : outreachChannel.value === 'whatsapp' ? 'outreach_whatsapp' : 'outreach_call'
-  prospectService.addTimelineEntry(updated._id, {
+  await prospectService.addTimelineEntry(updated._id, {
     type: eventType,
     description: outreachChannel.value === 'email' ? 'Email enviado' : outreachChannel.value === 'whatsapp' ? 'WhatsApp enviado' : 'Script de llamada generado',
   })
@@ -282,26 +289,26 @@ const onOutreachUpdated = (updated: Prospect) => {
 }
 
 // ─── Notes ───
-const onAddNote = (content: string) => {
-  prospectService.addNote(props.prospect._id, content)
+const onAddNote = async (content: string) => {
+  await prospectService.addNote(props.prospect._id, content)
   loadExtras()
 }
-const onRemoveNote = (id: string) => {
-  prospectService.deleteNote(props.prospect._id, id)
+const onRemoveNote = async (id: string) => {
+  await prospectService.deleteNote(props.prospect._id, id)
   loadExtras()
 }
 
 // ─── Tasks ───
-const onAddTask = (payload: { title: string; dueDate?: string }) => {
-  prospectService.addTask(props.prospect._id, payload)
+const onAddTask = async (payload: { title: string; dueDate?: string }) => {
+  await prospectService.addTask(props.prospect._id, payload)
   loadExtras()
 }
-const onToggleTask = (id: string) => {
-  prospectService.toggleTask(props.prospect._id, id)
+const onToggleTask = async (id: string) => {
+  await prospectService.toggleTask(props.prospect._id, id)
   loadExtras()
 }
-const onRemoveTask = (id: string) => {
-  prospectService.deleteTask(props.prospect._id, id)
+const onRemoveTask = async (id: string) => {
+  await prospectService.deleteTask(props.prospect._id, id)
   loadExtras()
 }
 
@@ -325,11 +332,11 @@ const convertToClient = async () => {
       address: '',
     } as any)
 
-    prospectService.setStatus(props.prospect._id, 'ganado')
+    await prospectService.setStatus(props.prospect._id, 'ganado')
     const updated = { ...props.prospect, status: 'ganado' as ProspectStatus }
     emit('updated', updated)
 
-    prospectService.addTimelineEntry(props.prospect._id, {
+    await prospectService.addTimelineEntry(props.prospect._id, {
       type: 'converted',
       description: `Convertido a cliente — ficha creada`,
       meta: { clientId: (created as any)._id },

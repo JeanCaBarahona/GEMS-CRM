@@ -165,8 +165,8 @@
         </div>
 
         <!-- Main Content Area -->
-        <main class="p-4 flex-1 min-h-0 overflow-y-auto custom-scrollbar">
-          <router-view class="h-full" />
+        <main class="p-4 pb-8 flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+          <router-view />
         </main>
       </div>
 

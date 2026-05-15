@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-3 pb-10 xl:h-full xl:overflow-hidden">
+  <div class="flex flex-col gap-3">
 
     <!-- ══ Top breadcrumb bar ══════════════════════════════════════════ -->
     <div class="flex items-center justify-between gap-2 flex-wrap pr-12 sm:pr-14">
@@ -65,15 +65,15 @@
     </div>
 
     <!-- ══ Main grid: stack < xl, 2/3 + 1/3 en xl+ ════════════════════ -->
-    <div class="grid grid-cols-1 xl:grid-cols-3 gap-3 xl:flex-1 xl:min-h-0">
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-3">
 
       <!-- ── Left: AI Insights + Agenda ─────────────────────────────── -->
-      <div class="xl:col-span-2 flex flex-col gap-3 xl:min-h-0">
+      <div class="xl:col-span-2 flex flex-col gap-3">
 
         <AIInsightsWidget />
 
         <!-- Agenda -->
-        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col xl:flex-1 xl:min-h-0">
+        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col">
           <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 shrink-0">
             <div>
               <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Agenda</div>
@@ -84,10 +84,10 @@
               Ver todas
             </router-link>
           </div>
-          <div v-if="agendaActivities.length === 0" class="py-8 xl:flex-1 xl:py-0 xl:flex xl:items-center xl:justify-center">
+          <div v-if="agendaActivities.length === 0" class="py-8">
             <p class="text-[12px] text-slate-400 text-center">Sin actividades próximas</p>
           </div>
-          <div v-else class="max-h-[420px] xl:max-h-none xl:flex-1 overflow-y-auto divide-y divide-slate-50">
+          <div v-else class="max-h-[420px] overflow-y-auto divide-y divide-slate-50">
             <div v-for="act in agendaActivities" :key="act._id"
               class="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 hover:bg-slate-50/60 transition-colors">
               <span class="w-2 h-2 rounded-full shrink-0"
@@ -116,7 +116,7 @@
            sm→xl: 2-col con "Nota de foco" abarcando ambas
            xl+: sidebar vertical 1-col
       ─────────────────────────────────────────────────────────────── -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-3 xl:min-h-0 xl:overflow-y-auto">
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-3">
 
         <!-- Ritmo del día -->
         <div class="bg-white border border-slate-200 rounded-xl px-4 py-3">

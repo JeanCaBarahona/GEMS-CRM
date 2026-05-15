@@ -1,275 +1,162 @@
 <template>
-  <div class="h-full flex flex-col gap-2.5 overflow-hidden">
+  <div class="flex flex-col gap-3 pb-4">
 
-    <!-- ══ Header ════════════════════════════════════════════════════════ -->
-    <header class="flex-none flex items-center gap-3 pr-14">
+    <!-- ══ Top breadcrumb bar ══════════════════════════════════════════ -->
+    <div class="flex items-center justify-between pr-14">
+      <div class="flex items-center gap-2">
+        <span class="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Dashboard Operativo</span>
+        <span class="px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold rounded uppercase tracking-wider">
+          {{ userRoleLabel }}
+        </span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button @click="refreshData" :disabled="isRefreshing"
+          class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-blue-500 hover:border-blue-200 hover:bg-blue-50 transition-colors disabled:opacity-50">
+          <i class="fas fa-sync-alt text-[11px]" :class="{ 'animate-spin': isRefreshing }"></i>
+        </button>
+        <router-link v-if="authStore.canCreateActivities" to="/activities"
+          class="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg text-[12px] font-semibold shadow-sm shadow-blue-500/20 transition-all">
+          <i class="fas fa-plus text-[10px]"></i>
+          <span>Nueva actividad</span>
+        </router-link>
+      </div>
+    </div>
 
-      <!-- Saludo + contexto -->
-      <div>
-        <p class="text-[10px] font-medium text-slate-400 leading-none mb-0.5">{{ timeGreeting }}</p>
-        <div class="flex items-center gap-2">
-          <span class="text-sm font-semibold text-slate-800 tracking-tight">{{ firstName }}</span>
-          <span class="px-1.5 py-0.5 bg-slate-100 text-slate-500 text-[9px] font-bold rounded-md uppercase tracking-wide">
-            {{ userRoleLabel }}
-          </span>
-          <span class="flex items-center gap-1">
-            <span class="w-1.5 h-1.5 rounded-full shrink-0"
-              :class="criticalCount > 0 ? 'bg-red-400' : 'bg-emerald-400'"></span>
-            <span class="text-[10px] font-medium"
-              :class="criticalCount > 0 ? 'text-red-500' : 'text-slate-400'">
-              {{ criticalCount > 0 ? `${criticalCount} críticas` : 'Al día' }}
-            </span>
-          </span>
+    <!-- ══ Greeting ═══════════════════════════════════════════════════ -->
+    <div>
+      <h1 class="text-[26px] font-bold text-slate-900 tracking-tight leading-tight">Hola, {{ firstName }}</h1>
+      <p class="text-[13px] text-slate-500 mt-0.5">
+        Tienes <span class="font-semibold text-slate-700">{{ criticalCount }}</span>
+        {{ criticalCount === 1 ? 'actividad' : 'actividades' }} que
+        {{ criticalCount === 1 ? 'requiere' : 'requieren' }} atención entre hoy y vencidas.
+      </p>
+    </div>
+
+    <!-- ══ Quick actions row ══════════════════════════════════════════ -->
+    <div class="grid gap-2.5" :style="`grid-template-columns: repeat(${quickActions.length}, minmax(0,1fr));`">
+      <router-link v-for="qa in quickActions" :key="qa.label" :to="qa.to"
+        class="flex items-center gap-3 bg-white border border-slate-200 hover:shadow-md rounded-xl px-4 py-3 transition-all group"
+        :class="qa.hover">
+        <div class="w-9 h-9 rounded-lg flex items-center justify-center transition-colors shrink-0"
+          :class="qa.iconBg">
+          <i :class="['fas', qa.icon, qa.iconColor, 'text-[14px]']"></i>
+        </div>
+        <span class="text-[13px] font-semibold text-slate-800">{{ qa.label }}</span>
+      </router-link>
+    </div>
+
+    <!-- ══ Stats row ══════════════════════════════════════════════════ -->
+    <div class="grid gap-2.5" :style="`grid-template-columns: repeat(${statCards.length}, minmax(0,1fr));`">
+      <div v-for="card in statCards" :key="card.label"
+        class="bg-white border border-slate-200 rounded-xl px-4 py-3">
+        <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">{{ card.label }}</div>
+        <div class="flex items-end justify-between">
+          <div class="flex items-baseline gap-2">
+            <span class="text-[26px] font-bold text-slate-900 leading-none">{{ card.value }}</span>
+            <span class="text-[11px] font-semibold" :class="card.tagColor">{{ card.tag }}</span>
+          </div>
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center" :class="card.iconBg">
+            <i :class="['fas', card.icon, card.iconColor, 'text-[13px]']"></i>
+          </div>
         </div>
       </div>
+    </div>
 
-      <div class="flex-1"></div>
+    <!-- ══ Main grid: 2/3 + 1/3 ═══════════════════════════════════════ -->
+    <div class="grid grid-cols-3 gap-3">
 
-      <!-- Acciones rápidas -->
-      <nav class="flex items-center gap-0.5">
-        <router-link v-if="authStore.canCreateClients" to="/clients"
-          class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors">
-          <i class="fas fa-user-plus text-[10px]"></i><span class="hidden sm:inline">Cliente</span>
-        </router-link>
-        <router-link v-if="authStore.canCreateActivities" to="/activities"
-          class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors">
-          <i class="fas fa-plus text-[10px]"></i><span class="hidden sm:inline">Actividad</span>
-        </router-link>
-        <router-link v-if="authStore.canViewCases" to="/tickets"
-          class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors">
-          <i class="fas fa-ticket-alt text-[10px]"></i><span class="hidden sm:inline">Tickets</span>
-        </router-link>
-        <router-link v-if="authStore.canCreateCases" to="/cases"
-          class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors">
-          <i class="fas fa-exclamation-circle text-[10px]"></i><span class="hidden sm:inline">Casos</span>
-        </router-link>
-        <router-link v-if="authStore.canCreateTeam" to="/team"
-          class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors">
-          <i class="fas fa-users-cog text-[10px]"></i><span class="hidden sm:inline">Equipo</span>
-        </router-link>
-      </nav>
+      <!-- ── Left: AI Insights + Agenda ─────────────────────────────── -->
+      <div class="col-span-2 flex flex-col gap-3">
 
-      <div class="w-px h-4 bg-slate-200 shrink-0"></div>
+        <AIInsightsWidget />
 
-      <button @click="refreshData" :disabled="isRefreshing"
-        class="w-6 h-6 flex items-center justify-center rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors disabled:opacity-40">
-        <i class="fas fa-sync-alt text-[9px]" :class="{ 'animate-spin': isRefreshing }"></i>
-      </button>
-    </header>
-
-    <!-- ══ Grid principal  1fr | 1fr | 210px ════════════════════════════ -->
-    <div class="flex-1 min-h-0 grid gap-2.5" style="grid-template-columns: 1fr 1fr 210px;">
-
-      <!-- ── Col 1: AI Insights ──────────────────────────────────────── -->
-      <AIInsightsWidget />
-
-      <!-- ── Col 2: Por atender ──────────────────────────────────────── -->
-      <div v-if="authStore.canViewActivities"
-        class="bg-white border border-slate-200 rounded-xl flex flex-col overflow-hidden">
-
-        <!-- Cabecera + tabs -->
-        <div class="px-3 pt-2.5 border-b border-slate-100 shrink-0">
-          <div class="flex items-center justify-between mb-2">
-            <div class="flex items-center gap-1.5">
-              <i class="fas fa-tasks text-slate-400 text-[10px]"></i>
-              <span class="text-[11px] font-bold text-slate-700">Por atender</span>
+        <!-- Agenda -->
+        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+          <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+            <div>
+              <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Agenda</div>
+              <div class="text-[13px] font-bold text-slate-900">Actividades próximas</div>
             </div>
             <router-link to="/activities"
-              class="text-[10px] text-slate-400 hover:text-blue-500 font-semibold transition-colors">
-              Ver todo →
+              class="text-[12px] text-blue-500 hover:text-blue-600 font-semibold transition-colors">
+              Ver todas
             </router-link>
           </div>
-          <!-- Tabs -->
-          <div class="flex gap-0.5">
-            <button v-for="tab in tabs" :key="tab.key" @click="activeTab = tab.key"
-              :class="[
-                'flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-bold rounded-t-lg border-b-2 transition-colors',
-                activeTab === tab.key
-                  ? tab.activeClass + ' border-b-current'
-                  : 'text-slate-400 border-b-transparent hover:text-slate-600 hover:bg-slate-50'
-              ]">
-              {{ tab.label }}
-              <span :class="['px-1 py-0.5 rounded text-[8px] font-black', activeTab === tab.key ? tab.badgeClass : 'bg-slate-100 text-slate-400']">
-                {{ tab.count }}
+          <div v-if="agendaActivities.length === 0" class="px-4 py-8 text-center">
+            <p class="text-[12px] text-slate-400">Sin actividades próximas</p>
+          </div>
+          <div v-else class="divide-y divide-slate-50">
+            <div v-for="act in agendaActivities" :key="act._id"
+              class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50/60 transition-colors">
+              <span class="w-2 h-2 rounded-full shrink-0"
+                :class="act.priority === 'urgent' ? 'bg-red-500' : act.priority === 'high' ? 'bg-orange-500' : 'bg-blue-500'"></span>
+              <div class="flex-1 min-w-0 flex items-center gap-1.5">
+                <span class="text-[12px] font-semibold text-slate-800 truncate">{{ act.title }}</span>
+                <span class="text-[12px] text-slate-400 truncate">· {{ clientsStore.clients.find(c => c._id === act.clientId)?.name || '—' }}</span>
+              </div>
+              <span :class="['shrink-0 px-2 py-0.5 rounded text-[10px] font-semibold', agendaStatusClass(act)]">
+                {{ agendaStatusLabel(act) }}
               </span>
-            </button>
+              <span class="shrink-0 flex items-center gap-1 text-[11px] text-slate-500">
+                <i class="fas fa-clock text-red-400 text-[10px]"></i>
+                {{ formatDateShort(act.dueDate || act.date) }}
+              </span>
+            </div>
           </div>
         </div>
 
-        <!-- Lista -->
-        <div class="flex-1 min-h-0 overflow-y-auto">
-
-          <template v-if="activeTab === 'overdue'">
-            <div v-if="overdueActivities.length === 0"
-              class="h-full flex flex-col items-center justify-center gap-2 p-4">
-              <i class="fas fa-check-circle text-emerald-400 text-lg"></i>
-              <p class="text-[10px] text-slate-400">Sin actividades vencidas</p>
-            </div>
-            <div v-for="act in overdueActivities" :key="act._id"
-              class="flex items-center gap-2 px-3 py-2 border-b border-slate-50 hover:bg-red-50/40 transition-colors">
-              <span class="shrink-0 text-[9px] font-black text-red-500 w-7 text-right">
-                {{ daysOverdue(act) }}d
-              </span>
-              <div class="flex-1 min-w-0">
-                <p class="text-[11px] font-semibold text-slate-700 truncate">{{ act.title }}</p>
-                <p class="text-[10px] text-slate-400 truncate">
-                  {{ clientsStore.clients.find(c => c._id === act.clientId)?.name || '—' }}
-                </p>
-              </div>
-              <span :class="['shrink-0 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase', statusClass(act.status)]">
-                {{ statusLabel(act.status) }}
-              </span>
-            </div>
-          </template>
-
-          <template v-if="activeTab === 'today'">
-            <div v-if="todayActivities.length === 0"
-              class="h-full flex flex-col items-center justify-center gap-2 p-4">
-              <i class="fas fa-sun text-amber-300 text-lg"></i>
-              <p class="text-[10px] text-slate-400">Nada programado para hoy</p>
-            </div>
-            <div v-for="act in todayActivities" :key="act._id"
-              class="flex items-center gap-2 px-3 py-2 border-b border-slate-50 hover:bg-blue-50/40 transition-colors">
-              <span class="shrink-0 w-7 flex justify-center">
-                <span class="w-1.5 h-1.5 rounded-full mt-1"
-                  :class="act.priority === 'urgent' ? 'bg-red-400' : act.priority === 'high' ? 'bg-orange-400' : 'bg-blue-400'"></span>
-              </span>
-              <div class="flex-1 min-w-0">
-                <p class="text-[11px] font-semibold text-slate-700 truncate">{{ act.title }}</p>
-                <p class="text-[10px] text-slate-400 truncate">
-                  {{ clientsStore.clients.find(c => c._id === act.clientId)?.name || '—' }}
-                </p>
-              </div>
-              <span :class="['shrink-0 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase', statusClass(act.status)]">
-                {{ statusLabel(act.status) }}
-              </span>
-            </div>
-          </template>
-
-          <template v-if="activeTab === 'priority'">
-            <div v-if="highPriorityActivities.length === 0"
-              class="h-full flex flex-col items-center justify-center gap-2 p-4">
-              <i class="fas fa-shield-alt text-slate-300 text-lg"></i>
-              <p class="text-[10px] text-slate-400">Sin alta prioridad</p>
-            </div>
-            <div v-for="act in highPriorityActivities" :key="act._id"
-              class="flex items-center gap-2 px-3 py-2 border-b border-slate-50 hover:bg-orange-50/40 transition-colors">
-              <span class="shrink-0 text-[8px] font-black uppercase w-7 text-right"
-                :class="act.priority === 'urgent' ? 'text-red-500' : 'text-orange-500'">
-                {{ act.priority === 'urgent' ? 'URG' : 'ALTA' }}
-              </span>
-              <div class="flex-1 min-w-0">
-                <p class="text-[11px] font-semibold text-slate-700 truncate">{{ act.title }}</p>
-                <p class="text-[10px] text-slate-400 truncate">
-                  {{ clientsStore.clients.find(c => c._id === act.clientId)?.name || '—' }}
-                </p>
-              </div>
-              <span :class="['shrink-0 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase', statusClass(act.status)]">
-                {{ statusLabel(act.status) }}
-              </span>
-            </div>
-          </template>
-
-        </div>
       </div>
 
-      <!-- ── Col 3: Métricas + Ritmo + Agenda ───────────────────────── -->
-      <div class="flex flex-col gap-2.5 min-h-0">
-
-        <!-- Métricas 2×2 -->
-        <div class="grid grid-cols-2 gap-1.5 shrink-0">
-          <div v-if="authStore.canViewClients"
-            class="bg-white border border-slate-200 rounded-lg px-2.5 py-2 hover:shadow-sm transition-all">
-            <div class="flex items-center justify-between mb-1">
-              <span class="text-[8px] font-black text-slate-400 uppercase tracking-wider">Clientes</span>
-              <i class="fas fa-users text-blue-300 text-[8px]"></i>
-            </div>
-            <div class="text-lg font-black text-slate-900 leading-none">{{ stats.clients }}</div>
-          </div>
-          <div v-if="authStore.canViewActivities"
-            class="bg-white border border-slate-200 rounded-lg px-2.5 py-2 hover:shadow-sm transition-all">
-            <div class="flex items-center justify-between mb-1">
-              <span class="text-[8px] font-black text-slate-400 uppercase tracking-wider">Activ.</span>
-              <i class="fas fa-clipboard-list text-green-300 text-[8px]"></i>
-            </div>
-            <div class="text-lg font-black text-slate-900 leading-none">{{ stats.activities }}</div>
-          </div>
-          <div v-if="authStore.canViewCases"
-            class="bg-white border border-slate-200 rounded-lg px-2.5 py-2 hover:shadow-sm transition-all">
-            <div class="flex items-center justify-between mb-1">
-              <span class="text-[8px] font-black text-slate-400 uppercase tracking-wider">Casos</span>
-              <i class="fas fa-exclamation-circle text-orange-300 text-[8px]"></i>
-            </div>
-            <div class="text-lg font-black text-slate-900 leading-none">{{ stats.openIssues }}</div>
-          </div>
-          <div v-if="authStore.canViewTeam"
-            class="bg-white border border-slate-200 rounded-lg px-2.5 py-2 hover:shadow-sm transition-all">
-            <div class="flex items-center justify-between mb-1">
-              <span class="text-[8px] font-black text-slate-400 uppercase tracking-wider">Equipo</span>
-              <i class="fas fa-user-friends text-indigo-300 text-[8px]"></i>
-            </div>
-            <div class="text-lg font-black text-slate-900 leading-none">{{ stats.teamMembers }}</div>
-          </div>
-        </div>
+      <!-- ── Right column ────────────────────────────────────────────── -->
+      <div class="flex flex-col gap-3">
 
         <!-- Ritmo del día -->
-        <div v-if="authStore.canViewActivities"
-          class="bg-white border border-slate-200 rounded-lg px-3 py-2.5 shrink-0">
-          <div class="flex items-center justify-between mb-1.5">
-            <span class="text-[10px] font-bold text-slate-600">Ritmo del día</span>
-            <span class="text-[10px] font-black text-slate-500">{{ focusProgress }}%</span>
+        <div class="bg-white border border-slate-200 rounded-xl px-4 py-3">
+          <div class="flex items-start justify-between mb-2">
+            <div>
+              <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Ritmo del día</div>
+              <div class="text-[13px] font-bold text-slate-900">Foco operativo</div>
+            </div>
+            <span class="bg-slate-900 text-white text-[11px] font-bold px-2.5 py-1 rounded-full leading-none">{{ focusProgress }}%</span>
           </div>
-          <div class="h-1 bg-slate-100 rounded-full overflow-hidden mb-2">
+          <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden mb-3.5">
             <div class="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all duration-700"
               :style="{ width: focusProgress + '%' }"></div>
           </div>
-          <div class="grid grid-cols-3 gap-1 text-center">
-            <div class="bg-red-50 rounded py-1">
-              <div class="text-xs font-black text-red-500 leading-none">{{ overdueCount }}</div>
-              <div class="text-[8px] text-red-400 font-semibold mt-0.5">Vencidas</div>
+          <div class="grid grid-cols-3 text-center">
+            <div>
+              <div class="text-xl font-bold text-red-500 leading-none">{{ overdueCount }}</div>
+              <div class="text-[10px] text-slate-500 font-semibold mt-1">Vencidas</div>
             </div>
-            <div class="bg-blue-50 rounded py-1">
-              <div class="text-xs font-black text-blue-500 leading-none">{{ todayCount }}</div>
-              <div class="text-[8px] text-blue-400 font-semibold mt-0.5">Hoy</div>
+            <div>
+              <div class="text-xl font-bold text-amber-500 leading-none">{{ todayCount }}</div>
+              <div class="text-[10px] text-slate-500 font-semibold mt-1">Hoy</div>
             </div>
-            <div class="bg-orange-50 rounded py-1">
-              <div class="text-xs font-black text-orange-500 leading-none">{{ highPriorityCount }}</div>
-              <div class="text-[8px] text-orange-400 font-semibold mt-0.5">Prioridad</div>
+            <div>
+              <div class="text-xl font-bold text-cyan-500 leading-none">{{ highPriorityCount }}</div>
+              <div class="text-[10px] text-slate-500 font-semibold mt-1">Alta prioridad</div>
             </div>
           </div>
         </div>
 
-        <!-- Agenda -->
-        <div class="bg-white border border-slate-200 rounded-xl flex flex-col flex-1 min-h-0 overflow-hidden">
-          <div class="flex items-center justify-between px-3 py-2 border-b border-slate-100 shrink-0">
-            <div class="flex items-center gap-1.5">
-              <i class="fas fa-calendar-day text-blue-400 text-[9px]"></i>
-              <span class="text-[11px] font-bold text-slate-700">Agenda</span>
-            </div>
-            <router-link to="/activities"
-              class="text-[10px] text-slate-400 hover:text-blue-500 font-semibold transition-colors">
-              Ver →
-            </router-link>
-          </div>
-          <div v-if="upcomingActivities.length === 0"
-            class="flex-1 flex items-center justify-center">
-            <p class="text-[10px] text-slate-400">Sin próximas</p>
-          </div>
-          <div v-else class="flex-1 overflow-y-auto">
-            <div v-for="act in upcomingActivities" :key="act._id"
-              class="flex items-center gap-2 px-3 py-2 border-b border-slate-50 hover:bg-slate-50/60 transition-colors">
-              <div class="shrink-0 w-7 text-center">
-                <div class="text-[11px] font-black text-slate-700 leading-none">{{ formatDay(act.dueDate || act.date) }}</div>
-                <div class="text-[8px] text-slate-400 uppercase">{{ formatMonth(act.dueDate || act.date) }}</div>
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="text-[10px] font-semibold text-slate-700 truncate">{{ act.title }}</p>
-                <p class="text-[9px] text-slate-400 truncate">
-                  {{ clientsStore.clients.find(c => c._id === act.clientId)?.name || '—' }}
-                </p>
-              </div>
+        <!-- Pulso comercial -->
+        <div class="bg-white border border-slate-200 rounded-xl px-4 py-3">
+          <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Pulso comercial</div>
+          <div class="text-[13px] font-bold text-slate-900 mb-3">Dónde atacar primero</div>
+          <div class="flex flex-col gap-2.5">
+            <div v-for="(item, i) in pulsoItems" :key="i" class="flex items-start gap-2.5">
+              <i :class="['fas', item.icon, item.color, 'text-[11px] mt-0.5 shrink-0']"></i>
+              <span class="text-[12px] text-slate-700 leading-snug">{{ item.text }}</span>
             </div>
           </div>
+        </div>
+
+        <!-- Nota de foco (dark) -->
+        <div class="bg-gradient-to-br from-indigo-900 to-violet-900 rounded-xl px-4 py-3 text-white">
+          <div class="text-[10px] font-bold uppercase tracking-widest text-indigo-300 mb-1">Nota de foco</div>
+          <p class="text-[13px] font-semibold leading-snug">
+            {{ focusNote }}
+          </p>
         </div>
 
       </div>
@@ -290,28 +177,13 @@ const issuesStore = useIssuesStore()
 const teamStore = useTeamStore()
 
 const isRefreshing = ref(false)
-const activeTab = ref<'overdue' | 'today' | 'priority'>('overdue')
 
 const firstName = computed(() => authStore.user?.name?.split(' ')[0] || 'Usuario')
 const userRoleLabel = computed(() => ({
-  admin: 'Admin', manager: 'Manager', employee: 'Empleado',
-  support: 'Soporte', development: 'Dev', fullstack: 'Fullstack',
+  admin: 'Administrador', manager: 'Manager', employee: 'Empleado',
+  support: 'Soporte', development: 'Desarrollador', fullstack: 'Fullstack',
   viewer: 'Viewer', client: 'Cliente',
 }[authStore.user?.role || ''] || authStore.user?.role || 'Usuario'))
-
-const timeGreeting = computed(() => {
-  const h = new Date().getHours()
-  if (h < 12) return 'Buenos días,'
-  if (h < 18) return 'Buenas tardes,'
-  return 'Buenas noches,'
-})
-
-const stats = computed(() => ({
-  clients: clientsStore.clients.length,
-  activities: activitiesStore.activities.length,
-  openIssues: issuesStore.issues.filter((i: any) => i.status === 'open').length,
-  teamMembers: teamStore.members.length,
-}))
 
 const todayMidnight = new Date()
 todayMidnight.setHours(0, 0, 0, 0)
@@ -337,82 +209,102 @@ const highPriorityCount = computed(() =>
   ).length
 )
 const criticalCount = computed(() => overdueCount.value + todayCount.value)
+
+const activeActivities = computed(() =>
+  activitiesStore.activities.filter((a: any) => a.status !== 'completed' && a.status !== 'cancelled').length
+)
+const openCases = computed(() =>
+  issuesStore.issues.filter((i: any) => i.status === 'open').length
+)
+const pendingTickets = computed(() =>
+  issuesStore.issues.filter((i: any) => i.status === 'pending' || i.status === 'in-progress').length
+)
 const focusProgress = computed(() => {
   const total = activitiesStore.activities.length
   if (!total) return 0
   return Math.round(activitiesStore.activities.filter((a: any) => a.status === 'completed').length / total * 100)
 })
 
-const tabs = computed(() => [
-  { key: 'overdue' as const, label: 'Vencidas', count: overdueCount.value, activeClass: 'text-red-500 bg-red-50/60', badgeClass: 'bg-red-100 text-red-500' },
-  { key: 'today' as const, label: 'Hoy', count: todayCount.value, activeClass: 'text-blue-600 bg-blue-50/60', badgeClass: 'bg-blue-100 text-blue-600' },
-  { key: 'priority' as const, label: 'Prioridad', count: highPriorityCount.value, activeClass: 'text-orange-500 bg-orange-50/60', badgeClass: 'bg-orange-100 text-orange-500' },
-])
+// Quick actions (filtradas por permisos)
+const quickActions = computed(() => {
+  const all = [
+    { label: 'Nuevo cliente', to: '/clients', icon: 'fa-user-plus', iconBg: 'bg-blue-50 group-hover:bg-blue-100', iconColor: 'text-blue-500', hover: 'hover:border-blue-200', can: authStore.canCreateClients },
+    { label: 'Nueva actividad', to: '/activities', icon: 'fa-plus-circle', iconBg: 'bg-green-50 group-hover:bg-green-100', iconColor: 'text-green-500', hover: 'hover:border-green-200', can: authStore.canCreateActivities },
+    { label: 'Revisar tickets', to: '/tickets', icon: 'fa-ticket-alt', iconBg: 'bg-slate-100 group-hover:bg-slate-200', iconColor: 'text-slate-600', hover: 'hover:border-slate-300', can: authStore.canViewCases },
+    { label: 'Nuevo caso', to: '/cases', icon: 'fa-exclamation-circle', iconBg: 'bg-orange-50 group-hover:bg-orange-100', iconColor: 'text-orange-500', hover: 'hover:border-orange-200', can: authStore.canCreateCases },
+    { label: 'Gestionar equipo', to: '/team', icon: 'fa-users-cog', iconBg: 'bg-purple-50 group-hover:bg-purple-100', iconColor: 'text-purple-500', hover: 'hover:border-purple-200', can: authStore.canCreateTeam },
+  ]
+  return all.filter(a => a.can)
+})
 
-const overdueActivities = computed(() =>
-  [...activitiesStore.activities]
-    .filter((a: any) => {
-      if (a.status === 'completed' || a.status === 'cancelled') return false
-      const d = new Date(a.dueDate || a.date); d.setHours(0, 0, 0, 0)
-      return d < todayMidnight
-    })
+// Stat cards (filtradas por permisos)
+const statCards = computed(() => {
+  const all = [
+    { label: 'Clientes', value: clientsStore.clients.length, tag: 'Base', tagColor: 'text-blue-500', icon: 'fa-users', iconBg: 'bg-blue-50', iconColor: 'text-blue-500', can: authStore.canViewClients },
+    { label: 'Actividades', value: activeActivities.value, tag: 'Activas', tagColor: 'text-green-500', icon: 'fa-clipboard-list', iconBg: 'bg-green-50', iconColor: 'text-green-500', can: authStore.canViewActivities },
+    { label: 'Casos', value: openCases.value, tag: 'Abiertos', tagColor: 'text-red-500', icon: 'fa-exclamation-triangle', iconBg: 'bg-red-50', iconColor: 'text-red-500', can: authStore.canViewCases },
+    { label: 'Tickets', value: pendingTickets.value, tag: 'Pendientes', tagColor: 'text-red-500', icon: 'fa-ticket-alt', iconBg: 'bg-slate-100', iconColor: 'text-slate-600', can: authStore.canViewCases },
+    { label: 'Equipo', value: teamStore.members.length, tag: 'Activos', tagColor: 'text-purple-500', icon: 'fa-user-friends', iconBg: 'bg-purple-50', iconColor: 'text-purple-500', can: authStore.canViewTeam },
+  ]
+  return all.filter(s => s.can)
+})
+
+// Agenda: vencidas + hoy + próximas — máximo 6
+const agendaActivities = computed(() => {
+  const list = [...activitiesStore.activities]
+    .filter((a: any) => a.status !== 'completed' && a.status !== 'cancelled')
     .sort((a: any, b: any) => new Date(a.dueDate || a.date).getTime() - new Date(b.dueDate || b.date).getTime())
-)
+  return list.slice(0, 6)
+})
 
-const todayActivities = computed(() =>
-  [...activitiesStore.activities]
-    .filter((a: any) => {
-      if (a.status === 'completed' || a.status === 'cancelled') return false
-      const d = new Date(a.dueDate || a.date); d.setHours(0, 0, 0, 0)
-      return d.getTime() === todayMidnight.getTime()
-    })
-    .sort((a: any, b: any) => {
-      const o: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 }
-      return (o[a.priority] ?? 2) - (o[b.priority] ?? 2)
-    })
-)
+// Pulso comercial dinámico
+const pulsoItems = computed(() => {
+  const items: { icon: string; color: string; text: string }[] = []
+  if (overdueCount.value > 0) {
+    items.push({ icon: 'fa-bolt', color: 'text-amber-500', text: 'Recupera primero las actividades vencidas antes de abrir nuevos frentes.' })
+  }
+  if (pendingTickets.value > 0 || openCases.value > 0) {
+    const n = pendingTickets.value + openCases.value
+    items.push({ icon: 'fa-chart-bar', color: 'text-slate-500', text: `${n} ${n === 1 ? 'caso/ticket activo puede afectar' : 'casos/tickets activos pueden afectar'} experiencia de clientes.` })
+  }
+  if (highPriorityCount.value > 0) {
+    items.push({ icon: 'fa-check-circle', color: 'text-emerald-500', text: 'Ataca actividades urgentes o de alta prioridad en bloque.' })
+  }
+  if (items.length === 0) {
+    items.push({ icon: 'fa-check-circle', color: 'text-emerald-500', text: 'Todo bajo control. Aprovecha para planear la siguiente semana.' })
+  }
+  return items
+})
 
-const highPriorityActivities = computed(() =>
-  [...activitiesStore.activities]
-    .filter((a: any) =>
-      (a.priority === 'high' || a.priority === 'urgent') &&
-      a.status !== 'completed' && a.status !== 'cancelled'
-    )
-    .sort((a: any, b: any) => {
-      const o: Record<string, number> = { urgent: 0, high: 1 }
-      return (o[a.priority] ?? 1) - (o[b.priority] ?? 1)
-    })
-)
+const focusNote = computed(() => {
+  if (criticalCount.value > 0) {
+    return 'Prioriza seguimientos con fecha, casos abiertos y tickets sin resolver. El dashboard debe servir para decidir, no para decorar.'
+  }
+  return 'Aprovecha esta calma para revisar pipeline, planear seguimientos y consolidar relaciones con clientes clave.'
+})
 
-const upcomingActivities = computed(() =>
-  [...activitiesStore.activities]
-    .filter((a: any) => {
-      if (a.status === 'completed' || a.status === 'cancelled') return false
-      const d = new Date(a.dueDate || a.date); d.setHours(0, 0, 0, 0)
-      return d > todayMidnight
-    })
-    .sort((a: any, b: any) => new Date(a.dueDate || a.date).getTime() - new Date(b.dueDate || b.date).getTime())
-    .slice(0, 12)
-)
+// Helpers
+const agendaStatusLabel = (a: any) => {
+  const d = new Date(a.dueDate || a.date); d.setHours(0, 0, 0, 0)
+  if (d < todayMidnight) return 'Atrasada'
+  if (a.status === 'in-progress') return 'En curso'
+  return 'Pendiente'
+}
+const agendaStatusClass = (a: any) => {
+  const d = new Date(a.dueDate || a.date); d.setHours(0, 0, 0, 0)
+  if (d < todayMidnight) return 'bg-red-50 text-red-600'
+  if (a.status === 'in-progress') return 'bg-blue-50 text-blue-600'
+  return 'bg-amber-50 text-amber-600'
+}
 
-const daysOverdue = (a: any) =>
-  Math.max(0, Math.floor((todayMidnight.getTime() - new Date(a.dueDate || a.date).setHours(0,0,0,0)) / 86400000))
-
-const formatDay = (d?: string) => d ? new Date(d).getDate() : '—'
-const formatMonth = (d?: string) => d ? new Date(d).toLocaleString('es', { month: 'short' }) : ''
-
-const statusLabel = (s?: string) => ({
-  pending: 'Pendiente', 'in-progress': 'En curso',
-  completed: 'Hecha', cancelled: 'Cancelada', overdue: 'Vencida',
-}[s || ''] || s || '—')
-
-const statusClass = (s?: string) => ({
-  pending: 'bg-slate-100 text-slate-500',
-  'in-progress': 'bg-blue-100 text-blue-600',
-  completed: 'bg-green-100 text-green-600',
-  cancelled: 'bg-slate-100 text-slate-400',
-  overdue: 'bg-red-100 text-red-500',
-}[s || ''] || 'bg-slate-100 text-slate-400')
+const formatDateShort = (d?: string) => {
+  if (!d) return '—'
+  const date = new Date(d)
+  const day = date.getDate()
+  const month = date.toLocaleString('es', { month: 'short' }).replace('.', '')
+  const time = date.toLocaleTimeString('es', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase()
+  return `${day} de ${month}, ${time}`
+}
 
 const refreshData = async () => {
   if (isRefreshing.value) return

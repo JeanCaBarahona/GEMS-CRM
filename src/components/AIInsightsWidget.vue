@@ -1,75 +1,94 @@
 <template>
-  <div class="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col">
+  <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
 
     <!-- Header -->
-    <div class="flex items-center justify-between px-3 py-2 border-b border-slate-100 shrink-0">
-      <div class="flex items-center gap-2">
-        <div class="w-6 h-6 rounded-lg bg-violet-50 flex items-center justify-center shrink-0">
-          <i class="fas fa-brain text-violet-500 text-[9px]"></i>
+    <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+          <i class="fas fa-brain text-blue-500 text-[14px]"></i>
         </div>
         <div>
-          <p class="text-[8px] font-black text-violet-400 uppercase tracking-widest leading-none mb-0.5">IA Personalizada</p>
-          <h3 class="text-[11px] font-bold text-slate-700 leading-none">Insights para {{ userName }}</h3>
+          <p class="text-[10px] font-bold text-blue-500 uppercase tracking-widest leading-none mb-1">IA Personalizada</p>
+          <h3 class="text-[13px] font-bold text-slate-900 leading-none">Insights para {{ userName }}</h3>
         </div>
       </div>
-      <button
-        @click="generateInsights(false)"
-        :disabled="loading"
-        class="w-6 h-6 flex items-center justify-center hover:bg-slate-100 rounded-md transition-colors disabled:opacity-40"
-        title="Actualizar"
-      >
-        <i :class="loading ? 'fas fa-spinner fa-spin' : 'fas fa-sync-alt'" class="text-slate-400 text-[9px]"></i>
-      </button>
+      <div class="flex items-center gap-2">
+        <button
+          @click="expanded = !expanded"
+          class="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-600 transition-colors"
+        >
+          {{ expanded ? 'Ver menos' : 'Ver más' }}
+        </button>
+        <button
+          @click="generateInsights(false)"
+          :disabled="loading"
+          class="w-7 h-7 flex items-center justify-center bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-slate-400 hover:text-blue-500 transition-colors disabled:opacity-40"
+          title="Actualizar"
+        >
+          <i :class="loading ? 'fas fa-spinner fa-spin' : 'fas fa-sync-alt'" class="text-[10px]"></i>
+        </button>
+      </div>
     </div>
 
     <!-- Loading -->
-    <div v-if="loading" class="flex-1 flex items-center justify-center gap-3">
-      <i class="fas fa-brain text-violet-400 text-lg animate-pulse"></i>
+    <div v-if="loading" class="flex items-center justify-center gap-3 py-10">
+      <i class="fas fa-brain text-blue-400 text-lg animate-pulse"></i>
       <p class="text-slate-400 text-xs font-medium">Analizando tu situación...</p>
     </div>
 
-    <!-- Content: 3 columnas que llenan la altura disponible -->
-    <div v-else-if="insights" class="flex-1 min-h-0 grid grid-cols-3 divide-x divide-slate-100 overflow-hidden">
+    <!-- Content: 3 columnas con dividers verticales -->
+    <div v-else-if="insights" class="grid grid-cols-3 divide-x divide-slate-100">
 
-      <div class="flex flex-col overflow-hidden">
-        <div class="flex items-center gap-1 px-3 pt-2 pb-1.5 shrink-0">
-          <i class="fas fa-eye text-amber-500 text-[8px]"></i>
-          <h4 class="text-[8px] font-black text-amber-500 uppercase tracking-widest">Situación</h4>
+      <!-- LECTURA (amarillo) -->
+      <div class="px-4 py-3.5">
+        <div class="flex items-center gap-1.5 mb-2.5">
+          <i class="fas fa-lightbulb text-amber-500 text-[11px]"></i>
+          <h4 class="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Lectura</h4>
         </div>
-        <p class="px-3 pb-3 text-[10px] text-slate-600 leading-relaxed overflow-y-auto flex-1">{{ insights.lectura }}</p>
+        <p class="text-[12px] text-slate-600 leading-relaxed" :class="!expanded && 'line-clamp-5'">
+          {{ insights.lectura }}
+        </p>
       </div>
 
-      <div class="flex flex-col overflow-hidden">
-        <div class="flex items-center gap-1 px-3 pt-2 pb-1.5 shrink-0">
-          <i class="fas fa-bullseye text-emerald-500 text-[8px]"></i>
-          <h4 class="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Acciones</h4>
+      <!-- ACCIONES (verde) -->
+      <div class="px-4 py-3.5">
+        <div class="flex items-center gap-1.5 mb-2.5">
+          <i class="fas fa-bullseye text-emerald-500 text-[11px]"></i>
+          <h4 class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Acciones</h4>
         </div>
-        <ul class="px-3 pb-3 space-y-2 overflow-y-auto flex-1">
-          <li v-for="(accion, i) in insights.acciones" :key="i"
-            class="flex items-start gap-1.5 text-[10px] text-slate-600 leading-snug">
-            <i class="fas fa-arrow-right text-emerald-400 text-[7px] mt-0.5 shrink-0"></i>
-            <span>{{ accion }}</span>
+        <ul class="space-y-2">
+          <li
+            v-for="(accion, i) in (expanded ? insights.acciones : insights.acciones.slice(0, 3))"
+            :key="i"
+            class="flex items-start gap-2 text-[12px] text-slate-600 leading-snug"
+          >
+            <span class="w-1 h-1 rounded-full bg-emerald-500 mt-1.5 shrink-0"></span>
+            <span :class="!expanded && 'line-clamp-2'">{{ accion }}</span>
           </li>
         </ul>
       </div>
 
-      <div class="flex flex-col overflow-hidden">
-        <div class="flex items-center gap-1 px-3 pt-2 pb-1.5 shrink-0">
-          <i class="fas fa-shield-alt text-red-400 text-[8px]"></i>
-          <h4 class="text-[8px] font-black text-red-400 uppercase tracking-widest">Riesgos</h4>
+      <!-- RIESGOS (azul) -->
+      <div class="px-4 py-3.5">
+        <div class="flex items-center gap-1.5 mb-2.5">
+          <i class="fas fa-chart-line text-blue-500 text-[11px]"></i>
+          <h4 class="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Riesgos</h4>
         </div>
-        <ul class="px-3 pb-3 space-y-2 overflow-y-auto flex-1">
-          <li v-for="(riesgo, i) in insights.riesgos" :key="i"
-            class="flex items-start gap-1.5 text-[10px] text-slate-600 leading-snug">
-            <i class="fas fa-exclamation text-red-400 text-[7px] mt-0.5 shrink-0"></i>
-            <span>{{ riesgo }}</span>
+        <ul class="space-y-2">
+          <li
+            v-for="(riesgo, i) in (expanded ? insights.riesgos : insights.riesgos.slice(0, 3))"
+            :key="i"
+            class="flex items-start gap-2 text-[12px] text-slate-600 leading-snug"
+          >
+            <span class="w-1 h-1 rounded-full bg-blue-500 mt-1.5 shrink-0"></span>
+            <span :class="!expanded && 'line-clamp-2'">{{ riesgo }}</span>
           </li>
         </ul>
       </div>
     </div>
 
     <!-- Error -->
-    <div v-else-if="error" class="flex-1 flex flex-col items-center justify-center gap-3 p-6">
+    <div v-else-if="error" class="flex flex-col items-center justify-center gap-3 py-8 px-6">
       <i class="fas fa-exclamation-triangle text-red-400 text-2xl"></i>
       <p class="text-red-500 text-xs font-medium text-center">{{ error }}</p>
       <button @click="generateInsights(false)"
@@ -79,11 +98,11 @@
     </div>
 
     <!-- Empty -->
-    <div v-else class="flex-1 flex flex-col items-center justify-center gap-2 p-6">
+    <div v-else class="flex flex-col items-center justify-center gap-2 py-8 px-6">
       <i class="fas fa-brain text-2xl text-slate-200"></i>
       <p class="text-slate-400 text-xs font-medium">Sin análisis disponible</p>
       <button @click="generateInsights(false)"
-        class="px-4 py-1.5 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-lg text-xs font-bold text-violet-600 transition-colors">
+        class="px-4 py-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg text-xs font-bold text-blue-600 transition-colors">
         Generar análisis
       </button>
     </div>
@@ -108,6 +127,7 @@ const teamStore = useTeamStore()
 const loading = ref(false)
 const insights = ref<InsightsData | null>(null)
 const error = ref('')
+const expanded = ref(false)
 
 const userName = computed(() => authStore.user?.name?.split(' ')[0] || 'ti')
 const CACHE_KEY = computed(() => `crm_ai_insights_v4_${authStore.user?.name}_${authStore.user?.role}`)

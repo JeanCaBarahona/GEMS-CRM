@@ -6,7 +6,7 @@ export interface User {
   _id: string
   name: string
   email: string
-  role: 'admin' | 'manager' | 'employee' | 'support' | 'client' | 'viewer'
+  role: 'admin' | 'manager' | 'employee' | 'support' | 'development' | 'fullstack' | 'viewer' | 'client'
   department: string
   position: string
   avatar?: string

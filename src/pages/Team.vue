@@ -346,7 +346,7 @@ const allAvailableRoles = computed(() => {
 const editingMember = ref<TeamMember | null>(null)
 const pagination = reactive({
   page: 1,
-  limit: 12,
+  limit: 500,
   total: 0,
   pages: 0
 })

@@ -551,7 +551,7 @@ export const useTeamStore = defineStore('team', {
   }),
   
   actions: {
-    async fetchTeam(page = 1, limit = 12) {
+    async fetchTeam(page = 1, limit = 500) {
       this.loading = true
       try {
         console.log('🔄 Fetching team data...')

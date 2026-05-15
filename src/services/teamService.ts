@@ -7,32 +7,18 @@ class TeamService {
   async getAll(): Promise<TeamMember[]> {
     try {
       const token = localStorage.getItem('token')
-      console.log('🔄 Haciendo petición a:', this.baseUrl)
-      console.log('🔑 Token presente:', !!token)
-      
-      const response = await fetch(this.baseUrl, {
+      const response = await fetch(`${this.baseUrl}?limit=500&page=1`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       })
       
-      console.log('📡 Response status:', response.status)
-      console.log('📡 Response ok:', response.ok)
-      
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error('❌ Error response:', errorText)
-        throw new Error(`Error ${response.status}: ${response.statusText}`)
-      }
+      if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`)
       
       const result = await response.json()
-      console.log('📦 Response data:', result)
-      
       // El backend devuelve { success: true, data: [...] }
-      const members = result.success && Array.isArray(result.data) ? result.data : []
-      console.log('👥 Team members parsed:', members)
-      return members
+      return result.success && Array.isArray(result.data) ? result.data : []
     } catch (error) {
       console.error('❌ Error fetching team members:', error)
       throw new Error('No se pudieron cargar los miembros del equipo')

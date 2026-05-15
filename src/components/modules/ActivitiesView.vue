@@ -227,6 +227,7 @@
           <CustomSelect
             v-model="selectedClient"
             size="sm"
+            searchable
             :options="[
               { value: '', label: 'Todos los clientes' },
               ...clients.map(c => ({ value: c._id || '', label: c.name }))

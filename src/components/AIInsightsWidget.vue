@@ -2,20 +2,20 @@
   <div class="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col">
 
     <!-- Header -->
-    <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 flex-none">
-      <div class="flex items-center gap-2.5">
-        <div class="w-7 h-7 rounded-lg bg-violet-50 flex items-center justify-center shrink-0">
-          <i class="fas fa-brain text-violet-500 text-xs"></i>
+    <div class="flex items-center justify-between px-3 py-2 border-b border-slate-100 flex-none">
+      <div class="flex items-center gap-2">
+        <div class="w-6 h-6 rounded-lg bg-violet-50 flex items-center justify-center shrink-0">
+          <i class="fas fa-brain text-violet-500 text-[10px]"></i>
         </div>
         <div class="leading-tight">
-          <p class="text-[9px] font-black text-violet-500 uppercase tracking-widest leading-none mb-0.5">IA Personalizada</p>
-          <h3 class="text-sm font-bold text-slate-800 leading-none">Insights para {{ userName }}</h3>
+          <p class="text-[8px] font-black text-violet-500 uppercase tracking-widest leading-none">IA Personalizada</p>
+          <h3 class="text-xs font-bold text-slate-800 leading-none">Insights para {{ userName }}</h3>
         </div>
       </div>
       <button
         @click="generateInsights(false)"
         :disabled="loading"
-        class="w-7 h-7 flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors disabled:opacity-40"
+        class="w-6 h-6 flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md transition-colors disabled:opacity-40"
         title="Actualizar insights"
       >
         <i :class="loading ? 'fas fa-spinner fa-spin' : 'fas fa-sync-alt'" class="text-slate-400 text-[10px]"></i>
@@ -23,50 +23,38 @@
     </div>
 
     <!-- Loading -->
-    <div v-if="loading" class="flex-1 flex items-center justify-center">
-      <div class="text-center">
-        <div class="relative mb-3 mx-auto w-10 h-10 flex items-center justify-center">
-          <i class="fas fa-brain text-violet-500 text-xl animate-bounce relative z-10"></i>
-          <div class="absolute inset-0 bg-violet-100 rounded-full animate-pulse"></div>
-        </div>
-        <p class="text-slate-500 text-xs font-medium mb-2">Analizando tu situación...</p>
-        <div class="flex justify-center gap-1">
-          <div class="w-1.5 h-1.5 bg-violet-400 rounded-full animate-pulse"></div>
-          <div class="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse" style="animation-delay:.15s"></div>
-          <div class="w-1.5 h-1.5 bg-sky-400 rounded-full animate-pulse" style="animation-delay:.3s"></div>
-        </div>
-      </div>
+    <div v-if="loading" class="flex-1 flex items-center justify-center gap-3">
+      <i class="fas fa-brain text-violet-400 text-base animate-pulse"></i>
+      <p class="text-slate-400 text-xs font-medium">Analizando tu situación...</p>
     </div>
 
     <!-- Content: 3 columns -->
     <div v-else-if="insights" class="flex-1 min-h-0 grid grid-cols-3 divide-x divide-slate-100 overflow-hidden">
 
-      <!-- LECTURA -->
+      <!-- SITUACIÓN -->
       <div class="flex flex-col overflow-hidden">
-        <div class="flex items-center gap-1.5 px-4 pt-3 pb-2 flex-none">
-          <i class="fas fa-eye text-amber-500 text-[10px]"></i>
-          <h4 class="text-[10px] font-black text-amber-500 uppercase tracking-widest">Situación</h4>
+        <div class="flex items-center gap-1 px-3 pt-2 pb-1.5 flex-none">
+          <i class="fas fa-eye text-amber-500 text-[9px]"></i>
+          <h4 class="text-[9px] font-black text-amber-500 uppercase tracking-widest">Situación</h4>
         </div>
-        <p class="px-4 pb-4 text-slate-600 text-xs leading-relaxed overflow-y-auto flex-1">
+        <p class="px-3 pb-3 text-[11px] text-slate-600 leading-relaxed overflow-y-auto flex-1">
           {{ insights.lectura }}
         </p>
       </div>
 
       <!-- ACCIONES -->
       <div class="flex flex-col overflow-hidden">
-        <div class="flex items-center gap-1.5 px-4 pt-3 pb-2 flex-none">
-          <i class="fas fa-bullseye text-emerald-500 text-[10px]"></i>
-          <h4 class="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Acciones</h4>
+        <div class="flex items-center gap-1 px-3 pt-2 pb-1.5 flex-none">
+          <i class="fas fa-bullseye text-emerald-500 text-[9px]"></i>
+          <h4 class="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Acciones</h4>
         </div>
-        <ul class="px-4 pb-4 space-y-2.5 overflow-y-auto flex-1">
+        <ul class="px-3 pb-3 space-y-2 overflow-y-auto flex-1">
           <li
             v-for="(accion, i) in insights.acciones"
             :key="i"
-            class="flex items-start gap-2 text-xs text-slate-600 leading-snug"
+            class="flex items-start gap-1.5 text-[11px] text-slate-600 leading-snug"
           >
-            <span class="mt-1 w-4 h-4 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
-              <i class="fas fa-arrow-right text-emerald-500 text-[8px]"></i>
-            </span>
+            <i class="fas fa-arrow-right text-emerald-400 text-[8px] mt-0.5 shrink-0"></i>
             <span>{{ accion }}</span>
           </li>
         </ul>
@@ -74,19 +62,17 @@
 
       <!-- RIESGOS -->
       <div class="flex flex-col overflow-hidden">
-        <div class="flex items-center gap-1.5 px-4 pt-3 pb-2 flex-none">
-          <i class="fas fa-shield-alt text-red-400 text-[10px]"></i>
-          <h4 class="text-[10px] font-black text-red-400 uppercase tracking-widest">Riesgos</h4>
+        <div class="flex items-center gap-1 px-3 pt-2 pb-1.5 flex-none">
+          <i class="fas fa-shield-alt text-red-400 text-[9px]"></i>
+          <h4 class="text-[9px] font-black text-red-400 uppercase tracking-widest">Riesgos</h4>
         </div>
-        <ul class="px-4 pb-4 space-y-2.5 overflow-y-auto flex-1">
+        <ul class="px-3 pb-3 space-y-2 overflow-y-auto flex-1">
           <li
             v-for="(riesgo, i) in insights.riesgos"
             :key="i"
-            class="flex items-start gap-2 text-xs text-slate-600 leading-snug"
+            class="flex items-start gap-1.5 text-[11px] text-slate-600 leading-snug"
           >
-            <span class="mt-1 w-4 h-4 rounded-full bg-red-50 flex items-center justify-center shrink-0">
-              <i class="fas fa-exclamation text-red-400 text-[8px]"></i>
-            </span>
+            <i class="fas fa-exclamation text-red-400 text-[8px] mt-0.5 shrink-0"></i>
             <span>{{ riesgo }}</span>
           </li>
         </ul>

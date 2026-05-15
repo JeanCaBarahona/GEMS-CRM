@@ -1,7 +1,7 @@
 <template>
   <div class="h-full flex flex-col gap-3 overflow-hidden">
 
-    <!-- ── Header ──────────────────────────────────────────────────── -->
+    <!-- ── Header ─────────────────────────────────────────────────────── -->
     <div class="flex items-center gap-3 flex-none flex-wrap pr-12">
       <div class="flex items-center gap-2 flex-1 min-w-0">
         <span class="text-base font-black text-slate-900">Hola, {{ firstName }}</span>
@@ -53,28 +53,144 @@
       </div>
     </div>
 
-    <!-- ════════════════════════════════════════════════════════════════
-         GRID 2 × 2
-         Col 1 (1fr): izquierda — Col 2 (290px): derecha
-         Fila 1 (auto): AI insights | Métricas + Ritmo del día
-         Fila 2 (1fr):  Vencidas + Urgentes | Agenda
-         ════════════════════════════════════════════════════════════════ -->
-    <div
-      class="flex-1 min-h-0"
-      style="display:grid; grid-template-columns:1fr 290px; grid-template-rows:auto 1fr; gap:12px;"
-    >
+    <!-- ── Main grid 3 cols ─────────────────────────────────────────── -->
+    <!-- Col 1: AI Insights (1fr) | Col 2: Por atender (1fr) | Col 3: Stats + Agenda (260px) -->
+    <div class="flex-1 min-h-0 grid gap-3" style="grid-template-columns: 1fr 1fr 260px;">
 
-      <!-- ─── [Fila 1 · Col 1] AI Insights ─────────────────────────── -->
-      <AIInsightsWidget class="self-start" />
+      <!-- ── Col 1: AI Insights ────────────────────────────────────── -->
+      <AIInsightsWidget />
 
-      <!-- ─── [Fila 1+2 · Col 2] Columna derecha — abarca ambas filas ── -->
-      <div class="flex flex-col gap-3 min-h-0" style="grid-row: 1 / 3">
+      <!-- ── Col 2: Por atender (tabs Vencidas / Hoy / Prioridad) ─── -->
+      <div v-if="authStore.canViewActivities"
+        class="bg-white border border-slate-200 rounded-xl flex flex-col overflow-hidden">
+
+        <!-- Panel header + tabs -->
+        <div class="px-3.5 pt-3 pb-0 border-b border-slate-100 shrink-0">
+          <div class="flex items-center justify-between mb-2.5">
+            <div class="flex items-center gap-1.5">
+              <i class="fas fa-tasks text-blue-500 text-[10px]"></i>
+              <span class="text-xs font-bold text-slate-700">Por atender</span>
+            </div>
+            <router-link to="/activities" class="text-[10px] text-blue-500 hover:text-blue-600 font-bold">Ver todo →</router-link>
+          </div>
+          <!-- Tab bar -->
+          <div class="flex gap-0.5">
+            <button
+              v-for="tab in tabs" :key="tab.key"
+              @click="activeTab = tab.key"
+              :class="[
+                'flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-bold rounded-t-lg transition-colors border-b-2',
+                activeTab === tab.key
+                  ? 'border-b-blue-500 text-blue-600 bg-blue-50/60'
+                  : 'border-b-transparent text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+              ]"
+            >
+              <span>{{ tab.label }}</span>
+              <span :class="[
+                'px-1 py-0.5 rounded-full text-[8px] font-black',
+                activeTab === tab.key ? tab.activeBadge : 'bg-slate-100 text-slate-400'
+              ]">{{ tab.count }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab content -->
+        <div class="flex-1 min-h-0 overflow-y-auto divide-y divide-slate-50">
+
+          <!-- Vencidas -->
+          <template v-if="activeTab === 'overdue'">
+            <div v-if="overdueActivities.length === 0" class="h-full flex items-center justify-center">
+              <div class="text-center py-6">
+                <i class="fas fa-check-circle text-emerald-400 text-xl mb-2 block"></i>
+                <p class="text-[10px] text-slate-400">Sin actividades vencidas</p>
+              </div>
+            </div>
+            <div v-for="act in overdueActivities" :key="act._id"
+              class="flex items-center gap-2.5 px-3.5 py-2.5 hover:bg-red-50/30 transition-colors">
+              <div class="shrink-0 w-8 text-center">
+                <div class="text-[10px] font-black text-red-500 leading-none">{{ daysOverdue(act) }}d</div>
+                <div class="text-[8px] text-red-300 font-semibold">vcda</div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[11px] font-semibold text-slate-700 truncate">{{ act.title }}</div>
+                <div class="text-[10px] text-slate-400 truncate">
+                  {{ clientsStore.clients.find(c => c._id === act.clientId)?.name || '—' }}
+                </div>
+              </div>
+              <span :class="['shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase', statusClass(act.status)]">
+                {{ statusLabel(act.status) }}
+              </span>
+            </div>
+          </template>
+
+          <!-- Hoy -->
+          <template v-if="activeTab === 'today'">
+            <div v-if="todayActivities.length === 0" class="h-full flex items-center justify-center">
+              <div class="text-center py-6">
+                <i class="fas fa-sun text-amber-300 text-xl mb-2 block"></i>
+                <p class="text-[10px] text-slate-400">Nada programado para hoy</p>
+              </div>
+            </div>
+            <div v-for="act in todayActivities" :key="act._id"
+              class="flex items-center gap-2.5 px-3.5 py-2.5 hover:bg-blue-50/30 transition-colors">
+              <div class="shrink-0 w-8 text-center">
+                <div class="w-5 h-5 mx-auto rounded-md flex items-center justify-center"
+                  :class="act.priority === 'urgent' ? 'bg-red-50' : act.priority === 'high' ? 'bg-orange-50' : 'bg-blue-50'">
+                  <i class="fas fa-circle text-[6px]"
+                    :class="act.priority === 'urgent' ? 'text-red-400' : act.priority === 'high' ? 'text-orange-400' : 'text-blue-400'"></i>
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[11px] font-semibold text-slate-700 truncate">{{ act.title }}</div>
+                <div class="text-[10px] text-slate-400 truncate">
+                  {{ clientsStore.clients.find(c => c._id === act.clientId)?.name || '—' }}
+                </div>
+              </div>
+              <span :class="['shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase', statusClass(act.status)]">
+                {{ statusLabel(act.status) }}
+              </span>
+            </div>
+          </template>
+
+          <!-- Alta prioridad -->
+          <template v-if="activeTab === 'priority'">
+            <div v-if="highPriorityActivities.length === 0" class="h-full flex items-center justify-center">
+              <div class="text-center py-6">
+                <i class="fas fa-shield-alt text-slate-300 text-xl mb-2 block"></i>
+                <p class="text-[10px] text-slate-400">Sin actividades de alta prioridad</p>
+              </div>
+            </div>
+            <div v-for="act in highPriorityActivities" :key="act._id"
+              class="flex items-center gap-2.5 px-3.5 py-2.5 hover:bg-orange-50/30 transition-colors">
+              <div class="shrink-0 w-8 text-center">
+                <span class="text-[9px] font-black uppercase"
+                  :class="act.priority === 'urgent' ? 'text-red-500' : 'text-orange-500'">
+                  {{ act.priority === 'urgent' ? 'URG' : 'ALTA' }}
+                </span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[11px] font-semibold text-slate-700 truncate">{{ act.title }}</div>
+                <div class="text-[10px] text-slate-400 truncate">
+                  {{ clientsStore.clients.find(c => c._id === act.clientId)?.name || '—' }}
+                </div>
+              </div>
+              <span :class="['shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase', statusClass(act.status)]">
+                {{ statusLabel(act.status) }}
+              </span>
+            </div>
+          </template>
+
+        </div>
+      </div>
+
+      <!-- ── Col 3: Stats + Ritmo + Agenda ─────────────────────────── -->
+      <div class="flex flex-col gap-3 min-h-0">
 
         <!-- Métricas 2×2 -->
-        <div class="grid grid-cols-2 gap-2">
+        <div class="grid grid-cols-2 gap-2 shrink-0">
           <div v-if="authStore.canViewClients"
-            class="bg-white border border-slate-200 rounded-xl px-3.5 py-3 hover:shadow-sm transition-all">
-            <div class="flex items-center justify-between mb-1.5">
+            class="bg-white border border-slate-200 rounded-xl px-3 py-2.5 hover:shadow-sm transition-all">
+            <div class="flex items-center justify-between mb-1">
               <span class="text-[9px] font-black text-slate-400 uppercase tracking-wider">Clientes</span>
               <div class="w-5 h-5 bg-blue-50 rounded-md flex items-center justify-center">
                 <i class="fas fa-users text-blue-400 text-[8px]"></i>
@@ -84,8 +200,8 @@
           </div>
 
           <div v-if="authStore.canViewActivities"
-            class="bg-white border border-slate-200 rounded-xl px-3.5 py-3 hover:shadow-sm transition-all">
-            <div class="flex items-center justify-between mb-1.5">
+            class="bg-white border border-slate-200 rounded-xl px-3 py-2.5 hover:shadow-sm transition-all">
+            <div class="flex items-center justify-between mb-1">
               <span class="text-[9px] font-black text-slate-400 uppercase tracking-wider">Activ.</span>
               <div class="w-5 h-5 bg-green-50 rounded-md flex items-center justify-center">
                 <i class="fas fa-clipboard-list text-green-400 text-[8px]"></i>
@@ -95,8 +211,8 @@
           </div>
 
           <div v-if="authStore.canViewCases"
-            class="bg-white border border-slate-200 rounded-xl px-3.5 py-3 hover:shadow-sm transition-all">
-            <div class="flex items-center justify-between mb-1.5">
+            class="bg-white border border-slate-200 rounded-xl px-3 py-2.5 hover:shadow-sm transition-all">
+            <div class="flex items-center justify-between mb-1">
               <span class="text-[9px] font-black text-slate-400 uppercase tracking-wider">Casos</span>
               <div class="w-5 h-5 bg-orange-50 rounded-md flex items-center justify-center">
                 <i class="fas fa-exclamation-circle text-orange-400 text-[8px]"></i>
@@ -106,8 +222,8 @@
           </div>
 
           <div v-if="authStore.canViewTeam"
-            class="bg-white border border-slate-200 rounded-xl px-3.5 py-3 hover:shadow-sm transition-all">
-            <div class="flex items-center justify-between mb-1.5">
+            class="bg-white border border-slate-200 rounded-xl px-3 py-2.5 hover:shadow-sm transition-all">
+            <div class="flex items-center justify-between mb-1">
               <span class="text-[9px] font-black text-slate-400 uppercase tracking-wider">Equipo</span>
               <div class="w-5 h-5 bg-indigo-50 rounded-md flex items-center justify-center">
                 <i class="fas fa-user-friends text-indigo-400 text-[8px]"></i>
@@ -118,7 +234,7 @@
         </div>
 
         <!-- Ritmo del día -->
-        <div v-if="authStore.canViewActivities" class="bg-white border border-slate-200 rounded-xl px-3.5 py-3">
+        <div v-if="authStore.canViewActivities" class="bg-white border border-slate-200 rounded-xl px-3.5 py-3 shrink-0">
           <div class="flex items-center justify-between mb-2">
             <div class="flex items-center gap-1.5">
               <i class="fas fa-bolt text-yellow-400 text-[9px]"></i>
@@ -146,7 +262,7 @@
           </div>
         </div>
 
-        <!-- Agenda: llena el espacio restante de la columna derecha -->
+        <!-- Agenda: llena el espacio restante -->
         <div class="bg-white border border-slate-200 rounded-xl flex flex-col flex-1 min-h-0 overflow-hidden">
           <div class="flex items-center justify-between px-3.5 py-2.5 border-b border-slate-100 shrink-0">
             <div class="flex items-center gap-1.5">
@@ -179,91 +295,6 @@
         </div>
 
       </div>
-
-      <!-- ─── [Fila 2 · Col 1] Vencidas | Hoy & Prioridad ──────────── -->
-      <div class="grid grid-cols-2 gap-3 min-h-0 overflow-hidden">
-
-        <!-- Vencidas -->
-        <div class="bg-white border border-slate-200 rounded-xl flex flex-col overflow-hidden">
-          <div class="flex items-center justify-between px-3.5 py-2.5 border-b border-slate-100 shrink-0">
-            <div class="flex items-center gap-1.5">
-              <div class="w-5 h-5 bg-red-50 rounded-md flex items-center justify-center">
-                <i class="fas fa-clock text-red-400 text-[9px]"></i>
-              </div>
-              <span class="text-xs font-bold text-slate-700">Vencidas</span>
-              <span v-if="overdueActivities.length"
-                class="text-[9px] font-black text-red-500 bg-red-50 px-1.5 py-0.5 rounded-full">
-                {{ overdueActivities.length }}
-              </span>
-            </div>
-            <router-link to="/activities" class="text-[10px] text-slate-400 hover:text-blue-500 font-semibold">Ver →</router-link>
-          </div>
-          <div v-if="overdueActivities.length === 0" class="flex-1 flex items-center justify-center">
-            <div class="text-center py-3">
-              <i class="fas fa-check-circle text-emerald-400 text-base mb-1 block"></i>
-              <p class="text-[10px] text-slate-400">Sin actividades vencidas</p>
-            </div>
-          </div>
-          <div v-else class="flex-1 overflow-y-auto divide-y divide-slate-50">
-            <div v-for="act in overdueActivities" :key="act._id"
-              class="flex items-center gap-2 px-3.5 py-2 hover:bg-red-50/30 transition-colors">
-              <span class="text-[10px] font-black text-red-400 shrink-0 w-7">{{ daysOverdue(act) }}d</span>
-              <div class="flex-1 min-w-0">
-                <div class="text-[11px] font-semibold text-slate-700 truncate">{{ act.title }}</div>
-                <div class="text-[10px] text-slate-400 truncate">
-                  {{ clientsStore.clients.find(c => c._id === act.clientId)?.name || '—' }}
-                </div>
-              </div>
-              <span :class="['shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase', statusClass(act.status)]">
-                {{ statusLabel(act.status) }}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Hoy & Prioridad -->
-        <div class="bg-white border border-slate-200 rounded-xl flex flex-col overflow-hidden">
-          <div class="flex items-center justify-between px-3.5 py-2.5 border-b border-slate-100 shrink-0">
-            <div class="flex items-center gap-1.5">
-              <div class="w-5 h-5 bg-amber-50 rounded-md flex items-center justify-center">
-                <i class="fas fa-bolt text-amber-400 text-[9px]"></i>
-              </div>
-              <span class="text-xs font-bold text-slate-700">Hoy & Prioridad</span>
-              <span v-if="urgentActivities.length"
-                class="text-[9px] font-black text-amber-500 bg-amber-50 px-1.5 py-0.5 rounded-full">
-                {{ urgentActivities.length }}
-              </span>
-            </div>
-            <router-link to="/activities" class="text-[10px] text-slate-400 hover:text-blue-500 font-semibold">Ver →</router-link>
-          </div>
-          <div v-if="urgentActivities.length === 0" class="flex-1 flex items-center justify-center">
-            <div class="text-center py-3">
-              <i class="fas fa-sun text-amber-300 text-base mb-1 block"></i>
-              <p class="text-[10px] text-slate-400">Sin pendientes urgentes</p>
-            </div>
-          </div>
-          <div v-else class="flex-1 overflow-y-auto divide-y divide-slate-50">
-            <div v-for="act in urgentActivities" :key="act._id"
-              class="flex items-center gap-2 px-3.5 py-2 hover:bg-amber-50/30 transition-colors">
-              <span class="shrink-0 w-7 text-[9px] font-black uppercase"
-                :class="act.priority === 'urgent' ? 'text-red-500' : act.priority === 'high' ? 'text-orange-500' : 'text-blue-400'">
-                {{ act.priority === 'urgent' ? 'URG' : act.priority === 'high' ? 'ALTA' : 'HOY' }}
-              </span>
-              <div class="flex-1 min-w-0">
-                <div class="text-[11px] font-semibold text-slate-700 truncate">{{ act.title }}</div>
-                <div class="text-[10px] text-slate-400 truncate">
-                  {{ clientsStore.clients.find(c => c._id === act.clientId)?.name || '—' }}
-                </div>
-              </div>
-              <span :class="['shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase', statusClass(act.status)]">
-                {{ statusLabel(act.status) }}
-              </span>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
     </div>
   </div>
 </template>
@@ -272,7 +303,6 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useClientsStore, useActivitiesStore, useIssuesStore, useTeamStore } from '../stores'
-import PermissionGuard from '../components/PermissionGuard.vue'
 import AIInsightsWidget from '../components/AIInsightsWidget.vue'
 
 const authStore = useAuthStore()
@@ -282,6 +312,7 @@ const issuesStore = useIssuesStore()
 const teamStore = useTeamStore()
 
 const isRefreshing = ref(false)
+const activeTab = ref<'overdue' | 'today' | 'priority'>('overdue')
 
 const firstName = computed(() => authStore.user?.name?.split(' ')[0] || 'Usuario')
 const userInitials = computed(() => {
@@ -331,7 +362,12 @@ const focusProgress = computed(() => {
   return Math.round(activitiesStore.activities.filter((a: any) => a.status === 'completed').length / total * 100)
 })
 
-// Vencidas: más antigua primero
+const tabs = computed(() => [
+  { key: 'overdue' as const, label: 'Vencidas', count: overdueCount.value, activeBadge: 'bg-red-100 text-red-500' },
+  { key: 'today' as const, label: 'Hoy', count: todayCount.value, activeBadge: 'bg-blue-100 text-blue-600' },
+  { key: 'priority' as const, label: 'Prioridad', count: highPriorityCount.value, activeBadge: 'bg-orange-100 text-orange-500' },
+])
+
 const overdueActivities = computed(() =>
   [...activitiesStore.activities]
     .filter((a: any) => {
@@ -342,15 +378,12 @@ const overdueActivities = computed(() =>
     .sort((a: any, b: any) => new Date(a.dueDate || a.date).getTime() - new Date(b.dueDate || b.date).getTime())
 )
 
-// Hoy + alta prioridad (no vencidas), urgentes primero
-const urgentActivities = computed(() =>
+const todayActivities = computed(() =>
   [...activitiesStore.activities]
     .filter((a: any) => {
       if (a.status === 'completed' || a.status === 'cancelled') return false
       const d = new Date(a.dueDate || a.date); d.setHours(0, 0, 0, 0)
-      const isToday = d.getTime() === todayMidnight.getTime()
-      const isHighP = a.priority === 'high' || a.priority === 'urgent'
-      return (isToday || isHighP) && d >= todayMidnight
+      return d.getTime() === todayMidnight.getTime()
     })
     .sort((a: any, b: any) => {
       const o: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 }
@@ -358,7 +391,18 @@ const urgentActivities = computed(() =>
     })
 )
 
-// Agenda: próximas (> hoy), máx 12
+const highPriorityActivities = computed(() =>
+  [...activitiesStore.activities]
+    .filter((a: any) =>
+      (a.priority === 'high' || a.priority === 'urgent') &&
+      a.status !== 'completed' && a.status !== 'cancelled'
+    )
+    .sort((a: any, b: any) => {
+      const o: Record<string, number> = { urgent: 0, high: 1 }
+      return (o[a.priority] ?? 1) - (o[b.priority] ?? 1)
+    })
+)
+
 const upcomingActivities = computed(() =>
   [...activitiesStore.activities]
     .filter((a: any) => {

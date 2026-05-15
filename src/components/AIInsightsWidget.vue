@@ -1,103 +1,123 @@
 <template>
-  <section class="bg-white rounded-2xl border border-outline-variant overflow-hidden shadow-sm relative animate-fade-in">
-    <!-- Top Badge -->
-    <div class="absolute top-0 right-0 p-4">
-      <span class="px-3 py-1 bg-primary-container/20 text-primary text-label-sm font-bold rounded-full border border-primary/20 flex items-center gap-1">
-        <span class="material-symbols-outlined text-[14px]">bolt</span> POWERED BY GEMINI
-      </span>
-    </div>
+  <div class="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col">
 
-    <div class="p-8">
-      <!-- Header -->
-      <div class="flex items-center gap-3 mb-8">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-sky-500 flex items-center justify-center text-white shadow-lg">
-          <span class="material-symbols-outlined">psychology</span>
+    <!-- Header -->
+    <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 flex-none">
+      <div class="flex items-center gap-2.5">
+        <div class="w-7 h-7 rounded-lg bg-violet-50 flex items-center justify-center shrink-0">
+          <i class="fas fa-brain text-violet-500 text-xs"></i>
         </div>
-        <div class="flex items-center gap-3">
-          <h3 class="text-headline-md font-headline-md ai-gradient-text">Insights Estratégicos IA</h3>
-          <button
-            @click="generateInsights(false)"
-            :disabled="loading"
-            class="p-1.5 rounded-lg hover:bg-surface-container transition-colors disabled:opacity-50"
-            title="Actualizar análisis"
-          >
-            <span :class="['material-symbols-outlined text-outline', loading ? 'animate-spin' : '']">refresh</span>
-          </button>
+        <div class="leading-tight">
+          <p class="text-[9px] font-black text-violet-500 uppercase tracking-widest leading-none mb-0.5">IA Personalizada</p>
+          <h3 class="text-sm font-bold text-slate-800 leading-none">Insights para {{ userName }}</h3>
         </div>
       </div>
-
-      <!-- Loading State -->
-      <div v-if="loading" class="flex flex-col items-center justify-center py-12 space-y-4">
-        <div class="relative w-16 h-16">
-          <div class="absolute inset-0 bg-primary/10 rounded-full animate-ping"></div>
-          <div class="relative flex items-center justify-center w-16 h-16 bg-white rounded-full border border-primary/20 shadow-sm">
-            <span class="material-symbols-outlined text-primary text-3xl animate-pulse">auto_awesome</span>
-          </div>
-        </div>
-        <p class="text-body-md text-outline font-medium">Sincronizando con Gemini Pro...</p>
-      </div>
-
-      <!-- Content State -->
-      <div v-else-if="insights" class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <!-- Vision Card -->
-        <div class="group">
-          <div class="flex items-center gap-2 mb-4 text-primary font-bold">
-            <span class="material-symbols-outlined">lightbulb</span>
-            <span class="text-label-md uppercase tracking-widest">Visión</span>
-          </div>
-          <p class="text-body-md text-on-surface-variant leading-relaxed">
-            {{ insights.summary }}
-          </p>
-        </div>
-
-        <!-- Recommendations Card -->
-        <div class="group">
-          <div class="flex items-center gap-2 mb-4 text-secondary font-bold">
-            <span class="material-symbols-outlined">task_alt</span>
-            <span class="text-label-md uppercase tracking-widest">Recomendaciones</span>
-          </div>
-          <ul class="space-y-3">
-            <li v-for="rec in insights.recommendations" :key="rec" class="flex items-start gap-2 text-body-md text-on-surface-variant">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0"></span>
-              {{ rec }}
-            </li>
-          </ul>
-        </div>
-
-        <!-- Trends Card -->
-        <div class="group">
-          <div class="flex items-center gap-2 mb-4 text-on-tertiary-container font-bold">
-            <span class="material-symbols-outlined">trending_up</span>
-            <span class="text-label-md uppercase tracking-widest">Tendencias</span>
-          </div>
-          <ul class="space-y-3">
-            <li v-for="trend in insights.trends" :key="trend" class="flex items-start gap-2 text-body-md text-on-surface-variant">
-              <span class="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 shrink-0"></span>
-              {{ trend }}
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- Error State -->
-      <div v-else-if="error" class="bg-error-container/20 border border-error/10 rounded-xl p-6 text-center">
-        <span class="material-symbols-outlined text-error text-4xl mb-2">warning</span>
-        <p class="text-on-surface font-bold">Error en el análisis</p>
-        <p class="text-on-surface-variant text-sm mb-4">{{ error }}</p>
-        <button @click="generateInsights(false)" class="bg-primary text-white px-4 py-2 rounded-lg font-bold hover:opacity-90 transition-opacity">
-          Reintentar
-        </button>
-      </div>
-    </div>
-
-    <!-- Footer Info -->
-    <div class="bg-surface-container-low px-8 py-4 border-t border-outline-variant flex justify-between items-center">
-      <span class="text-label-sm text-outline italic">Última actualización: {{ lastUpdatedText }}</span>
-      <button class="text-primary font-bold text-label-md hover:underline flex items-center gap-1">
-        Ver análisis detallado <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+      <button
+        @click="generateInsights(false)"
+        :disabled="loading"
+        class="w-7 h-7 flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors disabled:opacity-40"
+        title="Actualizar insights"
+      >
+        <i :class="loading ? 'fas fa-spinner fa-spin' : 'fas fa-sync-alt'" class="text-slate-400 text-[10px]"></i>
       </button>
     </div>
-  </section>
+
+    <!-- Loading -->
+    <div v-if="loading" class="flex-1 flex items-center justify-center">
+      <div class="text-center">
+        <div class="relative mb-3 mx-auto w-10 h-10 flex items-center justify-center">
+          <i class="fas fa-brain text-violet-500 text-xl animate-bounce relative z-10"></i>
+          <div class="absolute inset-0 bg-violet-100 rounded-full animate-pulse"></div>
+        </div>
+        <p class="text-slate-500 text-xs font-medium mb-2">Analizando tu situación...</p>
+        <div class="flex justify-center gap-1">
+          <div class="w-1.5 h-1.5 bg-violet-400 rounded-full animate-pulse"></div>
+          <div class="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse" style="animation-delay:.15s"></div>
+          <div class="w-1.5 h-1.5 bg-sky-400 rounded-full animate-pulse" style="animation-delay:.3s"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content: 3 columns -->
+    <div v-else-if="insights" class="flex-1 min-h-0 grid grid-cols-3 divide-x divide-slate-100 overflow-hidden">
+
+      <!-- LECTURA -->
+      <div class="flex flex-col overflow-hidden">
+        <div class="flex items-center gap-1.5 px-4 pt-3 pb-2 flex-none">
+          <i class="fas fa-eye text-amber-500 text-[10px]"></i>
+          <h4 class="text-[10px] font-black text-amber-500 uppercase tracking-widest">Situación</h4>
+        </div>
+        <p class="px-4 pb-4 text-slate-600 text-xs leading-relaxed overflow-y-auto flex-1">
+          {{ insights.lectura }}
+        </p>
+      </div>
+
+      <!-- ACCIONES -->
+      <div class="flex flex-col overflow-hidden">
+        <div class="flex items-center gap-1.5 px-4 pt-3 pb-2 flex-none">
+          <i class="fas fa-bullseye text-emerald-500 text-[10px]"></i>
+          <h4 class="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Acciones</h4>
+        </div>
+        <ul class="px-4 pb-4 space-y-2.5 overflow-y-auto flex-1">
+          <li
+            v-for="(accion, i) in insights.acciones"
+            :key="i"
+            class="flex items-start gap-2 text-xs text-slate-600 leading-snug"
+          >
+            <span class="mt-1 w-4 h-4 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
+              <i class="fas fa-arrow-right text-emerald-500 text-[8px]"></i>
+            </span>
+            <span>{{ accion }}</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- RIESGOS -->
+      <div class="flex flex-col overflow-hidden">
+        <div class="flex items-center gap-1.5 px-4 pt-3 pb-2 flex-none">
+          <i class="fas fa-shield-alt text-red-400 text-[10px]"></i>
+          <h4 class="text-[10px] font-black text-red-400 uppercase tracking-widest">Riesgos</h4>
+        </div>
+        <ul class="px-4 pb-4 space-y-2.5 overflow-y-auto flex-1">
+          <li
+            v-for="(riesgo, i) in insights.riesgos"
+            :key="i"
+            class="flex items-start gap-2 text-xs text-slate-600 leading-snug"
+          >
+            <span class="mt-1 w-4 h-4 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+              <i class="fas fa-exclamation text-red-400 text-[8px]"></i>
+            </span>
+            <span>{{ riesgo }}</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Error -->
+    <div v-else-if="error" class="flex-1 flex flex-col items-center justify-center gap-3 p-6">
+      <i class="fas fa-exclamation-triangle text-red-400 text-2xl"></i>
+      <p class="text-red-500 text-xs font-medium text-center">{{ error }}</p>
+      <button
+        @click="generateInsights(false)"
+        class="px-4 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 transition-colors"
+      >
+        <i class="fas fa-sync-alt mr-1.5 text-slate-400"></i>Reintentar
+      </button>
+    </div>
+
+    <!-- Empty -->
+    <div v-else class="flex-1 flex flex-col items-center justify-center gap-2 p-6">
+      <i class="fas fa-brain text-2xl text-slate-300"></i>
+      <p class="text-slate-500 text-xs font-medium text-center">Sin análisis disponible</p>
+      <button
+        @click="generateInsights(false)"
+        class="px-4 py-1.5 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-lg text-xs font-bold text-violet-600 transition-colors"
+      >
+        Generar análisis
+      </button>
+    </div>
+
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -106,22 +126,20 @@ import { useAuthStore } from '../stores/auth'
 import {
   useClientsStore,
   useActivitiesStore,
-  usePaymentsStore,
   useIssuesStore,
   useTeamStore
 } from '../stores'
 import { API_CONFIG } from '@/config/api'
 
 interface InsightsData {
-  summary: string
-  recommendations: string[]
-  trends: string[]
+  lectura: string
+  acciones: string[]
+  riesgos: string[]
 }
 
 const authStore = useAuthStore()
 const clientsStore = useClientsStore()
 const activitiesStore = useActivitiesStore()
-const paymentsStore = usePaymentsStore()
 const issuesStore = useIssuesStore()
 const teamStore = useTeamStore()
 
@@ -129,154 +147,178 @@ const loading = ref(false)
 const insights = ref<InsightsData | null>(null)
 const error = ref('')
 
-const lastUpdatedText = computed(() => {
-  return 'Hace pocos minutos'
-})
+const userName = computed(() => authStore.user?.name?.split(' ')[0] || 'ti')
 
-const defaultInsights: InsightsData = {
-  summary: 'Tu negocio está en constante evolución, transformando oportunidades en resultados tangibles.',
-  recommendations: [
-    'Optimiza el seguimiento de actividades pendientes para aumentar la productividad del equipo',
-    'Implementa estrategias de retención basadas en el análisis de clientes recurrentes',
-    'Explora oportunidades de cross-selling con tus clientes más valiosos'
-  ],
-  trends: [
-    'Crecimiento sostenido en la adquisición de nuevos clientes',
-    'Mejora en la resolución eficiente de casos e incidencias',
-    'Tendencia positiva en la colaboración y comunicación del equipo'
-  ]
-}
-
-const CACHE_KEY = 'crm_ai_insights_cache'
-const CACHE_DURATION = 2 * 60 * 60 * 1000 
+const CACHE_KEY = computed(() =>
+  `crm_ai_insights_v4_${authStore.user?.name}_${authStore.user?.role}`
+)
+const CACHE_DURATION = 30 * 60 * 1000
 
 const getCachedInsights = (): InsightsData | null => {
   try {
-    const cached = localStorage.getItem(CACHE_KEY)
+    const cached = localStorage.getItem(CACHE_KEY.value)
     if (cached) {
       const parsed = JSON.parse(cached)
-      const now = Date.now()
-      if (now - parsed.timestamp < CACHE_DURATION) {
-        return parsed.data
-      } else {
-        localStorage.removeItem(CACHE_KEY)
-      }
+      if (Date.now() - parsed.timestamp < CACHE_DURATION) return parsed.data
+      localStorage.removeItem(CACHE_KEY.value)
     }
-  } catch (error) {
-    console.warn('Error reading insights cache:', error)
-  }
+  } catch {}
   return null
 }
 
 const setCachedInsights = (data: InsightsData): void => {
   try {
-    const cacheData = {
-      data,
-      timestamp: Date.now()
-    }
-    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData))
-  } catch (error) {
-    console.warn('Error caching insights:', error)
-  }
+    localStorage.setItem(CACHE_KEY.value, JSON.stringify({ data, timestamp: Date.now() }))
+  } catch {}
 }
 
 const generateInsights = async (background = false) => {
-  if (!background) {
-    loading.value = true
-  }
+  if (!background) loading.value = true
   error.value = ''
 
   if (background) {
     const cached = getCachedInsights()
-    if (cached) {
-      insights.value = cached
-      return
-    }
+    if (cached) { insights.value = cached; return }
   }
-  
-  if (!background) {
-    insights.value = null
-  }
+
+  if (!background) insights.value = null
 
   try {
-    const userRole = authStore.user?.role || 'Miembro'
-    const userDept = authStore.user?.department || 'General'
-    const userName = authStore.user?.name || 'Usuario'
+    const userNameFull = authStore.user?.name || 'Usuario'
+    const firstName = userNameFull.split(' ')[0]
+    const userRole = (authStore.user?.role || 'employee') as string
 
-    const data = {
-      clients: clientsStore.clients.length,
-      activities: {
-        total: activitiesStore.activities.length,
-        pending: activitiesStore.activities.filter((a: any) => a.status === 'pending').length,
-        completed: activitiesStore.activities.filter((a: any) => a.status === 'completed').length,
-        overdue: activitiesStore.activities.filter((a: any) => a.status === 'overdue').length
-      },
-      issues: {
-        total: issuesStore.issues.length,
-        open: issuesStore.issues.filter((i: any) => i.status === 'open').length
-      },
-      team: teamStore.members.length
-    }
+    const todayDate = new Date()
+    const todayMidnight = new Date(todayDate)
+    todayMidnight.setHours(0, 0, 0, 0)
 
-    const prompt = `Actúa como un Consultor Estratégico de Negocios de alto nivel. 
-    Refiérete al sistema simplemente como "tu plataforma", "tu CRM" o "tu ecosistema de gestión".
-    
-    CONTEXTO DEL USUARIO:
-    - Nombre: ${userName}
-    - Rol: ${userRole}
-    - Departamento: ${userDept}
+    const clientMap = new Map(clientsStore.clients.map((c: any) => [c._id, c.name]))
 
-    DATOS ACTUALES DEL CRM:
-    - Clientes: ${data.clients}
-    - Actividades: ${data.activities.total} (${data.activities.pending} pendientes, ${data.activities.overdue} vencidas)
-    - Casos/Issues: ${data.issues.total} (${data.issues.open} abiertos)
-    - Equipo: ${data.team} integrantes
-
-    FORMATO DE RESPUESTA (Estricto):
-    Resumen: [1 frase potente y motivadora de visión]
-    Rec1: [Recomendación táctica 1]
-    Rec2: [Recomendación táctica 2]
-    Rec3: [Recomendación táctica 3]
-    Trend1: [Tendencia detectada 1]
-    Trend2: [Tendencia detectada 2]`
-
-    let aiText = ''
-    try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/ai/gemini-generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt })
+    const overdueActs = activitiesStore.activities
+      .filter((a: any) => {
+        if (a.status === 'completed' || a.status === 'cancelled') return false
+        const d = new Date(a.dueDate || a.date)
+        d.setHours(0, 0, 0, 0)
+        return d < todayMidnight
       })
+      .slice(0, 6)
 
-      if (!response.ok) {
-        throw new Error(`Error de IA (${response.status})`)
-      }
+    const todayActs = activitiesStore.activities
+      .filter((a: any) => {
+        if (a.status === 'completed' || a.status === 'cancelled') return false
+        const d = new Date(a.dueDate || a.date)
+        d.setHours(0, 0, 0, 0)
+        return d.getTime() === todayMidnight.getTime()
+      })
+      .slice(0, 5)
 
-      const result = await response.json()
-      aiText = result.text || ''
-    } catch (e: any) {
-      throw new Error(e?.message || 'Error de conexión con la IA')
+    const inProgressActs = activitiesStore.activities
+      .filter((a: any) => a.status === 'in-progress')
+      .slice(0, 4)
+
+    const highPriorityActs = activitiesStore.activities
+      .filter((a: any) =>
+        (a.priority === 'high' || a.priority === 'urgent') &&
+        a.status !== 'completed' && a.status !== 'cancelled'
+      )
+      .slice(0, 3)
+
+    const formatAct = (a: any): string => {
+      const clientName = clientMap.get(a.clientId)
+      const due = new Date(a.dueDate || a.date)
+      due.setHours(0, 0, 0, 0)
+      const diffDays = Math.floor((todayMidnight.getTime() - due.getTime()) / 86400000)
+      let str = `"${a.title}"`
+      if (clientName) str += ` (cliente: ${clientName})`
+      if (diffDays > 0) str += ` [${diffDays}d vencida]`
+      return str
     }
 
+    const roleContextMap: Record<string, string> = {
+      admin: 'gestión estratégica, supervisión de KPIs del negocio y liderazgo del equipo completo',
+      manager: 'supervisión del equipo, desbloqueo de impedimentos y cumplimiento de objetivos comerciales',
+      employee: 'ejecución de actividades asignadas y seguimiento personalizado de sus clientes',
+      support: 'resolución de tickets, satisfacción del cliente y reducción del tiempo de respuesta',
+      development: 'entregas técnicas, resolución de bugs y gestión de la deuda técnica',
+      fullstack: 'cobertura técnica y operativa, integraciones y estabilidad del sistema',
+      viewer: 'monitoreo del estado operativo y generación de reportes para decisiones',
+      client: 'seguimiento del estado de sus proyectos activos y comunicación con el equipo',
+    }
+
+    const todayStr = todayDate.toLocaleDateString('es', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    })
+
+    const prompt = `Eres un asistente estratégico de CRM. Responde ÚNICAMENTE en el formato indicado. Sin texto extra.
+REGLA IMPORTANTE: No menciones el nombre del sistema o plataforma CRM.
+
+PERFIL DEL USUARIO:
+- Nombre: ${firstName} | Rol: ${userRole}
+- Responsabilidad principal: ${roleContextMap[userRole] || 'gestión operativa'}
+- Fecha actual: ${todayStr}
+
+ACTIVIDADES VENCIDAS (${overdueActs.length} sin completar):
+${overdueActs.length > 0
+  ? overdueActs.map(formatAct).map(s => `  · ${s}`).join('\n')
+  : '  · Ninguna vencida — buena gestión del tiempo'}
+
+ACTIVIDADES PARA HOY (${todayActs.length}):
+${todayActs.length > 0
+  ? todayActs.map(formatAct).map(s => `  · ${s}`).join('\n')
+  : '  · Sin actividades programadas para hoy'}
+
+EN PROGRESO ACTIVO (${inProgressActs.length}):
+${inProgressActs.length > 0
+  ? inProgressActs.map(formatAct).map(s => `  · ${s}`).join('\n')
+  : '  · Ninguna en progreso activo'}
+
+ALTA PRIORIDAD (${highPriorityActs.length}):
+${highPriorityActs.length > 0
+  ? highPriorityActs.map(formatAct).map(s => `  · ${s}`).join('\n')
+  : '  · Sin tareas de alta prioridad pendientes'}
+
+MÉTRICAS GLOBALES:
+Clientes: ${clientsStore.clients.length} | Total actividades: ${activitiesStore.activities.length} (completadas: ${activitiesStore.activities.filter((a: any) => a.status === 'completed').length}) | Casos abiertos: ${issuesStore.issues.filter((i: any) => i.status === 'open').length} | Equipo: ${teamStore.members.length} personas
+
+FORMATO DE RESPUESTA (responde EXACTAMENTE estas 6 líneas, sin saltar líneas adicionales):
+Lectura: [2-3 oraciones evaluando la situación operativa real de ${firstName} con números y tareas específicas mencionadas arriba]
+Accion1: [Acción concreta que ${firstName} debe ejecutar HOY basada en las tareas vencidas o del día]
+Accion2: [Segunda acción prioritaria con impacto directo en los próximos 2 días]
+Accion3: [Tercera acción táctica para esta semana basada en el rol de ${firstName}]
+Riesgo1: [Riesgo operativo específico detectado en los datos, con consecuencia concreta]
+Riesgo2: [Segundo riesgo identificado, diferente al primero, con causa raíz clara]`
+
+    const response = await fetch(`${API_CONFIG.BASE_URL}/ai/gemini-generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    })
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(err.error || `Error de IA (${response.status})`)
+    }
+
+    const result = await response.json()
+    const aiText: string = result.text || ''
     if (!aiText) throw new Error('La IA no devolvió contenido')
 
-    const lines = aiText.split('\n')
-    const summaryLine = lines.find((l: string) => l.startsWith('Resumen:'))?.replace('Resumen:', '').trim()
-    
-    const recs = lines
-      .filter((l: string) => l.includes('Rec'))
+    const lines = aiText.split('\n').map((l: string) => l.trim()).filter(Boolean)
+
+    const lectura = lines.find((l: string) => l.startsWith('Lectura:'))?.replace('Lectura:', '').trim() || ''
+    const acciones = lines
+      .filter((l: string) => /^Accion\d+:/i.test(l))
       .map((l: string) => l.substring(l.indexOf(':') + 1).trim())
       .filter((l: string) => l.length > 5)
-    
-    const trends = lines
-      .filter((l: string) => l.includes('Trend'))
+    const riesgos = lines
+      .filter((l: string) => /^Riesgo\d+:/i.test(l))
       .map((l: string) => l.substring(l.indexOf(':') + 1).trim())
       .filter((l: string) => l.length > 5)
 
-    const finalInsights = {
-      summary: summaryLine || 'Análisis completado con éxito para tu perfil.',
-      recommendations: recs.length > 0 ? recs : defaultInsights.recommendations,
-      trends: trends.length > 0 ? trends : defaultInsights.trends
+    const finalInsights: InsightsData = {
+      lectura: lectura || 'Análisis completado. Revisa las secciones de acciones y riesgos.',
+      acciones: acciones.length > 0 ? acciones : ['Revisa las actividades vencidas y actualiza su estado', 'Haz seguimiento a los clientes con actividades pendientes'],
+      riesgos: riesgos.length > 0 ? riesgos : ['Actividades vencidas sin atender afectan la percepción del cliente']
     }
 
     insights.value = finalInsights
@@ -284,7 +326,7 @@ const generateInsights = async (background = false) => {
 
   } catch (err: any) {
     error.value = 'No se pudo conectar con la IA en este momento'
-    console.error('Gemini Error:', err)
+    console.error('AI Error:', err)
   } finally {
     if (!background) loading.value = false
   }
@@ -294,32 +336,7 @@ onMounted(() => {
   const cached = getCachedInsights()
   if (cached) {
     insights.value = cached
-  } else {
-    insights.value = defaultInsights
   }
-  generateInsights(true) 
+  generateInsights(true)
 })
 </script>
-
-<style scoped>
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-in {
-  animation: fade-in 0.6s ease-out forwards;
-}
-
-.ai-gradient-text {
-  background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-</style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-3 xl:h-full xl:overflow-hidden">
+  <div class="flex flex-col gap-3 pb-6 xl:pb-0 xl:h-full xl:overflow-hidden">
 
     <!-- ══ Top breadcrumb bar ══════════════════════════════════════════ -->
     <div class="flex items-center justify-between gap-2 flex-wrap pr-12 sm:pr-14">

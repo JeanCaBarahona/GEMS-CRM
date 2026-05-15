@@ -2,7 +2,7 @@
   <div class="h-full flex flex-col gap-3 overflow-hidden">
 
     <!-- ── Header ──────────────────────────────────────────────────── -->
-    <div class="flex items-center gap-3 flex-none flex-wrap">
+    <div class="flex items-center gap-3 flex-none flex-wrap pr-12">
       <div class="flex items-center gap-2 flex-1 min-w-0">
         <span class="text-base font-black text-slate-900">Hola, {{ firstName }}</span>
         <span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-black rounded-full uppercase tracking-wider">
@@ -67,8 +67,8 @@
       <!-- ─── [Fila 1 · Col 1] AI Insights ─────────────────────────── -->
       <AIInsightsWidget class="self-start" />
 
-      <!-- ─── [Fila 1 · Col 2] Métricas + Ritmo del día ───────────── -->
-      <div class="flex flex-col gap-2.5 self-start">
+      <!-- ─── [Fila 1+2 · Col 2] Columna derecha — abarca ambas filas ── -->
+      <div class="flex flex-col gap-3 min-h-0" style="grid-row: 1 / 3">
 
         <!-- Métricas 2×2 -->
         <div class="grid grid-cols-2 gap-2">
@@ -142,6 +142,38 @@
             <div class="bg-orange-50 rounded-lg py-1.5">
               <div class="text-sm font-black text-orange-500 leading-none">{{ highPriorityCount }}</div>
               <div class="text-[9px] text-orange-400 font-semibold mt-0.5">Prioridad</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Agenda: llena el espacio restante de la columna derecha -->
+        <div class="bg-white border border-slate-200 rounded-xl flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div class="flex items-center justify-between px-3.5 py-2.5 border-b border-slate-100 shrink-0">
+            <div class="flex items-center gap-1.5">
+              <i class="fas fa-calendar-day text-blue-500 text-[10px]"></i>
+              <span class="text-xs font-bold text-slate-700">Agenda</span>
+            </div>
+            <router-link to="/activities" class="text-[10px] text-blue-500 hover:text-blue-600 font-bold">Ver todo →</router-link>
+          </div>
+          <div v-if="upcomingActivities.length === 0" class="flex-1 flex items-center justify-center">
+            <p class="text-[10px] text-slate-400">Sin actividades próximas</p>
+          </div>
+          <div v-else class="flex-1 overflow-y-auto divide-y divide-slate-50">
+            <div v-for="act in upcomingActivities" :key="act._id"
+              class="flex items-center gap-2.5 px-3.5 py-2.5 hover:bg-slate-50 transition-colors">
+              <div class="shrink-0 w-8 text-center">
+                <div class="text-xs font-black text-slate-800 leading-none">{{ formatDay(act.dueDate || act.date) }}</div>
+                <div class="text-[9px] text-slate-400 font-semibold uppercase">{{ formatMonth(act.dueDate || act.date) }}</div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[11px] font-semibold text-slate-700 truncate">{{ act.title }}</div>
+                <div class="text-[10px] text-slate-400 truncate">
+                  {{ clientsStore.clients.find(c => c._id === act.clientId)?.name || '—' }}
+                </div>
+              </div>
+              <span :class="['shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase', statusClass(act.status)]">
+                {{ statusLabel(act.status) }}
+              </span>
             </div>
           </div>
         </div>
@@ -230,38 +262,6 @@
           </div>
         </div>
 
-      </div>
-
-      <!-- ─── [Fila 2 · Col 2] Agenda ───────────────────────────────── -->
-      <div class="bg-white border border-slate-200 rounded-xl flex flex-col overflow-hidden min-h-0">
-        <div class="flex items-center justify-between px-3.5 py-2.5 border-b border-slate-100 shrink-0">
-          <div class="flex items-center gap-1.5">
-            <i class="fas fa-calendar-day text-blue-500 text-[10px]"></i>
-            <span class="text-xs font-bold text-slate-700">Agenda</span>
-          </div>
-          <router-link to="/activities" class="text-[10px] text-blue-500 hover:text-blue-600 font-bold">Ver todo →</router-link>
-        </div>
-        <div v-if="upcomingActivities.length === 0" class="flex-1 flex items-center justify-center">
-          <p class="text-[10px] text-slate-400">Sin actividades próximas</p>
-        </div>
-        <div v-else class="flex-1 overflow-y-auto divide-y divide-slate-50">
-          <div v-for="act in upcomingActivities" :key="act._id"
-            class="flex items-center gap-2.5 px-3.5 py-2.5 hover:bg-slate-50 transition-colors">
-            <div class="shrink-0 w-8 text-center">
-              <div class="text-xs font-black text-slate-800 leading-none">{{ formatDay(act.dueDate || act.date) }}</div>
-              <div class="text-[9px] text-slate-400 font-semibold uppercase">{{ formatMonth(act.dueDate || act.date) }}</div>
-            </div>
-            <div class="flex-1 min-w-0">
-              <div class="text-[11px] font-semibold text-slate-700 truncate">{{ act.title }}</div>
-              <div class="text-[10px] text-slate-400 truncate">
-                {{ clientsStore.clients.find(c => c._id === act.clientId)?.name || '—' }}
-              </div>
-            </div>
-            <span :class="['shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase', statusClass(act.status)]">
-              {{ statusLabel(act.status) }}
-            </span>
-          </div>
-        </div>
       </div>
 
     </div>

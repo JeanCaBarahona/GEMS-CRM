@@ -2,20 +2,20 @@
   <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
 
     <!-- Header -->
-    <div class="flex items-center justify-between px-3 py-2 border-b border-slate-100">
-      <div class="flex items-center gap-2">
-        <div class="w-6 h-6 rounded-lg bg-violet-50 flex items-center justify-center shrink-0">
-          <i class="fas fa-brain text-violet-500 text-[10px]"></i>
+    <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-xl bg-violet-50 flex items-center justify-center shrink-0">
+          <i class="fas fa-brain text-violet-500 text-sm"></i>
         </div>
-        <div class="leading-tight">
-          <p class="text-[8px] font-black text-violet-500 uppercase tracking-widest leading-none">IA Personalizada</p>
-          <h3 class="text-xs font-bold text-slate-800 leading-none">Insights para {{ userName }}</h3>
+        <div>
+          <p class="text-[9px] font-black text-violet-500 uppercase tracking-widest leading-none mb-0.5">IA Personalizada</p>
+          <h3 class="text-sm font-bold text-slate-800 leading-none">Insights para {{ userName }}</h3>
         </div>
       </div>
       <button
         @click="generateInsights(false)"
         :disabled="loading"
-        class="w-6 h-6 flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md transition-colors disabled:opacity-40"
+        class="w-7 h-7 flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors disabled:opacity-40"
         title="Actualizar insights"
       >
         <i :class="loading ? 'fas fa-spinner fa-spin' : 'fas fa-sync-alt'" class="text-slate-400 text-[10px]"></i>

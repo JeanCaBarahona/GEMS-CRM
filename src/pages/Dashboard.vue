@@ -1,142 +1,148 @@
 <template>
-  <div class="space-y-6 relative">
-    <!-- Animated Light Background -->
-    <div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-      <div class="absolute inset-0 bg-slate-50"></div>
-      <div class="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary-400/5 rounded-full blur-[100px] animate-pulse"></div>
-      <div class="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-sky-300/5 rounded-full blur-[100px] animate-pulse animation-delay-3000"></div>
-      
-      <!-- Subtle grid pattern -->
-      <div class="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] opacity-50"></div>
-    </div>
+  <div class="space-y-8 animate-fade-in">
     <!-- Welcome Header -->
-    <div class="mb-6">
-      <h1 class="text-xl lg:text-2xl font-black text-slate-800 tracking-tight animate-fade-in mb-0.5">
-        ¡Hola, {{ authStore.user?.name?.split(' ')[0] || 'Usuario' }}! 👋
-      </h1>
-      <p class="text-slate-500 text-xs font-medium animate-fade-in animation-delay-300">
-        {{ getWelcomeMessage() }}
-      </p>
-    </div>
-
-    <!-- Quick Actions - Horizontal Row (Prioritized) -->
-    <div v-if="availableQuickActions.length > 0" class="animate-fade-in animation-delay-300">
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        <router-link
-          v-for="action in availableQuickActions.slice(0, 5)"
-          :key="action.name"
-          :to="action.to"
-          :class="`
-            group flex items-center justify-center lg:justify-start gap-3 py-2.5 px-4
-            bg-white border border-slate-200 rounded-2xl
-            transition-all duration-300 hover:shadow-md hover:border-slate-300 hover:-translate-y-0.5
-          `"
-        >
-          <component :is="action.icon" :class="`w-5 h-5 ${action.iconColor}`" />
-          <span class="text-slate-700 text-xs font-bold tracking-tight group-hover:text-primary-600 truncate">
-            {{ action.name }}
-          </span>
-        </router-link>
+    <section class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div>
+        <h2 class="text-headline-xl font-headline-xl text-on-surface flex items-center gap-3">
+          ¡Hola, {{ authStore.user?.name?.split(' ')[0] || 'Usuario' }}! <span class="text-[32px]">👋</span>
+        </h2>
+        <p class="text-body-lg text-on-surface-variant mt-2">
+          Tienes <span class="font-bold text-primary">{{ pendingActivitiesCount }} actividades</span> críticas para hoy. El pronóstico de cierre mensual es optimista.
+        </p>
       </div>
-    </div>
+      <button 
+        @click="generateNewAIPrediction"
+        class="flex items-center gap-2 px-6 py-3 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:scale-[0.98] transition-all"
+      >
+        <span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+        Nueva Predicción IA
+      </button>
+    </section>
 
-    <!-- Stats Grid (Unified Sleek Strip) -->
-    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm animate-fade-in animation-delay-600 flex flex-nowrap overflow-x-auto divide-x divide-slate-100 w-full">
-      <!-- Clientes -->
-      <PermissionGuard :permissions="['view-clients']" :fallback="false" class="flex-1">
-        <div class="px-4 py-3 hover:bg-slate-50 transition-colors group flex items-center justify-center gap-3 w-full min-w-[130px]">
-          <div class="p-1.5 bg-blue-50 text-blue-500 rounded-lg group-hover:bg-blue-100 transition-colors">
-            <UserGroupIcon class="w-4 h-4" />
-          </div>
-          <div>
-            <div class="text-xl font-black text-slate-800 leading-none mb-0.5">{{ stats.clients }}</div>
-            <div class="text-[9px] font-bold text-slate-500 uppercase tracking-wider group-hover:text-blue-600 transition-colors">Clientes</div>
-          </div>
+    <!-- Quick Action Pills -->
+    <section class="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <router-link 
+        v-for="action in availableQuickActions" 
+        :key="action.name"
+        :to="action.to"
+        class="flex flex-col items-center justify-center gap-3 p-6 bg-white border border-outline-variant rounded-2xl hover:shadow-md hover:-translate-y-1 transition-all"
+      >
+        <div class="w-12 h-12 bg-surface-container rounded-full flex items-center justify-center text-primary">
+          <span class="material-symbols-outlined">{{ action.iconName }}</span>
         </div>
-      </PermissionGuard>
-      
-      <!-- Actividades -->
-      <PermissionGuard :permissions="['view-activities']" :fallback="false" class="flex-1">
-        <div class="px-4 py-3 hover:bg-slate-50 transition-colors group flex items-center justify-center gap-3 w-full min-w-[130px]">
-          <div class="p-1.5 bg-green-50 text-green-500 rounded-lg group-hover:bg-green-100 transition-colors">
-            <ClipboardDocumentListIcon class="w-4 h-4" />
-          </div>
-          <div>
-            <div class="text-xl font-black text-slate-800 leading-none mb-0.5">{{ stats.activities }}</div>
-            <div class="text-[9px] font-bold text-slate-500 uppercase tracking-wider group-hover:text-green-600 transition-colors">Actividades</div>
-          </div>
+        <span class="text-label-md">{{ action.name }}</span>
+      </router-link>
+    </section>
+
+    <!-- KPI Bento Grid -->
+    <section class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-6">
+      <div class="bg-white p-6 rounded-2xl border border-outline-variant shadow-sm">
+        <p class="text-label-md text-outline uppercase tracking-wider mb-2">Clientes</p>
+        <div class="flex items-end justify-between">
+          <span class="text-headline-xl font-headline-xl text-on-surface">{{ stats.clients }}</span>
+          <span class="text-emerald-600 flex items-center text-label-sm font-bold bg-emerald-50 px-2 py-1 rounded-lg">
+            +12% <span class="material-symbols-outlined text-[16px]">arrow_upward</span>
+          </span>
         </div>
-      </PermissionGuard>
-
-      <!-- Tickets -->
-      <PermissionGuard :permissions="['view-cases']" :fallback="false" class="flex-1">
-        <div class="px-4 py-3 hover:bg-slate-50 transition-colors group flex items-center justify-center gap-3 w-full min-w-[130px]">
-          <div class="p-1.5 bg-sky-50 text-sky-500 rounded-lg group-hover:bg-sky-100 transition-colors relative">
-            <TicketIcon class="w-4 h-4" />
-            <div class="absolute top-0 right-0 w-1.5 h-1.5 bg-sky-400 rounded-full animate-pulse"></div>
-          </div>
-          <div>
-            <div class="text-xl font-black text-slate-800 leading-none mb-0.5">5</div>
-            <div class="text-[9px] font-bold text-slate-500 uppercase tracking-wider group-hover:text-sky-600 transition-colors">Nuevos Tickets</div>
-          </div>
+      </div>
+      <div class="bg-white p-6 rounded-2xl border border-outline-variant shadow-sm">
+        <p class="text-label-md text-outline uppercase tracking-wider mb-2">Actividades</p>
+        <div class="flex items-end justify-between">
+          <span class="text-headline-xl font-headline-xl text-on-surface">{{ stats.activities }}</span>
+          <span class="text-on-surface-variant text-label-sm font-bold bg-surface-container px-2 py-1 rounded-lg">Hoy</span>
         </div>
-      </PermissionGuard>
-
-      <!-- Issues -->
-      <PermissionGuard :permissions="['view-cases']" :fallback="false" class="flex-1">
-        <div class="px-4 py-3 hover:bg-slate-50 transition-colors group flex items-center justify-center gap-3 w-full min-w-[130px]">
-          <div class="p-1.5 bg-red-50 text-red-500 rounded-lg group-hover:bg-red-100 transition-colors">
-            <ExclamationTriangleIcon class="w-4 h-4" />
-          </div>
-          <div>
-            <div class="text-xl font-black text-slate-800 leading-none mb-0.5">{{ stats.openIssues }}</div>
-            <div class="text-[9px] font-bold text-slate-500 uppercase tracking-wider group-hover:text-red-600 transition-colors">Issues Abiertos</div>
-          </div>
+      </div>
+      <div class="bg-white p-6 rounded-2xl border border-outline-variant shadow-sm">
+        <p class="text-label-md text-outline uppercase tracking-wider mb-2">Tickets</p>
+        <div class="flex items-end justify-between">
+          <span class="text-headline-xl font-headline-xl text-on-surface">5</span>
+          <span class="text-primary text-label-sm font-bold bg-primary-container/10 px-2 py-1 rounded-lg">Nuevos</span>
         </div>
-      </PermissionGuard>
-
-      <!-- Equipo -->
-      <PermissionGuard :permissions="['view-team']" :fallback="false" class="flex-1">
-        <div class="px-4 py-3 hover:bg-slate-50 transition-colors group flex items-center justify-center gap-3 w-full min-w-[130px]">
-          <div class="p-1.5 bg-indigo-50 text-indigo-500 rounded-lg group-hover:bg-indigo-100 transition-colors">
-            <UsersIcon class="w-4 h-4" />
-          </div>
-          <div>
-            <div class="text-xl font-black text-slate-800 leading-none mb-0.5">{{ stats.teamMembers }}</div>
-            <div class="text-[9px] font-bold text-slate-500 uppercase tracking-wider group-hover:text-indigo-600 transition-colors">Equipo App</div>
-          </div>
+      </div>
+      <div class="bg-white p-6 rounded-2xl border border-outline-variant shadow-sm">
+        <p class="text-label-md text-outline uppercase tracking-wider mb-2">Issues</p>
+        <div class="flex items-end justify-between">
+          <span class="text-headline-xl font-headline-xl text-error">{{ stats.openIssues }}</span>
+          <span class="text-rose-600 flex items-center text-label-sm font-bold bg-rose-50 px-2 py-1 rounded-lg">Crítico</span>
         </div>
-      </PermissionGuard>
-    </div>
+      </div>
+    </section>
 
-    <!-- Core Insights Row (Full Width) -->
-    <div class="mt-2">
-      <AIInsightsWidget />
-    </div>
+    <!-- AI Insights Section -->
+    <AIInsightsWidget />
 
-    <!-- Motivational Section -->
-    <div class="mt-12 mb-8 flex flex-col items-center animate-fade-in animation-delay-900">
-      <div class="w-full max-w-sm bg-slate-50/50 border border-slate-100 rounded-2xl p-6 transition-all duration-300">
-        <div class="flex flex-col items-center">
-          <!-- Quote Text -->
-          <p class="text-xs font-medium text-slate-500 text-center leading-relaxed mb-4">
-            "El éxito es la suma de pequeños esfuerzos repetidos día tras día."
-          </p>
-
-          <!-- Author & Action -->
-          <div class="flex items-center gap-3">
-            <span class="text-[9px] font-black text-slate-300 uppercase tracking-widest">Robert Collier</span>
-            <div class="w-1 h-1 bg-slate-200 rounded-full"></div>
-            <button 
-              @click="copyQuote" 
-              class="flex items-center gap-1.5 text-slate-400 hover:text-primary-600 transition-colors"
-              title="Copiar frase"
-            >
-              <i class="far fa-copy text-[9px]"></i>
-              <span class="text-[9px] font-black uppercase tracking-wider">Copiar</span>
-            </button>
+    <!-- Daily Insight Card: Upcoming Activities -->
+    <section class="bg-white rounded-2xl border border-outline-variant overflow-hidden shadow-sm">
+      <div class="p-6 border-b border-outline-variant flex items-center justify-between bg-surface-container-low">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-sky-500 flex items-center justify-center text-white">
+            <span class="material-symbols-outlined">event_busy</span>
           </div>
+          <h3 class="text-headline-md font-headline-md text-on-surface">Actividades Próximas a Vencer</h3>
         </div>
+        <router-link to="/activities" class="text-primary font-bold text-label-md hover:underline">Ver todas</router-link>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-surface">
+              <th class="px-6 py-4 text-label-md text-outline uppercase tracking-wider">Actividad</th>
+              <th class="px-6 py-4 text-label-md text-outline uppercase tracking-wider text-center">Prioridad</th>
+              <th class="px-6 py-4 text-label-md text-outline uppercase tracking-wider text-center">Estado</th>
+              <th class="px-6 py-4 text-label-md text-outline uppercase tracking-wider">Vencimiento</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-outline-variant">
+            <tr v-for="activity in upcomingActivities" :key="activity.id" class="hover:bg-surface-container-low/50 transition-colors">
+              <td class="px-6 py-4">
+                <div class="flex flex-col">
+                  <span class="font-bold text-on-surface">{{ activity.title }}</span>
+                  <span class="text-label-sm text-outline">Cliente: {{ activity.clientName || 'N/A' }}</span>
+                </div>
+              </td>
+              <td class="px-6 py-4 text-center">
+                <span :class="getPriorityClass(activity.priority)">{{ activity.priority }}</span>
+              </td>
+              <td class="px-6 py-4 text-center">
+                <span :class="getStatusClass(activity.status)">{{ activity.status }}</span>
+              </td>
+              <td class="px-6 py-4 text-on-surface-variant font-medium">{{ formatDate(activity.dueDate) }}</td>
+            </tr>
+            <tr v-if="upcomingActivities.length === 0">
+              <td colspan="4" class="px-6 py-8 text-center text-outline">No hay actividades pendientes para hoy.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Quote Section -->
+    <section class="max-w-3xl mx-auto text-center py-12 px-6 bg-white rounded-[2rem] border border-outline-variant shadow-sm relative overflow-hidden">
+      <div class="absolute -top-10 -left-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl"></div>
+      <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-secondary/5 rounded-full blur-3xl"></div>
+      <span class="material-symbols-outlined text-outline/20 text-6xl mb-4">format_quote</span>
+      <p class="text-headline-md font-medium text-on-surface italic leading-snug">
+        "El éxito no es el final, el fracaso no es fatal: lo que cuenta es el coraje para continuar."
+      </p>
+      <div class="mt-6">
+        <p class="text-label-md font-bold text-primary tracking-widest uppercase">— Winston Churchill</p>
+        <p class="text-label-sm text-outline mt-1">Reflexión de hoy para el equipo GEMS</p>
+      </div>
+    </section>
+
+    <!-- Success Toast (SweetAlert2 Style) -->
+    <div v-if="showToast" class="fixed bottom-8 right-8 z-50 animate-fade-in">
+      <div class="bg-white/90 backdrop-blur-lg border-l-4 border-emerald-500 rounded-xl shadow-2xl px-6 py-4 flex items-center gap-4 transition-all hover:scale-105">
+        <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+          <span class="material-symbols-outlined text-[20px]">check_circle</span>
+        </div>
+        <div>
+          <p class="font-bold text-on-surface">Sincronización Completa</p>
+          <p class="text-label-sm text-outline">Todos los datos están actualizados.</p>
+        </div>
+        <button @click="showToast = false" class="text-outline hover:text-on-surface transition-colors ml-4">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
       </div>
     </div>
   </div>
@@ -144,7 +150,7 @@
 
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { 
   useClientsStore, 
@@ -152,13 +158,8 @@ import {
   useIssuesStore,
   useTeamStore 
 } from '../stores'
-import PermissionGuard from '../components/PermissionGuard.vue'
 import AIInsightsWidget from '../components/AIInsightsWidget.vue'
-import MotivationalWidget from '../components/MotivationalWidget.vue'
 import {
-  UserGroupIcon,
-  ClipboardDocumentListIcon,
-  ExclamationTriangleIcon,
   UserPlusIcon,
   PlusCircleIcon,
   ExclamationCircleIcon,
@@ -172,6 +173,8 @@ const activitiesStore = useActivitiesStore()
 const issuesStore = useIssuesStore()
 const teamStore = useTeamStore()
 
+const showToast = ref(false)
+
 const stats = computed(() => ({
   clients: clientsStore.clients.length,
   activities: activitiesStore.activities.length,
@@ -179,7 +182,17 @@ const stats = computed(() => ({
   teamMembers: teamStore.members.length,
 }))
 
-// Computed property for available quick actions
+const pendingActivitiesCount = computed(() => {
+  return activitiesStore.activities.filter(a => a.status === 'pending').length
+})
+
+const upcomingActivities = computed(() => {
+  return [...activitiesStore.activities]
+    .filter(a => a.status !== 'completed')
+    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+    .slice(0, 3)
+})
+
 const availableQuickActions = computed(() => {
   const actions = []
   
@@ -187,9 +200,7 @@ const availableQuickActions = computed(() => {
     actions.push({
       name: 'Nuevo Cliente',
       to: '/clients',
-      icon: UserPlusIcon,
-      colors: 'from-blue-600/20 to-blue-700/20 border-blue-500/30 hover:from-blue-500/30 hover:to-blue-600/30',
-      iconColor: 'text-blue-400 group-hover:text-blue-300'
+      iconName: 'person_add'
     })
   }
   
@@ -197,20 +208,15 @@ const availableQuickActions = computed(() => {
     actions.push({
       name: 'Nueva Actividad',
       to: '/activities',
-      icon: PlusCircleIcon,
-      colors: 'from-green-600/20 to-green-700/20 border-green-500/30 hover:from-green-500/30 hover:to-green-600/30',
-      iconColor: 'text-green-400 group-hover:text-green-300'
+      iconName: 'add_task'
     })
   }
   
-  // Quick Action para revisar Tickets reemplazando el pago
   if (authStore.canViewCases) {
     actions.push({
       name: 'Revisar Tickets',
       to: '/tickets',
-      icon: TicketIcon,
-      colors: 'from-sky-600/20 to-sky-700/20 border-sky-500/30 hover:from-sky-500/30 hover:to-sky-600/30',
-      iconColor: 'text-sky-500 group-hover:text-sky-400'
+      iconName: 'checklist'
     })
   }
   
@@ -218,9 +224,7 @@ const availableQuickActions = computed(() => {
     actions.push({
       name: 'Nuevo Caso',
       to: '/cases',
-      icon: ExclamationCircleIcon,
-      colors: 'from-orange-600/20 to-orange-700/20 border-orange-500/30 hover:from-orange-500/30 hover:to-orange-600/30',
-      iconColor: 'text-orange-400 group-hover:text-orange-300'
+      iconName: 'assignment'
     })
   }
   
@@ -228,56 +232,61 @@ const availableQuickActions = computed(() => {
     actions.push({
       name: 'Gestionar Equipo',
       to: '/team',
-      icon: UsersIcon,
-      colors: 'from-indigo-600/20 to-indigo-700/20 border-indigo-500/30 hover:from-indigo-500/30 hover:to-indigo-600/30',
-      iconColor: 'text-indigo-400 group-hover:text-indigo-300'
+      iconName: 'groups'
     })
   }
   
   return actions
 })
 
-const getWelcomeMessage = () => {
-  const hour = new Date().getHours()
-  if (hour < 12) return '¡Buenos días! Comencemos con energía este día.'
-  if (hour < 18) return '¡Buenas tardes! ¿Qué actividades tienes planeadas?'
-  return '¡Buenas noches! Revisemos el progreso del día.'
+const generateNewAIPrediction = () => {
+  // Placeholder for IA prediction logic
+  showToast.value = true
+  setTimeout(() => {
+    showToast.value = false
+  }, 5000)
 }
 
-const copyQuote = () => {
-  const quote = '"El éxito es la suma de pequeños esfuerzos repetidos día tras día." - Robert Collier'
-  navigator.clipboard.writeText(quote)
+const getPriorityClass = (priority: string) => {
+  const classes: Record<string, string> = {
+    'P1': 'px-2 py-1 bg-rose-100 text-rose-700 text-label-sm font-bold rounded-lg',
+    'P2': 'px-2 py-1 bg-orange-100 text-orange-700 text-label-sm font-bold rounded-lg',
+    'P3': 'px-2 py-1 bg-amber-100 text-amber-700 text-label-sm font-bold rounded-lg',
+    'P4': 'px-2 py-1 bg-blue-50 text-blue-600 text-label-sm font-bold rounded-lg'
+  }
+  return classes[priority] || 'px-2 py-1 bg-slate-100 text-slate-600 text-label-sm font-bold rounded-lg'
+}
+
+const getStatusClass = (status: string) => {
+  const classes: Record<string, string> = {
+    'pending': 'px-2 py-1 bg-amber-100 text-amber-700 text-label-sm font-bold rounded-lg',
+    'in-progress': 'px-2 py-1 bg-blue-100 text-blue-700 text-label-sm font-bold rounded-lg',
+    'completed': 'px-2 py-1 bg-emerald-100 text-emerald-700 text-label-sm font-bold rounded-lg',
+    'overdue': 'px-2 py-1 bg-rose-100 text-rose-700 text-label-sm font-bold rounded-lg'
+  }
+  return classes[status] || 'px-2 py-1 bg-slate-100 text-slate-600 text-label-sm font-bold rounded-lg'
+}
+
+const formatDate = (dateString: string) => {
+  if (!dateString) return 'N/A'
+  const date = new Date(dateString)
+  return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 }
 
 onMounted(async () => {
   try {
-    // Only fetch data user has permission to see
     const promises: Promise<any>[] = []
-    
-    if (authStore.canViewClients) {
-      promises.push(clientsStore.fetchClients())
-    }
-    
-    if (authStore.canViewActivities) {
-      console.log('[Dashboard] Fetching all activities (secondary onMounted)');
-      promises.push(activitiesStore.fetchActivities())
-    }
-    
-    // Contabilidad temporarily removed
-    // if (authStore.canViewAccounting) {
-    //   promises.push(paymentsStore.fetchPayments())
-    //   promises.push(paymentsStore.fetchSummary())
-    // }
-    
-    if (authStore.canViewCases) {
-      promises.push(issuesStore.fetchIssues())
-    }
-    
-    if (authStore.canViewTeam) {
-      promises.push(teamStore.fetchTeam())
-    }
-    
+    if (authStore.canViewClients) promises.push(clientsStore.fetchClients())
+    if (authStore.canViewActivities) promises.push(activitiesStore.fetchActivities())
+    if (authStore.canViewCases) promises.push(issuesStore.fetchIssues())
+    if (authStore.canViewTeam) promises.push(teamStore.fetchTeam())
     await Promise.all(promises)
+    
+    // Show sync toast on load
+    showToast.value = true
+    setTimeout(() => {
+      showToast.value = false
+    }, 3000)
   } catch (error) {
     console.error('Error loading dashboard data:', error)
   }
@@ -285,10 +294,15 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  vertical-align: middle;
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -297,26 +311,12 @@ onMounted(async () => {
 }
 
 .animate-fade-in {
-  animation: fade-in 0.6s ease-out forwards;
+  animation: fade-in 0.5s ease-out forwards;
 }
 
-.animation-delay-300 {
-  animation-delay: 0.3s;
-}
-
-.animation-delay-600 {
-  animation-delay: 0.6s;
-}
-
-.animation-delay-900 {
-  animation-delay: 0.9s;
-}
-
-.animation-delay-2000 {
-  animation-delay: 2s;
-}
-
-.animation-delay-4000 {
-  animation-delay: 4s;
+.ai-gradient-text {
+  background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 </style>

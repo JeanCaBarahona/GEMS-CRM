@@ -1,123 +1,107 @@
 <template>
-  <div class="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 lg:p-5 animate-fade-in animation-delay-1800">
-    <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-3">
-      <h3 class="text-xs font-black text-slate-800 flex items-center tracking-tight uppercase">
-        <div class="w-6 h-6 rounded bg-purple-50 flex items-center justify-center mr-2">
-          <i class="fas fa-brain text-purple-500 text-[10px]"></i>
+  <section class="bg-white rounded-2xl border border-outline-variant overflow-hidden shadow-sm relative animate-fade-in">
+    <!-- Top Badge -->
+    <div class="absolute top-0 right-0 p-4">
+      <span class="px-3 py-1 bg-primary-container/20 text-primary text-label-sm font-bold rounded-full border border-primary/20 flex items-center gap-1">
+        <span class="material-symbols-outlined text-[14px]">bolt</span> POWERED BY GEMINI
+      </span>
+    </div>
+
+    <div class="p-8">
+      <!-- Header -->
+      <div class="flex items-center gap-3 mb-8">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-sky-500 flex items-center justify-center text-white shadow-lg">
+          <span class="material-symbols-outlined">psychology</span>
         </div>
-        Insights IA
-      </h3>
-      <div class="flex items-center gap-2">
-        <span class="text-[9px] bg-gradient-to-r from-purple-100 to-primary-100 text-purple-700 px-2 py-0.5 rounded border border-purple-200 font-bold uppercase tracking-wider">
-          Activo
-        </span>
-        <button
-          @click="generateInsights(false)"
-          :disabled="loading"
-          class="w-6 h-6 flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded transition-all duration-200 disabled:opacity-50 text-slate-500 hover:text-primary-500"
-          title="Actualizar insights"
-        >
-          <i :class="loading ? 'fas fa-spinner fa-spin text-[10px]' : 'fas fa-sync-alt text-[10px]'"></i>
+        <div class="flex items-center gap-3">
+          <h3 class="text-headline-md font-headline-md ai-gradient-text">Insights Estratégicos IA</h3>
+          <button
+            @click="generateInsights(false)"
+            :disabled="loading"
+            class="p-1.5 rounded-lg hover:bg-surface-container transition-colors disabled:opacity-50"
+            title="Actualizar análisis"
+          >
+            <span :class="['material-symbols-outlined text-outline', loading ? 'animate-spin' : '']">refresh</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div v-if="loading" class="flex flex-col items-center justify-center py-12 space-y-4">
+        <div class="relative w-16 h-16">
+          <div class="absolute inset-0 bg-primary/10 rounded-full animate-ping"></div>
+          <div class="relative flex items-center justify-center w-16 h-16 bg-white rounded-full border border-primary/20 shadow-sm">
+            <span class="material-symbols-outlined text-primary text-3xl animate-pulse">auto_awesome</span>
+          </div>
+        </div>
+        <p class="text-body-md text-outline font-medium">Sincronizando con Gemini Pro...</p>
+      </div>
+
+      <!-- Content State -->
+      <div v-else-if="insights" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Vision Card -->
+        <div class="group">
+          <div class="flex items-center gap-2 mb-4 text-primary font-bold">
+            <span class="material-symbols-outlined">lightbulb</span>
+            <span class="text-label-md uppercase tracking-widest">Visión</span>
+          </div>
+          <p class="text-body-md text-on-surface-variant leading-relaxed">
+            {{ insights.summary }}
+          </p>
+        </div>
+
+        <!-- Recommendations Card -->
+        <div class="group">
+          <div class="flex items-center gap-2 mb-4 text-secondary font-bold">
+            <span class="material-symbols-outlined">task_alt</span>
+            <span class="text-label-md uppercase tracking-widest">Recomendaciones</span>
+          </div>
+          <ul class="space-y-3">
+            <li v-for="rec in insights.recommendations" :key="rec" class="flex items-start gap-2 text-body-md text-on-surface-variant">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0"></span>
+              {{ rec }}
+            </li>
+          </ul>
+        </div>
+
+        <!-- Trends Card -->
+        <div class="group">
+          <div class="flex items-center gap-2 mb-4 text-on-tertiary-container font-bold">
+            <span class="material-symbols-outlined">trending_up</span>
+            <span class="text-label-md uppercase tracking-widest">Tendencias</span>
+          </div>
+          <ul class="space-y-3">
+            <li v-for="trend in insights.trends" :key="trend" class="flex items-start gap-2 text-body-md text-on-surface-variant">
+              <span class="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 shrink-0"></span>
+              {{ trend }}
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Error State -->
+      <div v-else-if="error" class="bg-error-container/20 border border-error/10 rounded-xl p-6 text-center">
+        <span class="material-symbols-outlined text-error text-4xl mb-2">warning</span>
+        <p class="text-on-surface font-bold">Error en el análisis</p>
+        <p class="text-on-surface-variant text-sm mb-4">{{ error }}</p>
+        <button @click="generateInsights(false)" class="bg-primary text-white px-4 py-2 rounded-lg font-bold hover:opacity-90 transition-opacity">
+          Reintentar
         </button>
       </div>
     </div>
 
-    <div v-if="loading" class="flex items-center justify-center py-12">
-      <div class="text-center">
-        <div class="relative mb-6 mx-auto w-16 h-16 flex items-center justify-center">
-          <i class="fas fa-brain text-purple-500 text-3xl animate-bounce relative z-10"></i>
-          <div class="absolute inset-0 bg-purple-100 rounded-full animate-pulse"></div>
-        </div>
-        <p class="text-slate-500 font-medium mb-3">Analizando datos con IA colaborativa...</p>
-        <div class="flex justify-center space-x-1.5">
-          <div class="w-2.5 h-2.5 bg-purple-400 rounded-full animate-pulse"></div>
-          <div class="w-2.5 h-2.5 bg-primary-400 rounded-full animate-pulse animation-delay-300"></div>
-          <div class="w-2.5 h-2.5 bg-sky-400 rounded-full animate-pulse animation-delay-600"></div>
-        </div>
-      </div>
-    </div>
-
-    <div v-else-if="insights" class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-100">
-      
-      <!-- Visión Creativa -->
-      <div class="px-4 py-2 hover:bg-slate-50/50 transition-colors">
-        <div class="flex items-center gap-2 mb-2">
-          <div class="w-5 h-5 rounded bg-amber-50 text-amber-500 flex items-center justify-center">
-            <i class="fas fa-lightbulb text-[10px]"></i>
-          </div>
-          <h4 class="text-slate-800 font-bold text-[10px] uppercase tracking-wider">Visión</h4>
-        </div>
-        <p class="text-slate-500 text-[10px] font-medium leading-relaxed">{{ insights.summary }}</p>
-      </div>
-
-      <!-- Recomendaciones -->
-      <div class="px-4 py-2 hover:bg-slate-50/50 transition-colors">
-        <div class="flex items-center gap-2 mb-2">
-          <div class="w-5 h-5 rounded bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <i class="fas fa-bullseye text-[10px]"></i>
-          </div>
-          <h4 class="text-slate-800 font-bold text-[10px] uppercase tracking-wider">Recomendaciones</h4>
-        </div>
-        <div v-if="insights.recommendations && insights.recommendations.length > 0">
-          <ul class="space-y-1">
-            <li v-for="rec in insights.recommendations" :key="rec" class="text-slate-500 text-[10px] flex items-start font-medium leading-tight">
-              <span class="text-emerald-400 mr-2 mt-[2px]"><i class="fas fa-circle text-[4px]"></i></span>
-              <span>{{ rec }}</span>
-            </li>
-          </ul>
-        </div>
-        <div v-else class="text-slate-400 text-[10px] italic">
-          Generando...
-        </div>
-      </div>
-
-      <!-- Tendencias -->
-      <div class="px-4 py-2 hover:bg-slate-50/50 transition-colors">
-        <div class="flex items-center gap-2 mb-2">
-          <div class="w-5 h-5 rounded bg-sky-50 text-sky-500 flex items-center justify-center">
-            <i class="fas fa-chart-line text-[10px]"></i>
-          </div>
-          <h4 class="text-slate-800 font-bold text-[10px] uppercase tracking-wider">Tendencias</h4>
-        </div>
-        <div v-if="insights.trends && insights.trends.length > 0">
-          <ul class="space-y-1">
-            <li v-for="trend in insights.trends" :key="trend" class="text-slate-500 text-[10px] flex items-start font-medium leading-tight">
-              <span class="text-sky-400 mr-2 mt-[2px]"><i class="fas fa-circle text-[4px]"></i></span>
-              <span>{{ trend }}</span>
-            </li>
-          </ul>
-        </div>
-        <div v-else class="text-slate-400 text-[10px] italic">
-          Analizando...
-        </div>
-      </div>
-    </div>
-
-    <div v-else-if="error" class="text-center py-10 bg-red-50 rounded-2xl border border-red-100">
-      <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm text-red-500">
-        <i class="fas fa-exclamation-triangle text-2xl"></i>
-      </div>
-      <p class="text-slate-700 font-bold mb-1">Inconveniente detectado</p>
-      <p class="text-red-500 text-sm font-medium">{{ error }}</p>
-      <button
-        @click="generateInsights(false)"
-        class="mt-5 px-6 py-2.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl shadow-sm text-slate-700 font-bold transition-all duration-200 active:scale-[0.98]"
-      >
-        <i class="fas fa-sync-alt mr-2 text-slate-400"></i>Reintentar Análisis
+    <!-- Footer Info -->
+    <div class="bg-surface-container-low px-8 py-4 border-t border-outline-variant flex justify-between items-center">
+      <span class="text-label-sm text-outline italic">Última actualización: {{ lastUpdatedText }}</span>
+      <button class="text-primary font-bold text-label-md hover:underline flex items-center gap-1">
+        Ver análisis detallado <span class="material-symbols-outlined text-[16px]">chevron_right</span>
       </button>
     </div>
-
-    <div v-else class="text-center py-12 text-slate-500 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
-      <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm text-slate-300">
-        <i class="fas fa-brain text-2xl"></i>
-      </div>
-      <p class="font-medium">Inicia un análisis con IA para revelar el potencial de tus datos</p>
-    </div>
-  </div>
+  </section>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import {
   useClientsStore,
@@ -126,6 +110,7 @@ import {
   useIssuesStore,
   useTeamStore
 } from '../stores'
+import { API_CONFIG } from '@/config/api'
 
 interface InsightsData {
   summary: string
@@ -133,6 +118,7 @@ interface InsightsData {
   trends: string[]
 }
 
+const authStore = useAuthStore()
 const clientsStore = useClientsStore()
 const activitiesStore = useActivitiesStore()
 const paymentsStore = usePaymentsStore()
@@ -143,7 +129,10 @@ const loading = ref(false)
 const insights = ref<InsightsData | null>(null)
 const error = ref('')
 
-// Datos por defecto para mostrar inmediatamente
+const lastUpdatedText = computed(() => {
+  return 'Hace pocos minutos'
+})
+
 const defaultInsights: InsightsData = {
   summary: 'Tu negocio está en constante evolución, transformando oportunidades en resultados tangibles.',
   recommendations: [
@@ -158,16 +147,9 @@ const defaultInsights: InsightsData = {
   ]
 }
 
-// La API key de Gemini vive solo en el backend.
-// El proxy /api/ai/gemini-generate es lo único que llamamos desde el front.
-import { API_CONFIG } from '@/config/api'
-const authStore = useAuthStore()
-
-// Cache key for localStorage
 const CACHE_KEY = 'crm_ai_insights_cache'
-const CACHE_DURATION = 2 * 60 * 60 * 1000 // 2 hours (more fresh for Gemini)
+const CACHE_DURATION = 2 * 60 * 60 * 1000 
 
-// Cache functions
 const getCachedInsights = (): InsightsData | null => {
   try {
     const cached = localStorage.getItem(CACHE_KEY)
@@ -204,7 +186,6 @@ const generateInsights = async (background = false) => {
   }
   error.value = ''
 
-  // Check cache first (solo si no es manual)
   if (background) {
     const cached = getCachedInsights()
     if (cached) {
@@ -218,12 +199,10 @@ const generateInsights = async (background = false) => {
   }
 
   try {
-    // Datos del usuario para contexto
     const userRole = authStore.user?.role || 'Miembro'
     const userDept = authStore.user?.department || 'General'
     const userName = authStore.user?.name || 'Usuario'
 
-    // Preparar datos para el análisis
     const data = {
       clients: clientsStore.clients.length,
       activities: {
@@ -240,7 +219,6 @@ const generateInsights = async (background = false) => {
     }
 
     const prompt = `Actúa como un Consultor Estratégico de Negocios de alto nivel. 
-    IMPORTANTE: No menciones la palabra "GEMS" en ninguna parte de tu respuesta. 
     Refiérete al sistema simplemente como "tu plataforma", "tu CRM" o "tu ecosistema de gestión".
     
     CONTEXTO DEL USUARIO:
@@ -254,20 +232,14 @@ const generateInsights = async (background = false) => {
     - Casos/Issues: ${data.issues.total} (${data.issues.open} abiertos)
     - Equipo: ${data.team} integrantes
 
-    TAREA:
-    Genera un análisis específico para este ROL y DEPARTAMENTO enfocado en la escalabilidad y eficiencia técnica.
-    
     FORMATO DE RESPUESTA (Estricto):
     Resumen: [1 frase potente y motivadora de visión]
     Rec1: [Recomendación táctica 1]
     Rec2: [Recomendación táctica 2]
     Rec3: [Recomendación táctica 3]
     Trend1: [Tendencia detectada 1]
-    Trend2: [Tendencia detectada 2]
-    
-    Evita introducciones, ve directo al formato.`
+    Trend2: [Tendencia detectada 2]`
 
-    // Proxy seguro: backend hace el fallback automático entre modelos
     let aiText = ''
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}/ai/gemini-generate`, {
@@ -277,21 +249,17 @@ const generateInsights = async (background = false) => {
       })
 
       if (!response.ok) {
-        const err = await response.json().catch(() => ({}))
-        console.error('AI proxy error:', err)
-        throw new Error(err.error || `Error de IA (${response.status})`)
+        throw new Error(`Error de IA (${response.status})`)
       }
 
       const result = await response.json()
       aiText = result.text || ''
     } catch (e: any) {
-      console.error('Error de conexión con IA:', e)
       throw new Error(e?.message || 'Error de conexión con la IA')
     }
 
     if (!aiText) throw new Error('La IA no devolvió contenido')
 
-    // Parsing simple pero efectivo
     const lines = aiText.split('\n')
     const summaryLine = lines.find((l: string) => l.startsWith('Resumen:'))?.replace('Resumen:', '').trim()
     
@@ -322,20 +290,14 @@ const generateInsights = async (background = false) => {
   }
 }
 
-
-// Generar insights automáticamente al montar el componente
 onMounted(() => {
-  // Revisar cache inmediatamente
   const cached = getCachedInsights()
   if (cached) {
     insights.value = cached
   } else {
-    // Mostrar datos por defecto si no hay cache
     insights.value = defaultInsights
   }
-  
-  // Generar insights reales en background inmediatamente
-  generateInsights(true) // true indica que es background
+  generateInsights(true) 
 })
 </script>
 
@@ -355,7 +317,9 @@ onMounted(() => {
   animation: fade-in 0.6s ease-out forwards;
 }
 
-.animation-delay-1800 {
-  animation-delay: 1.8s;
+.ai-gradient-text {
+  background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 </style>

@@ -1,31 +1,33 @@
 <template>
-  <div class="h-full flex flex-col gap-3 overflow-hidden">
+  <div class="flex flex-col gap-3 xl:h-full xl:overflow-hidden">
 
     <!-- ══ Top breadcrumb bar ══════════════════════════════════════════ -->
-    <div class="flex items-center justify-between pr-14">
-      <div class="flex items-center gap-2">
-        <span class="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Dashboard Operativo</span>
-        <span class="px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold rounded uppercase tracking-wider">
+    <div class="flex items-center justify-between gap-2 flex-wrap pr-12 sm:pr-14">
+      <div class="flex items-center gap-2 min-w-0">
+        <span class="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400 hidden sm:inline">Dashboard Operativo</span>
+        <span class="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400 sm:hidden">Dashboard</span>
+        <span class="px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold rounded uppercase tracking-wider whitespace-nowrap">
           {{ userRoleLabel }}
         </span>
       </div>
       <div class="flex items-center gap-2">
         <button @click="refreshData" :disabled="isRefreshing"
-          class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-blue-500 hover:border-blue-200 hover:bg-blue-50 transition-colors disabled:opacity-50">
+          class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-blue-500 hover:border-blue-200 hover:bg-blue-50 transition-colors disabled:opacity-50 shrink-0">
           <i class="fas fa-sync-alt text-[11px]" :class="{ 'animate-spin': isRefreshing }"></i>
         </button>
         <router-link v-if="authStore.canCreateActivities" to="/activities"
-          class="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg text-[12px] font-semibold shadow-sm shadow-blue-500/20 transition-all">
+          class="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg text-[12px] font-semibold shadow-sm shadow-blue-500/20 transition-all shrink-0">
           <i class="fas fa-plus text-[10px]"></i>
-          <span>Nueva actividad</span>
+          <span class="hidden sm:inline">Nueva actividad</span>
+          <span class="sm:hidden">Nueva</span>
         </router-link>
       </div>
     </div>
 
     <!-- ══ Greeting ═══════════════════════════════════════════════════ -->
     <div>
-      <h1 class="text-[26px] font-bold text-slate-900 tracking-tight leading-tight">Hola, {{ firstName }}</h1>
-      <p class="text-[13px] text-slate-500 mt-0.5">
+      <h1 class="text-xl sm:text-2xl xl:text-[26px] font-bold text-slate-900 tracking-tight leading-tight">Hola, {{ firstName }}</h1>
+      <p class="text-[12px] sm:text-[13px] text-slate-500 mt-0.5">
         Tienes <span class="font-semibold text-slate-700">{{ criticalCount }}</span>
         {{ criticalCount === 1 ? 'actividad' : 'actividades' }} que
         {{ criticalCount === 1 ? 'requiere' : 'requieren' }} atención entre hoy y vencidas.
@@ -33,45 +35,45 @@
     </div>
 
     <!-- ══ Quick actions row ══════════════════════════════════════════ -->
-    <div class="grid gap-2.5" :style="`grid-template-columns: repeat(${quickActions.length}, minmax(0,1fr));`">
+    <div class="grid gap-2.5" style="grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));">
       <router-link v-for="qa in quickActions" :key="qa.label" :to="qa.to"
-        class="flex items-center gap-3 bg-white border border-slate-200 hover:shadow-md rounded-xl px-4 py-3 transition-all group"
+        class="flex items-center gap-3 bg-white border border-slate-200 hover:shadow-md rounded-xl px-3.5 py-2.5 sm:px-4 sm:py-3 transition-all group"
         :class="qa.hover">
         <div class="w-9 h-9 rounded-lg flex items-center justify-center transition-colors shrink-0"
           :class="qa.iconBg">
           <i :class="['fas', qa.icon, qa.iconColor, 'text-[14px]']"></i>
         </div>
-        <span class="text-[13px] font-semibold text-slate-800">{{ qa.label }}</span>
+        <span class="text-[12px] sm:text-[13px] font-semibold text-slate-800 truncate">{{ qa.label }}</span>
       </router-link>
     </div>
 
     <!-- ══ Stats row ══════════════════════════════════════════════════ -->
-    <div class="grid gap-2.5" :style="`grid-template-columns: repeat(${statCards.length}, minmax(0,1fr));`">
+    <div class="grid gap-2.5" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
       <div v-for="card in statCards" :key="card.label"
-        class="bg-white border border-slate-200 rounded-xl px-4 py-3">
-        <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">{{ card.label }}</div>
-        <div class="flex items-end justify-between">
-          <div class="flex items-baseline gap-2">
-            <span class="text-[26px] font-bold text-slate-900 leading-none">{{ card.value }}</span>
-            <span class="text-[11px] font-semibold" :class="card.tagColor">{{ card.tag }}</span>
+        class="bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 sm:px-4 sm:py-3">
+        <div class="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 sm:mb-1.5 truncate">{{ card.label }}</div>
+        <div class="flex items-end justify-between gap-2">
+          <div class="flex items-baseline gap-1.5 sm:gap-2 min-w-0">
+            <span class="text-xl sm:text-2xl xl:text-[26px] font-bold text-slate-900 leading-none">{{ card.value }}</span>
+            <span class="text-[10px] sm:text-[11px] font-semibold truncate" :class="card.tagColor">{{ card.tag }}</span>
           </div>
-          <div class="w-9 h-9 rounded-lg flex items-center justify-center" :class="card.iconBg">
-            <i :class="['fas', card.icon, card.iconColor, 'text-[13px]']"></i>
+          <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center shrink-0" :class="card.iconBg">
+            <i :class="['fas', card.icon, card.iconColor, 'text-[12px] sm:text-[13px]']"></i>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ══ Main grid: 2/3 + 1/3 ═══════════════════════════════════════ -->
-    <div class="grid grid-cols-3 gap-3 flex-1 min-h-0">
+    <!-- ══ Main grid: stack < xl, 2/3 + 1/3 en xl+ ════════════════════ -->
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-3 xl:flex-1 xl:min-h-0">
 
       <!-- ── Left: AI Insights + Agenda ─────────────────────────────── -->
-      <div class="col-span-2 flex flex-col gap-3 min-h-0">
+      <div class="xl:col-span-2 flex flex-col gap-3 xl:min-h-0">
 
         <AIInsightsWidget />
 
         <!-- Agenda -->
-        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col flex-1 min-h-0">
+        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col xl:flex-1 xl:min-h-0">
           <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 shrink-0">
             <div>
               <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Agenda</div>
@@ -82,22 +84,24 @@
               Ver todas
             </router-link>
           </div>
-          <div v-if="agendaActivities.length === 0" class="flex-1 flex items-center justify-center">
-            <p class="text-[12px] text-slate-400">Sin actividades próximas</p>
+          <div v-if="agendaActivities.length === 0" class="py-8 xl:flex-1 xl:py-0 xl:flex xl:items-center xl:justify-center">
+            <p class="text-[12px] text-slate-400 text-center">Sin actividades próximas</p>
           </div>
-          <div v-else class="flex-1 overflow-y-auto divide-y divide-slate-50">
+          <div v-else class="max-h-[420px] xl:max-h-none xl:flex-1 overflow-y-auto divide-y divide-slate-50">
             <div v-for="act in agendaActivities" :key="act._id"
-              class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50/60 transition-colors">
+              class="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 hover:bg-slate-50/60 transition-colors">
               <span class="w-2 h-2 rounded-full shrink-0"
                 :class="act.priority === 'urgent' ? 'bg-red-500' : act.priority === 'high' ? 'bg-orange-500' : 'bg-blue-500'"></span>
-              <div class="flex-1 min-w-0 flex items-center gap-1.5">
+              <div class="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center sm:gap-1.5">
                 <span class="text-[12px] font-semibold text-slate-800 truncate">{{ act.title }}</span>
-                <span class="text-[12px] text-slate-400 truncate">· {{ clientsStore.clients.find(c => c._id === act.clientId)?.name || '—' }}</span>
+                <span class="text-[11px] sm:text-[12px] text-slate-400 truncate">
+                  <span class="hidden sm:inline">· </span>{{ clientsStore.clients.find(c => c._id === act.clientId)?.name || '—' }}
+                </span>
               </div>
               <span :class="['shrink-0 px-2 py-0.5 rounded text-[10px] font-semibold', agendaStatusClass(act)]">
                 {{ agendaStatusLabel(act) }}
               </span>
-              <span class="shrink-0 flex items-center gap-1 text-[11px] text-slate-500">
+              <span class="shrink-0 hidden md:flex items-center gap-1 text-[11px] text-slate-500">
                 <i class="fas fa-clock text-red-400 text-[10px]"></i>
                 {{ formatDateShort(act.dueDate || act.date) }}
               </span>
@@ -108,7 +112,7 @@
       </div>
 
       <!-- ── Right column ────────────────────────────────────────────── -->
-      <div class="flex flex-col gap-3 min-h-0 overflow-y-auto">
+      <div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-1 gap-3 xl:min-h-0 xl:overflow-y-auto">
 
         <!-- Ritmo del día -->
         <div class="bg-white border border-slate-200 rounded-xl px-4 py-3">

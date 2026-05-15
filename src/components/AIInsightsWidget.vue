@@ -2,20 +2,20 @@
   <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
 
     <!-- Header -->
-    <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-          <i class="fas fa-brain text-blue-500 text-[14px]"></i>
+    <div class="flex items-center justify-between gap-2 px-3 sm:px-4 py-3 border-b border-slate-100">
+      <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+        <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+          <i class="fas fa-brain text-blue-500 text-[13px] sm:text-[14px]"></i>
         </div>
-        <div>
+        <div class="min-w-0">
           <p class="text-[10px] font-bold text-blue-500 uppercase tracking-widest leading-none mb-1">IA Personalizada</p>
-          <h3 class="text-[13px] font-bold text-slate-900 leading-none">Insights para {{ userName }}</h3>
+          <h3 class="text-[12px] sm:text-[13px] font-bold text-slate-900 leading-none truncate">Insights para {{ userName }}</h3>
         </div>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
         <button
           @click="expanded = !expanded"
-          class="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-600 transition-colors"
+          class="px-2.5 sm:px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-600 transition-colors whitespace-nowrap"
         >
           {{ expanded ? 'Ver menos' : 'Ver más' }}
         </button>
@@ -36,8 +36,8 @@
       <p class="text-slate-400 text-xs font-medium">Analizando tu situación...</p>
     </div>
 
-    <!-- Content: 3 columnas con dividers verticales -->
-    <div v-else-if="insights" class="grid grid-cols-3 divide-x divide-slate-100">
+    <!-- Content: 3 columnas con dividers (verticales en md+, horizontales en mobile) -->
+    <div v-else-if="insights" class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-100">
 
       <!-- LECTURA (amarillo) -->
       <div class="px-4 py-3.5">

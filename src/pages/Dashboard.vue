@@ -111,23 +111,27 @@
 
       </div>
 
-      <!-- ── Right column ────────────────────────────────────────────── -->
-      <div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-1 gap-3 xl:min-h-0 xl:overflow-y-auto">
+      <!-- ── Right column ─────────────────────────────────────────────
+           Mobile (<sm): 1-col stacked
+           sm→xl: 2-col con "Nota de foco" abarcando ambas
+           xl+: sidebar vertical 1-col
+      ─────────────────────────────────────────────────────────────── -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-3 xl:min-h-0 xl:overflow-y-auto">
 
         <!-- Ritmo del día -->
         <div class="bg-white border border-slate-200 rounded-xl px-4 py-3">
-          <div class="flex items-start justify-between mb-2">
-            <div>
+          <div class="flex items-start justify-between mb-2 gap-2">
+            <div class="min-w-0">
               <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Ritmo del día</div>
               <div class="text-[13px] font-bold text-slate-900">Foco operativo</div>
             </div>
-            <span class="bg-slate-900 text-white text-[11px] font-bold px-2.5 py-1 rounded-full leading-none">{{ focusProgress }}%</span>
+            <span class="bg-slate-900 text-white text-[11px] font-bold px-2.5 py-1 rounded-full leading-none shrink-0">{{ focusProgress }}%</span>
           </div>
           <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden mb-3.5">
             <div class="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all duration-700"
               :style="{ width: focusProgress + '%' }"></div>
           </div>
-          <div class="grid grid-cols-3 text-center">
+          <div class="grid grid-cols-3 text-center gap-1">
             <div>
               <div class="text-xl font-bold text-red-500 leading-none">{{ overdueCount }}</div>
               <div class="text-[10px] text-slate-500 font-semibold mt-1">Vencidas</div>
@@ -138,7 +142,7 @@
             </div>
             <div>
               <div class="text-xl font-bold text-cyan-500 leading-none">{{ highPriorityCount }}</div>
-              <div class="text-[10px] text-slate-500 font-semibold mt-1">Alta prioridad</div>
+              <div class="text-[10px] text-slate-500 font-semibold mt-1 leading-tight">Alta prioridad</div>
             </div>
           </div>
         </div>
@@ -155,12 +159,19 @@
           </div>
         </div>
 
-        <!-- Nota de foco (dark) -->
-        <div class="bg-gradient-to-br from-indigo-900 to-violet-900 rounded-xl px-4 py-3 text-white">
-          <div class="text-[10px] font-bold uppercase tracking-widest text-indigo-300 mb-1">Nota de foco</div>
-          <p class="text-[13px] font-semibold leading-snug">
-            {{ focusNote }}
-          </p>
+        <!-- Nota de foco (dark) - full width en 2-col mode -->
+        <div class="sm:col-span-2 xl:col-span-1 bg-gradient-to-br from-indigo-900 to-violet-900 rounded-xl px-4 py-3.5 text-white relative overflow-hidden">
+          <!-- Decorative accent -->
+          <div class="absolute -top-8 -right-8 w-28 h-28 bg-violet-400/10 rounded-full blur-2xl pointer-events-none"></div>
+          <div class="relative">
+            <div class="flex items-center gap-2 mb-1.5">
+              <i class="fas fa-bullseye text-indigo-300 text-[11px]"></i>
+              <div class="text-[10px] font-bold uppercase tracking-widest text-indigo-300">Nota de foco</div>
+            </div>
+            <p class="text-[13px] font-semibold leading-relaxed">
+              {{ focusNote }}
+            </p>
+          </div>
         </div>
 
       </div>

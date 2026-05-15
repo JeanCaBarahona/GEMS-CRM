@@ -1,8 +1,8 @@
 <template>
-  <div class="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col">
+  <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
 
     <!-- Header -->
-    <div class="flex items-center justify-between px-3 py-2 border-b border-slate-100 flex-none">
+    <div class="flex items-center justify-between px-3 py-2 border-b border-slate-100">
       <div class="flex items-center gap-2">
         <div class="w-6 h-6 rounded-lg bg-violet-50 flex items-center justify-center shrink-0">
           <i class="fas fa-brain text-violet-500 text-[10px]"></i>
@@ -23,37 +23,32 @@
     </div>
 
     <!-- Loading -->
-    <div v-if="loading" class="flex-1 flex items-center justify-center gap-3">
+    <div v-if="loading" class="flex items-center justify-center gap-3 py-6">
       <i class="fas fa-brain text-violet-400 text-base animate-pulse"></i>
       <p class="text-slate-400 text-xs font-medium">Analizando tu situación...</p>
     </div>
 
-    <!-- Content: 3 columns -->
-    <div v-else-if="insights" class="flex-1 min-h-0 grid grid-cols-3 divide-x divide-slate-100 overflow-hidden">
+    <!-- Content: 3 columns (auto-height based on content) -->
+    <div v-else-if="insights" class="grid grid-cols-3 divide-x divide-slate-100">
 
       <!-- SITUACIÓN -->
-      <div class="flex flex-col overflow-hidden">
-        <div class="flex items-center gap-1 px-3 pt-2 pb-1.5 flex-none">
+      <div>
+        <div class="flex items-center gap-1 px-3 pt-2.5 pb-1.5">
           <i class="fas fa-eye text-amber-500 text-[9px]"></i>
           <h4 class="text-[9px] font-black text-amber-500 uppercase tracking-widest">Situación</h4>
         </div>
-        <p class="px-3 pb-3 text-[11px] text-slate-600 leading-relaxed overflow-y-auto flex-1">
-          {{ insights.lectura }}
-        </p>
+        <p class="px-3 pb-3 text-[11px] text-slate-600 leading-relaxed">{{ insights.lectura }}</p>
       </div>
 
       <!-- ACCIONES -->
-      <div class="flex flex-col overflow-hidden">
-        <div class="flex items-center gap-1 px-3 pt-2 pb-1.5 flex-none">
+      <div>
+        <div class="flex items-center gap-1 px-3 pt-2.5 pb-1.5">
           <i class="fas fa-bullseye text-emerald-500 text-[9px]"></i>
           <h4 class="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Acciones</h4>
         </div>
-        <ul class="px-3 pb-3 space-y-2 overflow-y-auto flex-1">
-          <li
-            v-for="(accion, i) in insights.acciones"
-            :key="i"
-            class="flex items-start gap-1.5 text-[11px] text-slate-600 leading-snug"
-          >
+        <ul class="px-3 pb-3 space-y-2">
+          <li v-for="(accion, i) in insights.acciones" :key="i"
+            class="flex items-start gap-1.5 text-[11px] text-slate-600 leading-snug">
             <i class="fas fa-arrow-right text-emerald-400 text-[8px] mt-0.5 shrink-0"></i>
             <span>{{ accion }}</span>
           </li>
@@ -61,17 +56,14 @@
       </div>
 
       <!-- RIESGOS -->
-      <div class="flex flex-col overflow-hidden">
-        <div class="flex items-center gap-1 px-3 pt-2 pb-1.5 flex-none">
+      <div>
+        <div class="flex items-center gap-1 px-3 pt-2.5 pb-1.5">
           <i class="fas fa-shield-alt text-red-400 text-[9px]"></i>
           <h4 class="text-[9px] font-black text-red-400 uppercase tracking-widest">Riesgos</h4>
         </div>
-        <ul class="px-3 pb-3 space-y-2 overflow-y-auto flex-1">
-          <li
-            v-for="(riesgo, i) in insights.riesgos"
-            :key="i"
-            class="flex items-start gap-1.5 text-[11px] text-slate-600 leading-snug"
-          >
+        <ul class="px-3 pb-3 space-y-2">
+          <li v-for="(riesgo, i) in insights.riesgos" :key="i"
+            class="flex items-start gap-1.5 text-[11px] text-slate-600 leading-snug">
             <i class="fas fa-exclamation text-red-400 text-[8px] mt-0.5 shrink-0"></i>
             <span>{{ riesgo }}</span>
           </li>
@@ -80,25 +72,21 @@
     </div>
 
     <!-- Error -->
-    <div v-else-if="error" class="flex-1 flex flex-col items-center justify-center gap-3 p-6">
-      <i class="fas fa-exclamation-triangle text-red-400 text-2xl"></i>
+    <div v-else-if="error" class="flex flex-col items-center justify-center gap-3 py-6">
+      <i class="fas fa-exclamation-triangle text-red-400 text-xl"></i>
       <p class="text-red-500 text-xs font-medium text-center">{{ error }}</p>
-      <button
-        @click="generateInsights(false)"
-        class="px-4 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 transition-colors"
-      >
+      <button @click="generateInsights(false)"
+        class="px-4 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 transition-colors">
         <i class="fas fa-sync-alt mr-1.5 text-slate-400"></i>Reintentar
       </button>
     </div>
 
     <!-- Empty -->
-    <div v-else class="flex-1 flex flex-col items-center justify-center gap-2 p-6">
-      <i class="fas fa-brain text-2xl text-slate-300"></i>
+    <div v-else class="flex flex-col items-center justify-center gap-2 py-6">
+      <i class="fas fa-brain text-xl text-slate-300"></i>
       <p class="text-slate-500 text-xs font-medium text-center">Sin análisis disponible</p>
-      <button
-        @click="generateInsights(false)"
-        class="px-4 py-1.5 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-lg text-xs font-bold text-violet-600 transition-colors"
-      >
+      <button @click="generateInsights(false)"
+        class="px-4 py-1.5 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-lg text-xs font-bold text-violet-600 transition-colors">
         Generar análisis
       </button>
     </div>

@@ -70,8 +70,59 @@
     <!-- ── Main grid ─────────────────────────────────────────────────── -->
     <div class="flex-1 min-h-0 grid gap-2" style="grid-template-columns: 1fr 272px">
 
-      <!-- LEFT: AI Insights (fills height) -->
-      <AIInsightsWidget class="min-h-0" />
+      <!-- LEFT: AI (auto-height) + panel crítico (fills rest) -->
+      <div class="flex flex-col gap-2 min-h-0">
+        <!-- AI Insights: solo ocupa lo que necesita -->
+        <AIInsightsWidget />
+
+        <!-- Actividades críticas: llena el espacio restante -->
+        <PermissionGuard :permissions="['view-activities']" :fallback="false">
+          <div class="bg-white border border-slate-200 rounded-xl flex flex-col flex-1 min-h-0 overflow-hidden">
+            <div class="flex items-center justify-between px-3 py-2 border-b border-slate-100 flex-none">
+              <div class="flex items-center gap-1.5">
+                <i class="fas fa-fire text-red-400 text-[10px]"></i>
+                <span class="text-xs font-bold text-slate-700">Críticas</span>
+                <span v-if="criticalActivities.length" class="px-1.5 py-0.5 bg-red-100 text-red-600 text-[9px] font-black rounded-full">
+                  {{ criticalActivities.length }}
+                </span>
+              </div>
+              <router-link to="/activities" class="text-[10px] text-blue-500 hover:text-blue-600 font-bold">Ver todo →</router-link>
+            </div>
+            <div v-if="criticalActivities.length === 0" class="flex-1 flex items-center justify-center">
+              <div class="text-center">
+                <i class="fas fa-check-circle text-emerald-400 text-xl mb-1"></i>
+                <p class="text-xs text-slate-400 font-medium">Sin actividades críticas</p>
+              </div>
+            </div>
+            <div v-else class="flex-1 overflow-y-auto divide-y divide-slate-50">
+              <div
+                v-for="activity in criticalActivities"
+                :key="activity._id"
+                class="flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 transition-colors"
+              >
+                <div class="shrink-0 w-8 text-center">
+                  <div class="text-xs font-black text-slate-800 leading-none">{{ formatDay(activity.dueDate || activity.date) }}</div>
+                  <div class="text-[9px] text-slate-400 font-semibold uppercase">{{ formatMonth(activity.dueDate || activity.date) }}</div>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-xs font-semibold text-slate-700 truncate">{{ activity.title }}</div>
+                  <div class="text-[10px] text-slate-400 truncate">
+                    {{ clientsStore.clients.find(c => c._id === activity.clientId)?.name || '—' }}
+                  </div>
+                </div>
+                <div class="flex flex-col items-end gap-0.5 shrink-0">
+                  <span :class="['px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide', statusClass(activity.status)]">
+                    {{ statusLabel(activity.status) }}
+                  </span>
+                  <span v-if="daysOverdue(activity) > 0" class="text-[9px] text-red-400 font-semibold">
+                    {{ daysOverdue(activity) }}d vencida
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </PermissionGuard>
+      </div>
 
       <!-- RIGHT: stacked panels -->
       <div class="flex flex-col gap-2 min-h-0">
@@ -273,6 +324,30 @@ const highPriorityCount = computed(() =>
 )
 
 const criticalCount = computed(() => overdueCount.value + todayCount.value)
+
+// Overdue + today, sorted: most overdue first, then today
+const criticalActivities = computed(() => {
+  const now = todayMidnight.getTime()
+  return [...activitiesStore.activities]
+    .filter((a: any) => {
+      if (a.status === 'completed' || a.status === 'cancelled') return false
+      const d = new Date(a.dueDate || a.date)
+      d.setHours(0, 0, 0, 0)
+      return d.getTime() <= now
+    })
+    .sort((a: any, b: any) => {
+      const da = new Date(a.dueDate || a.date).getTime()
+      const db = new Date(b.dueDate || b.date).getTime()
+      return da - db // oldest due date first
+    })
+})
+
+const daysOverdue = (a: any): number => {
+  const due = new Date(a.dueDate || a.date)
+  due.setHours(0, 0, 0, 0)
+  const diff = Math.floor((todayMidnight.getTime() - due.getTime()) / 86400000)
+  return diff > 0 ? diff : 0
+}
 
 const focusProgress = computed(() => {
   const total = activitiesStore.activities.length

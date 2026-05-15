@@ -16,7 +16,7 @@
           {{ selectedOption?.label || placeholder }}
         </span>
       </div>
-      <i 
+      <i
         class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-300"
         :class="{ 'rotate-180 text-primary-500': isOpen }"
       ></i>
@@ -35,16 +35,37 @@
         v-if="isOpen"
         class="absolute z-50 w-full mt-2 bg-white border border-slate-100 rounded-2xl shadow-xl overflow-hidden shadow-slate-200/50"
       >
+        <!-- Search input -->
+        <div v-if="searchable" class="p-2 border-b border-slate-100">
+          <div class="relative">
+            <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]"></i>
+            <input
+              ref="searchInput"
+              v-model="searchQuery"
+              type="text"
+              placeholder="Buscar..."
+              class="w-full pl-7 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 transition-all"
+              @click.stop
+            />
+          </div>
+        </div>
+
         <ul class="max-h-60 overflow-y-auto p-1 custom-scrollbar">
           <li
-            v-for="option in options"
+            v-if="filteredOptions.length === 0"
+            class="px-3 py-2 text-xs text-slate-400 text-center italic"
+          >
+            Sin resultados
+          </li>
+          <li
+            v-for="option in filteredOptions"
             :key="String(option.value)"
             @click="selectOption(option)"
             :class="[
               'rounded-xl cursor-pointer transition-colors flex items-center justify-between group/item',
               size === 'sm' ? 'px-2 py-1.5' : 'px-3 py-2.5',
-              option.value === modelValue 
-                ? 'bg-primary-50 text-primary-700' 
+              option.value === modelValue
+                ? 'bg-primary-50 text-primary-700'
                 : 'hover:bg-slate-50 text-slate-700'
             ]"
           >
@@ -55,9 +76,9 @@
                 size === 'sm' ? 'text-xs' : 'text-sm'
               ]">{{ option.label }}</span>
             </div>
-            
-            <i 
-              v-if="option.value === modelValue" 
+
+            <i
+              v-if="option.value === modelValue"
               class="fas fa-check text-xs text-primary-500"
             ></i>
           </li>
@@ -68,7 +89,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 
 interface SelectOption {
   value: string | number | null
@@ -82,18 +103,28 @@ const props = withDefaults(defineProps<{
   options: SelectOption[]
   placeholder?: string
   size?: 'sm' | 'md'
+  searchable?: boolean
 }>(), {
   placeholder: 'Seleccionar...',
-  size: 'md'
+  size: 'md',
+  searchable: false
 })
 
 const emit = defineEmits(['update:modelValue', 'change'])
 
 const isOpen = ref(false)
+const searchQuery = ref('')
 const selectContainer = ref<HTMLElement | null>(null)
+const searchInput = ref<HTMLInputElement | null>(null)
 
 const selectedOption = computed(() => {
   return props.options.find(opt => opt.value === props.modelValue)
+})
+
+const filteredOptions = computed(() => {
+  if (!props.searchable || !searchQuery.value.trim()) return props.options
+  const q = searchQuery.value.toLowerCase()
+  return props.options.filter(opt => opt.label.toLowerCase().includes(q))
 })
 
 const toggle = () => {
@@ -104,22 +135,24 @@ const selectOption = (option: SelectOption) => {
   emit('update:modelValue', option.value)
   emit('change', option.value)
   isOpen.value = false
+  searchQuery.value = ''
 }
 
-// Close on outside click
+watch(isOpen, (val) => {
+  if (val && props.searchable) {
+    nextTick(() => searchInput.value?.focus())
+  }
+  if (!val) searchQuery.value = ''
+})
+
 const handleClickOutside = (event: MouseEvent) => {
   if (selectContainer.value && !selectContainer.value.contains(event.target as Node)) {
     isOpen.value = false
   }
 }
 
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
+onMounted(() => document.addEventListener('click', handleClickOutside))
+onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 </script>
 
 <style scoped>

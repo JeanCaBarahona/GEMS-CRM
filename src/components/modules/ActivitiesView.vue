@@ -258,6 +258,7 @@
           <CustomSelect
             v-model="selectedTeamMember"
             size="sm"
+            searchable
             :options="[
               { value: '', label: 'Todos los miembros' },
               { value: 'unassigned', label: 'Sin asignar', specialClass: 'text-slate-500 italic' },

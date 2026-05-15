@@ -103,6 +103,7 @@
                   <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Cliente / Proyecto</label>
                   <CustomSelect
                     v-model="form.clientId"
+                    searchable
                     :options="[
                       { value: '', label: 'Interno' },
                       ...(clients || []).map(client => ({ value: client._id, label: client.name }))

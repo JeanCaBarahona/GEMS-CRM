@@ -50,6 +50,7 @@
           <div class="min-w-[200px]">
             <CustomSelect
               v-model="selectedClient"
+              searchable
               :options="[
                 { value: '', label: 'Todos los clientes' },
                 ...clients.map(c => ({ value: c._id || '', label: c.name }))

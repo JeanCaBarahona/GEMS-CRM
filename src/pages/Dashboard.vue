@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-3 pb-4">
+  <div class="h-full flex flex-col gap-3 overflow-hidden">
 
     <!-- ══ Top breadcrumb bar ══════════════════════════════════════════ -->
     <div class="flex items-center justify-between pr-14">
@@ -63,16 +63,16 @@
     </div>
 
     <!-- ══ Main grid: 2/3 + 1/3 ═══════════════════════════════════════ -->
-    <div class="grid grid-cols-3 gap-3">
+    <div class="grid grid-cols-3 gap-3 flex-1 min-h-0">
 
       <!-- ── Left: AI Insights + Agenda ─────────────────────────────── -->
-      <div class="col-span-2 flex flex-col gap-3">
+      <div class="col-span-2 flex flex-col gap-3 min-h-0">
 
         <AIInsightsWidget />
 
         <!-- Agenda -->
-        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
-          <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col flex-1 min-h-0">
+          <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 shrink-0">
             <div>
               <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Agenda</div>
               <div class="text-[13px] font-bold text-slate-900">Actividades próximas</div>
@@ -82,10 +82,10 @@
               Ver todas
             </router-link>
           </div>
-          <div v-if="agendaActivities.length === 0" class="px-4 py-8 text-center">
+          <div v-if="agendaActivities.length === 0" class="flex-1 flex items-center justify-center">
             <p class="text-[12px] text-slate-400">Sin actividades próximas</p>
           </div>
-          <div v-else class="divide-y divide-slate-50">
+          <div v-else class="flex-1 overflow-y-auto divide-y divide-slate-50">
             <div v-for="act in agendaActivities" :key="act._id"
               class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50/60 transition-colors">
               <span class="w-2 h-2 rounded-full shrink-0"
@@ -108,7 +108,7 @@
       </div>
 
       <!-- ── Right column ────────────────────────────────────────────── -->
-      <div class="flex flex-col gap-3">
+      <div class="flex flex-col gap-3 min-h-0 overflow-y-auto">
 
         <!-- Ritmo del día -->
         <div class="bg-white border border-slate-200 rounded-xl px-4 py-3">
@@ -254,7 +254,7 @@ const agendaActivities = computed(() => {
   const list = [...activitiesStore.activities]
     .filter((a: any) => a.status !== 'completed' && a.status !== 'cancelled')
     .sort((a: any, b: any) => new Date(a.dueDate || a.date).getTime() - new Date(b.dueDate || b.date).getTime())
-  return list.slice(0, 6)
+  return list.slice(0, 20)
 })
 
 // Pulso comercial dinámico

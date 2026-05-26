@@ -246,7 +246,8 @@
               { value: '', label: 'Todos los depto.' },
               { value: 'TI', label: 'TI' },
               { value: 'Comercial', label: 'Comercial' },
-              { value: 'Marketing', label: 'Marketing' }
+              { value: 'Marketing', label: 'Marketing' },
+              { value: 'Customer Success', label: 'Customer Success' }
             ]"
           />
         </div>
@@ -2666,6 +2667,7 @@ import { useAuthStore } from '../../stores/auth'
 import { useBoardsStore } from '../../stores/boards'
 import { useTasksStore } from '../../stores/tasks'
 import { useGitHubStore } from '../../stores/github'
+import { useTeamStore } from '../../stores'
 import { API_CONFIG } from '../../config/api'
 import type { Client, TeamMember } from '../../types'
 import { casesService } from '../../services/casesService'
@@ -2699,6 +2701,7 @@ const authStore = useAuthStore()
 const boardsStore = useBoardsStore()
 const tasksStore = useTasksStore()
 const githubStore = useGitHubStore()
+const teamStore = useTeamStore()
 
 // Constants
 const API_URL = API_CONFIG.BASE_URL.replace('/api', '')
@@ -2866,7 +2869,7 @@ const filteredWikiForLinking = computed(() => {
 // Computed
 const filteredMembersByDept = computed(() => {
   if (!selectedDepartment.value) return teamMembers.value
-  return teamMembers.value.filter((m: any) => m.department === selectedDepartment.value)
+  return teamMembers.value.filter((m: any) => m.department?.toLowerCase() === selectedDepartment.value?.toLowerCase())
 })
 
 const filteredActivities = computed(() => {
@@ -3427,22 +3430,22 @@ const updateOverdueActivities = async () => {
 }
 
 const loadTeamMembers = async () => {
-  console.log('🔄 Iniciando carga de miembros del equipo...')
-  console.log('👤 Usuario actual:', authStore.user?.name, '- Rol:', authStore.user?.role)
-  console.log('🔐 Puede ver equipo:', authStore.canViewTeam)
-  
   try {
-    console.log('🔄 Cargando miembros del equipo...')
+    // Usar el store como fuente primaria (evita llamadas duplicadas a la API)
+    if (teamStore.members.length === 0) {
+      await teamStore.fetchTeam(1, 500)
+    }
+    if (teamStore.members.length > 0) {
+      teamMembers.value = teamStore.members.filter(m => m.isActive && !m.role?.toLowerCase().includes('client'))
+      return
+    }
+    // Fallback: llamada directa al servicio
     teamMembers.value = await teamService.getActiveMembers()
-    console.log('✅ Miembros del equipo cargados:', teamMembers.value)
   } catch (err) {
     console.error('❌ Error loading team members:', err)
-    // Intentar cargar todos los miembros si falla getActiveMembers
     try {
-      console.log('🔄 Intentando cargar todos los miembros...')
       const allMembers = await teamService.getAll()
       teamMembers.value = allMembers.filter(member => member.isActive)
-      console.log('✅ Miembros activos filtrados:', teamMembers.value)
     } catch (err2) {
       console.error('❌ Error loading all team members:', err2)
     }

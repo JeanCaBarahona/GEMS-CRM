@@ -28,12 +28,12 @@
             <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">{{ dept }}</span>
             <div class="flex items-center gap-2">
               <span class="text-xs font-bold text-slate-700 leading-none">
-                {{ teamStore.members.filter(m => m.department === dept).length }}
+                {{ teamStore.members.filter(m => m.department?.toLowerCase() === dept.toLowerCase()).length }}
               </span>
               <!-- Mini Leaders Avatars -->
               <div class="flex -space-x-2 ml-1">
-                <div 
-                  v-for="leader in teamStore.members.filter(m => m.department === dept && m.departmentRole === 'leader').slice(0, 3)"
+                <div
+                  v-for="leader in teamStore.members.filter(m => m.department?.toLowerCase() === dept.toLowerCase() && m.departmentRole === 'leader').slice(0, 3)"
                   :key="leader._id"
                   class="w-4 h-4 rounded-full bg-amber-400 border-2 border-white flex items-center justify-center text-[6px] font-black text-white shadow-sm"
                   :title="leader.name"
@@ -389,7 +389,7 @@ const filteredMembers = computed(() => {
   }
 
   if (selectedDepartment.value) {
-    filtered = filtered.filter(member => member.department === selectedDepartment.value)
+    filtered = filtered.filter(member => member.department?.toLowerCase() === selectedDepartment.value.toLowerCase())
   }
 
   return filtered.sort((a,b) => (a.isActive === b.isActive) ? 0 : a.isActive ? -1 : 1)

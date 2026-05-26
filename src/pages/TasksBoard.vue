@@ -373,6 +373,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useBoardsStore } from '@/stores/boards'
 import { useTasksStore, type Task } from '@/stores/tasks'
 import { useAuthStore } from '@/stores/auth'
+import { useTeamStore } from '@/stores'
 import { teamService } from '@/services/teamService'
 import { clientService } from '@/services/clientService'
 import ActivityFormModal from '../components/forms/ActivityFormModal.vue'
@@ -383,6 +384,7 @@ console.log('TasksBoard initialized')
 const authStore = useAuthStore()
 const boardsStore = useBoardsStore()
 const tasksStore = useTasksStore()
+const teamStore = useTeamStore()
 const { showSuccess, showError } = useNotifications()
 
 const currentView = ref<'kanban' | 'list'>('kanban')
@@ -395,7 +397,7 @@ const selectedTask = ref<Task | null>(null)
 const initialColumnId = ref('backlog')
 const teamMembers = ref<any[]>([])
 const clients = ref([])
-const departments = ref<string[]>(['TI', 'Comercial', 'Marketing'])
+const departments = ref<string[]>(['TI', 'Comercial', 'Marketing', 'Customer Success'])
 
 watch(showTaskModal, (val) => {
   console.log('showTaskModal changed to:', val)
@@ -615,13 +617,22 @@ onMounted(async () => {
       await loadTasks()
     }
 
-    const [team, cls] = await Promise.all([
-      teamService.getActiveMembers(),
-      clientService.getAll()
-    ])
-    teamMembers.value = team
-    clients.value = cls
-    console.log('TasksBoard data loaded:', { teamMembers: team.length, clients: cls.length })
+    clients.value = await clientService.getAll()
+
+    // Cargar miembros del equipo usando el store como fuente primaria
+    try {
+      if (teamStore.members.length === 0) {
+        await teamStore.fetchTeam(1, 500)
+      }
+      if (teamStore.members.length > 0) {
+        teamMembers.value = teamStore.members.filter(m => m.isActive && !m.role?.toLowerCase().includes('client'))
+      } else {
+        teamMembers.value = await teamService.getActiveMembers()
+      }
+    } catch (teamErr) {
+      console.error('Error loading team members:', teamErr)
+    }
+    console.log('TasksBoard data loaded:', { teamMembers: teamMembers.value.length, clients: clients.value.length })
   } catch (error) {
     console.error('Error in TasksBoard onMounted:', error)
   }

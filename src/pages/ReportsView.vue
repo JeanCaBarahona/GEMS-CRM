@@ -587,9 +587,11 @@ import type {
 } from '../services/reportsService'
 import { teamService } from '../services/teamService'
 import { clientService } from '../services/clientService'
+import { useTeamStore } from '../stores'
 import { teamReportsService, type KPIResponse, type TrendPoint } from '../services/reportsService'
 
 const { showError, showSuccess } = useNotifications()
+const teamStore = useTeamStore()
 
 // ── Page Tab ──
 const activePageTab = ref<'reports' | 'kpis'>('reports')
@@ -815,11 +817,13 @@ const loadData = async () => {
   loading.value = true
   try {
     if (availableMembers.value.length === 0) {
-      const [membersData, clientsData] = await Promise.all([
-        teamService.getAll(),
+      const [, clientsData] = await Promise.all([
+        teamStore.members.length === 0 ? teamStore.fetchTeam(1, 500) : Promise.resolve(),
         clientService.getAll()
       ])
-      availableMembers.value = membersData
+      availableMembers.value = teamStore.members.length > 0
+        ? teamStore.members
+        : await teamService.getAll()
       clients.value = clientsData
     }
 

@@ -99,6 +99,80 @@
         </div>
 
         <!-- Services -->
+        <div v-else-if="activeTab === 'projects'" class="space-y-6">
+          <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+            <h3 class="text-lg font-black text-slate-800">Proyectos</h3>
+            <span class="text-xs font-bold text-slate-400">{{ (client.projects || []).length }} en total</span>
+          </div>
+
+          <div class="flex flex-wrap gap-3 items-center bg-slate-50 border border-slate-200 rounded-xl p-4 shadow-sm">
+            <div class="flex-1 min-w-[200px]">
+              <label class="sr-only">Nombre del proyecto</label>
+              <input v-model="projectName" @keyup.enter="createProject" placeholder="Ej: Migración Hubspot" class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-800 font-medium text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none shadow-sm" />
+            </div>
+            <div class="w-full sm:w-auto">
+              <label class="sr-only">Estado</label>
+              <select v-model="projectStatus" class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-800 font-medium text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none shadow-sm">
+                <option value="active">Activo</option>
+                <option value="paused">Pausado</option>
+                <option value="completed">Completado</option>
+                <option value="archived">Archivado</option>
+              </select>
+            </div>
+            <button @click="createProject" :disabled="!projectName.trim()" class="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-primary-600 text-white font-bold hover:bg-primary-700 shadow-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+              <i class="fas fa-plus mr-1"></i> Crear proyecto
+            </button>
+          </div>
+
+          <div v-if="client.projects?.length" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div v-for="pr in client.projects" :key="pr._id" class="bg-white border border-slate-200 rounded-xl p-5 hover:border-primary-300 hover:shadow-md transition-all shadow-sm">
+              <div v-if="editingProjectId !== pr._id" class="flex flex-col h-full justify-between gap-3">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <h4 class="text-slate-800 font-black">{{ pr.name }}</h4>
+                      <span v-if="pr.isDefault" class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md border bg-slate-100 text-slate-600 border-slate-200">Por defecto</span>
+                    </div>
+                    <div class="flex items-center gap-2 mt-1">
+                      <span :class="{
+                        'bg-emerald-100 text-emerald-700 border-emerald-200': pr.status === 'active',
+                        'bg-amber-100 text-amber-700 border-amber-200': pr.status === 'paused',
+                        'bg-blue-100 text-blue-700 border-blue-200': pr.status === 'completed',
+                        'bg-slate-100 text-slate-600 border-slate-200': pr.status === 'archived',
+                      }" class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md border">
+                        {{ projectStatusLabel(pr.status) }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="flex gap-1">
+                    <button @click="startEditProject(pr)" class="p-2 text-primary-500 hover:bg-primary-50 rounded-lg transition-colors"><i class="fas fa-edit"></i></button>
+                    <button v-if="!pr.isDefault" @click="deleteProject(pr._id)" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"><i class="fas fa-trash"></i></button>
+                  </div>
+                </div>
+                <p v-if="pr.description" class="text-slate-600 text-sm p-3 bg-slate-50 rounded-lg border border-slate-100 mt-2">{{ pr.description }}</p>
+              </div>
+              <div v-else class="flex flex-col gap-3">
+                <input v-model="editProjectName" placeholder="Nombre del proyecto" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-800 text-sm focus:ring-2 focus:ring-primary-500" />
+                <select v-model="editProjectStatus" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-800 text-sm focus:ring-2 focus:ring-primary-500">
+                  <option value="active">Activo</option>
+                  <option value="paused">Pausado</option>
+                  <option value="completed">Completado</option>
+                  <option value="archived">Archivado</option>
+                </select>
+                <input v-model="editProjectDescription" placeholder="Descripción del proyecto..." class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-800 text-sm focus:ring-2 focus:ring-primary-500" />
+                <div class="flex gap-2 justify-end mt-2">
+                  <button @click="cancelEditProject" class="px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-600 text-sm font-bold hover:bg-slate-50">Cancelar</button>
+                  <button @click="confirmEditProject" class="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700">Guardar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div v-else class="text-center py-10 bg-slate-50 border border-dashed border-slate-200 rounded-xl">
+            <i class="fas fa-diagram-project text-3xl text-slate-300 mb-3"></i>
+            <p class="text-slate-500 font-medium">Este cliente todavía no tiene proyectos.</p>
+          </div>
+        </div>
+
         <div v-else-if="activeTab === 'services'" class="space-y-6">
           <div class="flex justify-between items-center border-b border-slate-100 pb-3">
             <h3 class="text-lg font-black text-slate-800">Servicios Contratados</h3>
@@ -392,6 +466,7 @@ const newFieldValue = ref('')
 
 const tabs = [
   { key: 'overview', label: 'Resumen', icon: 'fas fa-user' },
+  { key: 'projects', label: 'Proyectos', icon: 'fas fa-diagram-project' },
   { key: 'services', label: 'Servicios', icon: 'fas fa-box' },
   { key: 'commitments', label: 'Compromisos', icon: 'fas fa-handshake' },
   { key: 'preferences', label: 'Preferencias', icon: 'fas fa-heart' },
@@ -524,6 +599,74 @@ const deleteNote = async (noteId:string) => {
 }
 
 // Services (inline)
+// ───────── Proyectos del cliente ─────────
+const projectName = ref('')
+const projectStatus = ref<'active' | 'paused' | 'completed' | 'archived'>('active')
+const editingProjectId = ref<string | null>(null)
+const editProjectName = ref('')
+const editProjectStatus = ref<'active' | 'paused' | 'completed' | 'archived'>('active')
+const editProjectDescription = ref('')
+
+const projectStatusLabel = (st?: string) =>
+  st === 'active' ? 'Activo' : st === 'paused' ? 'Pausado' : st === 'completed' ? 'Completado' : 'Archivado'
+
+const createProject = async () => {
+  const name = projectName.value.trim()
+  if (!name) return
+  try {
+    const created = await clientService.createProject(id, { name, status: projectStatus.value })
+    client.projects = [...(client.projects || []), created]
+    projectName.value = ''
+    projectStatus.value = 'active'
+  } catch (err: any) {
+    alert(err?.message || 'No se pudo crear el proyecto')
+  }
+}
+
+const startEditProject = (pr: any) => {
+  editingProjectId.value = pr._id
+  editProjectName.value = pr.name || ''
+  editProjectStatus.value = pr.status || 'active'
+  editProjectDescription.value = pr.description || ''
+}
+
+const cancelEditProject = () => {
+  editingProjectId.value = null
+}
+
+const confirmEditProject = async () => {
+  if (!editingProjectId.value) return
+  try {
+    const updated = await clientService.updateProject(id, editingProjectId.value, {
+      name: editProjectName.value.trim(),
+      status: editProjectStatus.value,
+      description: editProjectDescription.value
+    })
+    const idx = (client.projects || []).findIndex((x: any) => x._id === editingProjectId.value)
+    if (idx >= 0) client.projects[idx] = updated
+    editingProjectId.value = null
+  } catch (err: any) {
+    alert(err?.message || 'No se pudo actualizar el proyecto')
+  }
+}
+
+const deleteProject = async (projectId?: string) => {
+  if (!projectId) return
+  if (!confirm('¿Eliminar este proyecto? Si tiene tareas o actividades asociadas se archivará en lugar de borrarse.')) return
+  try {
+    const res = await clientService.deleteProject(id, projectId)
+    if (res.archived) {
+      const idx = (client.projects || []).findIndex((x: any) => x._id === projectId)
+      if (idx >= 0) client.projects[idx] = { ...client.projects[idx], status: 'archived' }
+      alert(res.message || 'El proyecto se archivó porque tiene trabajo asociado.')
+    } else {
+      client.projects = (client.projects || []).filter((x: any) => x._id !== projectId)
+    }
+  } catch (err: any) {
+    alert(err?.message || 'No se pudo eliminar el proyecto')
+  }
+}
+
 const serviceName = ref('')
 const servicePlan = ref('')
 const serviceStatus = ref<'active' | 'paused' | 'cancelled' | 'trial'>('active')

@@ -44,6 +44,12 @@
         </p>
       </div>
 
+      <ProjectSelect
+        v-model="form.projectId"
+        :client-id="form.clientId || null"
+        auto-select-default
+      />
+
       <!-- Selección múltiple de asignados (componente reutilizable) -->
       <div>
         <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Asignados *</label>
@@ -132,6 +138,7 @@ import VoiceDictateButton from '@/components/ui/VoiceDictateButton.vue'
 import { ref, reactive, onMounted, watch } from 'vue'
 import { activityService, type ActivityData } from '../../services/activityService'
 import { clientService, type ClientData } from '../../services/clientService'
+import ProjectSelect from './ProjectSelect.vue'
 import { teamService } from '../../services/teamService'
 import type { TeamMember } from '../../types'
 
@@ -157,6 +164,7 @@ const form = reactive<Partial<ActivityData>>({
   date: '',
   status: 'pending',
   clientId: '',
+  projectId: null as string | null,
   assignedTo: [] as string[]
 })
 
@@ -210,6 +218,7 @@ const handleSubmit = async () => {
       date: new Date(form.date!).toISOString(),
       status: form.status || 'pending',
       clientId: form.clientId!,
+      projectId: form.projectId || null,
       assignedTo: assignedToClean
     }
 
@@ -234,6 +243,7 @@ const resetForm = () => {
     date: '',
   status: 'pending',
   clientId: '',
+  projectId: null as string | null,
   assignedTo: []
   })
 }
@@ -247,6 +257,7 @@ const loadForm = () => {
       date: props.activity?.date ? new Date(props.activity.date).toISOString().slice(0, 16) : '',
       status: props.activity?.status || 'pending',
       clientId: typeof props.activity?.clientId === 'string' ? props.activity?.clientId : (props.activity?.clientId && typeof props.activity.clientId === 'object' ? (props.activity.clientId as any)._id : ''),
+      projectId: (props.activity as any)?.projectId ? String((props.activity as any).projectId) : null,
   assignedTo: props.activity && Array.isArray(props.activity.assignedTo) ? props.activity.assignedTo : props.activity && props.activity.assignedTo ? [props.activity.assignedTo] : []
     })
   } else {

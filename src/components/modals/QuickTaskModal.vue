@@ -50,6 +50,29 @@
             ></textarea>
           </div>
 
+          <!-- Cliente y proyecto -->
+          <div class="group">
+            <label class="block text-xs font-black text-slate-700 uppercase tracking-widest mb-3">
+              Cliente <span class="text-slate-400 font-bold lowercase tracking-normal">(opcional)</span>
+            </label>
+            <select
+              v-model="form.clientId"
+              :disabled="loadingClients"
+              class="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all text-sm font-bold shadow-sm disabled:opacity-50"
+            >
+              <option value="">{{ loadingClients ? 'Cargando clientes...' : 'Sin cliente' }}</option>
+              <option v-for="c in clients" :key="c._id" :value="c._id">
+                {{ c.name }}{{ c.company ? ` - ${c.company}` : '' }}
+              </option>
+            </select>
+          </div>
+
+          <ProjectSelect
+            v-model="form.projectId"
+            :client-id="form.clientId || null"
+            auto-select-default
+          />
+
           <!-- Información automática -->
           <div class="bg-indigo-50/50 rounded-2xl p-5 border border-indigo-100 shadow-inner">
             <h4 class="text-[10px] font-black text-indigo-700 uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -118,6 +141,8 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted } from 'vue'
+import ProjectSelect from '../forms/ProjectSelect.vue'
+import { clientService, type ClientData } from '../../services/clientService'
 import { useAuthStore } from '../../stores/auth'
 
 // Props
@@ -142,7 +167,9 @@ const titleInput = ref<HTMLInputElement>()
 const form = ref({
   title: '',
   description: '',
-  priority: 'medium' as 'low' | 'medium' | 'high' | 'urgent'
+  priority: 'medium' as 'low' | 'medium' | 'high' | 'urgent',
+  clientId: '' as string,
+  projectId: null as string | null
 })
 
 // Computed
@@ -153,6 +180,9 @@ const dueDate = computed(() => {
   date.setDate(date.getDate() + 2) // 2 días después
   return date
 })
+
+const clients = ref<ClientData[]>([])
+const loadingClients = ref(false)
 
 const priorities = [
   { value: 'low', label: 'Baja', activeClass: 'bg-emerald-500 text-white border-emerald-500 ring-emerald-500/20' },
@@ -185,7 +215,8 @@ const handleSubmit = async () => {
       status: 'pending',
       priority: form.value.priority,
       assignedTo: currentUser.value?._id || null,
-      clientId: null, // Se asignará después
+      clientId: form.value.clientId || null,
+      projectId: form.value.projectId || null,
       estimatedTime: '2 horas', // Tiempo por defecto
       createdBy: currentUser.value?._id || null
     }
@@ -202,6 +233,14 @@ const handleSubmit = async () => {
 onMounted(async () => {
   await nextTick()
   titleInput.value?.focus()
+  loadingClients.value = true
+  try {
+    clients.value = await clientService.getAll()
+  } catch (err) {
+    console.error('Error loading clients:', err)
+  } finally {
+    loadingClients.value = false
+  }
 })
 </script>
 

@@ -7,6 +7,7 @@ export interface ActivityData {
   date: string
   status: 'pending' | 'in-progress' | 'completed' | 'cancelled' | 'overdue'
   clientId: string
+  projectId?: string | null
   assignedTo?: string[]
   assignedToUser?: {
     _id: string

@@ -1,23 +1,23 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
-import type { Activity, ActivityForm } from '../types'
-import { API_CONFIG } from '@/config/api'
-
-
-import { defineStore } from 'pinia'
-import axios from 'axios'
+import type { Activity } from '../types'
 import { API_CONFIG } from '@/config/api'
 
 const API_BASE_URL = API_CONFIG.BASE_URL
 
+interface ActivityFilters {
+  assignedTo?: string
+  status?: string
+}
+
 export const useActivitiesStore = defineStore('activities', {
   state: () => ({
-    activities: [],
+    activities: [] as Activity[],
     loading: false,
-    error: null
+    error: null as string | null
   }),
   actions: {
-    fetchActivities(filters) {
+    fetchActivities(filters?: ActivityFilters) {
       this.loading = true;
       let url = `${API_BASE_URL}/activities`;
       if (filters && filters.assignedTo) {
@@ -55,7 +55,7 @@ export const useActivitiesStore = defineStore('activities', {
           this.loading = false;
         });
     },
-    createActivity(activityData) {
+    createActivity(activityData: Partial<Activity>) {
       this.loading = true;
       return axios.post(`${API_BASE_URL}/activities`, activityData)
         .then(response => {
@@ -71,7 +71,7 @@ export const useActivitiesStore = defineStore('activities', {
           this.loading = false;
         });
     },
-    updateActivity(activityId, activityData) {
+    updateActivity(activityId: string, activityData: Partial<Activity>) {
       this.loading = true;
       return axios.put(`${API_BASE_URL}/activities/${activityId}`, activityData)
         .then(response => {
@@ -90,7 +90,7 @@ export const useActivitiesStore = defineStore('activities', {
           this.loading = false;
         });
     },
-    deleteActivity(activityId) {
+    deleteActivity(activityId: string) {
       this.loading = true;
       return axios.delete(`${API_BASE_URL}/activities/${activityId}`)
         .then(() => {
@@ -107,20 +107,3 @@ export const useActivitiesStore = defineStore('activities', {
     }
   }
 })
-            },
-            deleteActivity(activityId) {
-              this.loading = true;
-              return axios.delete(`${API_BASE_URL}/activities/${activityId}`)
-                .then(() => {
-                  this.activities = this.activities.filter(a => a._id !== activityId);
-                  this.error = null;
-                })
-                .catch(error => {
-                  this.error = error.message || 'Error deleting activity';
-                  throw error;
-                })
-                .finally(() => {
-                  this.loading = false;
-                });
-            }
-          }

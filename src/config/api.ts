@@ -1,9 +1,11 @@
 // Configuración automática de API según el ambiente
 const getBaseURL = (): string => {
-  const devURL = 'https://gems-crm-backend.onrender.com/api'
-  const prodURL = 'https://gems-crm-backend.onrender.com/api'
-  
-  return prodURL
+  // VITE_API_URL permite apuntar al backend local en desarrollo (.env.local).
+  // Sin la variable, se usa el backend desplegado — el build de producción no cambia.
+  const envURL = import.meta.env.VITE_API_URL
+  if (envURL) return envURL
+
+  return 'https://gems-crm-backend.onrender.com/api'
 }
 
 // Función para obtener timeout personalizado

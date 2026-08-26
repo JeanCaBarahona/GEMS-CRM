@@ -51,6 +51,7 @@ export interface Activity {
   date: string
   status: 'pending' | 'in-progress' | 'completed' | 'cancelled' | 'overdue'
   clientId: string
+  projectId?: string | null
   assignedTo?: string[]
   assignedToUser?: TeamMember // Datos del usuario asignado (populated)
   priority?: 'low' | 'medium' | 'high' | 'urgent'

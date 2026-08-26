@@ -1,68 +1,71 @@
 <template>
   <div>
-    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+    <label class="block text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5">
       Proyecto
       <span v-if="required" class="text-red-500">*</span>
     </label>
 
-    <!-- Selección normal -->
-    <div v-if="!creating" class="flex gap-2">
-      <select
-        :value="modelValue || ''"
-        @change="onSelect(($event.target as HTMLSelectElement).value)"
-        :disabled="!clientId || loading"
-        class="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-primary-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <option value="">
-          {{ !clientId ? 'Primero selecciona un cliente' : loading ? 'Cargando proyectos...' : 'Sin proyecto' }}
-        </option>
-        <option v-for="p in activeProjects" :key="p._id" :value="p._id">
-          {{ p.name }}{{ p.status !== 'active' ? ` (${statusLabel(p.status)})` : '' }}
-        </option>
-        <option v-if="clientId && !loading" value="__new__">+ Crear proyecto…</option>
-      </select>
-      <button
-        v-if="clientId && !loading"
-        type="button"
-        @click="startCreating"
-        title="Crear proyecto rápido"
-        class="px-3 py-3 rounded-xl bg-primary-50 text-primary-600 border border-primary-200 hover:bg-primary-100 transition-colors"
-      >
-        <i class="fas fa-plus text-sm"></i>
-      </button>
-    </div>
-
-    <!-- Creación rápida en línea -->
-    <div v-else class="flex gap-2">
-      <input
-        ref="newInput"
-        v-model="newName"
-        @keyup.enter.prevent="confirmCreate"
-        @keyup.esc="cancelCreate"
-        placeholder="Nombre del nuevo proyecto"
-        class="flex-1 px-4 py-3 bg-white border border-primary-300 rounded-xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-primary-500 focus:outline-none"
+    <!-- Selección normal: mismo componente CustomSelect que usa el resto de la app -->
+    <transition
+      enter-active-class="transition ease-out duration-150"
+      enter-from-class="opacity-0 scale-[0.98]"
+      enter-to-class="opacity-100 scale-100"
+      leave-active-class="transition ease-in duration-100"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-[0.98]"
+      mode="out-in"
+    >
+      <CustomSelect
+        v-if="!creating"
+        key="select"
+        :model-value="modelValue ?? null"
+        :options="selectOptions"
+        :placeholder="!clientId ? 'Primero selecciona un cliente' : 'Sin proyecto'"
+        :disabled="!clientId"
+        :loading="loading"
+        searchable
+        @change="onSelect"
       />
-      <button
-        type="button"
-        @click="confirmCreate"
-        :disabled="!newName.trim() || saving"
-        class="px-4 py-3 rounded-xl bg-primary-600 text-white text-sm font-bold hover:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-      >
-        <i v-if="saving" class="fas fa-spinner fa-spin"></i>
-        <span v-else>Crear</span>
-      </button>
-      <button
-        type="button"
-        @click="cancelCreate"
-        class="px-4 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 text-sm font-bold hover:bg-slate-50 transition-colors"
-      >
-        Cancelar
-      </button>
-    </div>
 
-    <p v-if="error" class="text-red-500 text-xs font-bold mt-1.5">{{ error }}</p>
-    <p v-else-if="clientId && !loading && activeProjects.length === 0 && !creating" class="text-amber-500 text-xs font-bold mt-1.5">
-      Este cliente no tiene proyectos. Crea uno con el botón +.
+      <!-- Creación rápida en línea -->
+      <div v-else key="create" class="flex gap-2">
+        <input
+          ref="newInput"
+          v-model="newName"
+          @keyup.enter.prevent="confirmCreate"
+          @keyup.esc="cancelCreate"
+          placeholder="Nombre del nuevo proyecto"
+          class="flex-1 min-w-0 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all shadow-sm"
+        />
+        <button
+          type="button"
+          @click="confirmCreate"
+          :disabled="!newName.trim() || saving"
+          :class="[
+            'px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 whitespace-nowrap',
+            !newName.trim() || saving
+              ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+              : 'bg-primary-600 text-white hover:bg-primary-700 active:scale-[0.98]'
+          ]"
+        >
+          <i v-if="saving" class="fas fa-spinner fa-spin text-xs"></i>
+          <span>Crear</span>
+        </button>
+        <button
+          type="button"
+          @click="cancelCreate"
+          class="px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-500 text-sm font-bold hover:bg-slate-50 hover:text-slate-700 transition-all shadow-sm whitespace-nowrap"
+        >
+          Cancelar
+        </button>
+      </div>
+    </transition>
+
+    <p v-if="error" class="text-red-500 text-[11px] font-bold mt-1.5 ml-1">
+      <i class="fas fa-exclamation-triangle mr-1"></i>{{ error }}
+    </p>
+    <p v-else-if="clientId && !loading && !creating && activeProjects.length === 0" class="text-slate-400 text-[11px] font-medium mt-1.5 ml-1">
+      Este cliente no tiene proyectos. Usa <span class="text-primary-600 font-bold">+ Crear proyecto</span> en el desplegable.
     </p>
   </div>
 </template>
@@ -70,6 +73,9 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
 import { clientService, type ProjectData } from '../../services/clientService'
+import CustomSelect from '../ui/CustomSelect.vue'
+
+const NEW_PROJECT_VALUE = '__new_project__'
 
 const props = defineProps<{
   clientId?: string | null
@@ -98,7 +104,21 @@ const activeProjects = computed(() =>
 )
 
 const statusLabel = (st?: string) =>
-  st === 'paused' ? 'pausado' : st === 'completed' ? 'completado' : st === 'archived' ? 'archivado' : 'activo'
+  st === 'paused' ? 'pausado' : st === 'completed' ? 'completado' : st === 'archived' ? 'archivado' : ''
+
+const selectOptions = computed(() => {
+  const opts: Array<{ value: string | null; label: string; specialClass?: string }> = [
+    { value: null, label: 'Sin proyecto' },
+    ...activeProjects.value.map(p => {
+      const suffix = p.status !== 'active' ? ` · ${statusLabel(p.status)}` : ''
+      return { value: p._id ?? null, label: `${p.name}${suffix}`, specialClass: p.status !== 'active' ? 'font-medium text-slate-400' : 'font-medium' }
+    })
+  ]
+  if (props.clientId) {
+    opts.push({ value: NEW_PROJECT_VALUE, label: '+ Crear proyecto…', specialClass: 'font-bold text-primary-600' })
+  }
+  return opts
+})
 
 const loadProjects = async () => {
   if (!props.clientId) {
@@ -131,12 +151,12 @@ watch(() => props.clientId, (next, prev) => {
   }
 }, { immediate: true })
 
-const onSelect = (value: string) => {
-  if (value === '__new__') {
+const onSelect = (value: string | number | null) => {
+  if (value === NEW_PROJECT_VALUE) {
     startCreating()
     return
   }
-  emit('update:modelValue', value || null)
+  emit('update:modelValue', (value as string | null) ?? null)
 }
 
 const startCreating = async () => {

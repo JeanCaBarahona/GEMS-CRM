@@ -4,10 +4,12 @@
     <button
       type="button"
       @click="toggle"
+      :disabled="disabled"
       :class="[
         'w-full bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all shadow-sm flex items-center justify-between group',
         size === 'sm' ? 'px-3 py-1.5 text-xs' : 'px-4 py-2.5 text-sm',
-        { 'ring-4 ring-primary-500/10 border-primary-500 bg-white': isOpen }
+        { 'ring-4 ring-primary-500/10 border-primary-500 bg-white': isOpen },
+        { 'opacity-60 cursor-not-allowed hover:bg-slate-50': disabled }
       ]"
     >
       <div class="flex items-center gap-2 truncate">
@@ -17,9 +19,11 @@
         </span>
       </div>
       <i
+        v-if="!loading"
         class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-300"
         :class="{ 'rotate-180 text-primary-500': isOpen }"
       ></i>
+      <i v-else class="fas fa-spinner fa-spin text-[10px] text-slate-400"></i>
     </button>
 
     <!-- Dropdown Menu -->
@@ -104,10 +108,14 @@ const props = withDefaults(defineProps<{
   placeholder?: string
   size?: 'sm' | 'md'
   searchable?: boolean
+  disabled?: boolean
+  loading?: boolean
 }>(), {
   placeholder: 'Seleccionar...',
   size: 'md',
-  searchable: false
+  searchable: false,
+  disabled: false,
+  loading: false
 })
 
 const emit = defineEmits(['update:modelValue', 'change'])
@@ -128,6 +136,7 @@ const filteredOptions = computed(() => {
 })
 
 const toggle = () => {
+  if (props.disabled) return
   isOpen.value = !isOpen.value
 }
 

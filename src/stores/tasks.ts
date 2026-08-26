@@ -33,6 +33,8 @@ export interface Task {
     _id: string
     name: string
   }
+  clientId?: string | null
+  projectId?: string | null
   estimatedHours?: number
   actualHours?: number
   remainingHours?: number

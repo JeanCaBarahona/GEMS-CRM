@@ -117,6 +117,13 @@
                   />
                 </div>
                 <div class="space-y-2">
+                  <ProjectSelect
+                    v-model="form.projectId"
+                    :client-id="form.clientId || null"
+                    auto-select-default
+                  />
+                </div>
+                <div class="space-y-2">
                   <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Equipo Responsable</label>
                   <div class="bg-slate-50/50 border border-slate-200 rounded-2xl p-3 shadow-inner h-[320px] flex flex-col overflow-hidden">
                     <AssignedUsersSelector
@@ -429,6 +436,7 @@ import axios from 'axios'
 import { API_CONFIG } from '../../config/api'
 import AssignedUsersSelector from '../AssignedUsersSelector.vue'
 import CustomSelect from '../ui/CustomSelect.vue'
+import ProjectSelect from './ProjectSelect.vue'
 import VoiceDictateButton from '@/components/ui/VoiceDictateButton.vue'
 import { activityService } from '../../services/activityService'
 import { useBoardsStore } from '../../stores/boards'
@@ -473,6 +481,7 @@ const form = reactive({
   title: '',
   description: '',
   clientId: '',
+  projectId: null as string | null,
   assignedTo: [] as string[],
   priority: 'medium',
   status: 'pending',
@@ -493,6 +502,7 @@ const populateForm = () => {
       // Soporte para ambos: clientId (Activity) o client (Task)
       form.clientId = props.activity.clientId?._id || props.activity.clientId || 
                       props.activity.client?._id || props.activity.client || ''
+      form.projectId = props.activity.projectId?._id || props.activity.projectId || null
       
       // Soporte para asignación múltiple (Activity) o única (Task)
       if (props.activity.assignedTo) {
@@ -524,6 +534,7 @@ const populateForm = () => {
       form.title = ''
       form.description = ''
       form.clientId = ''
+      form.projectId = null
       form.assignedTo = []
       form.priority = 'medium'
       form.status = 'pending'
@@ -570,12 +581,14 @@ const handleSubmit = async () => {
       taskData.boardStatus = props.initialBoardStatus || props.activity?.boardStatus
       // En Task, assignedTo es usualmente el primer elemento o manejado diferente en el backend
       taskData.assignedTo = form.assignedTo[0] || null
-      taskData.client = form.clientId || undefined
+      taskData.clientId = form.clientId || undefined
+      taskData.projectId = form.projectId || null
       // Convertir estimatedTime (1.5h) a estimatedHours (1.5)
       const hours = parseFloat(form.estimatedTime.replace('h', ''))
       if (!isNaN(hours)) taskData.estimatedHours = hours
     } else {
       taskData.clientId = form.clientId || undefined
+      taskData.projectId = form.projectId || null
       taskData.assignedTo = form.assignedTo
       taskData.estimatedTime = form.estimatedTime
       taskData.date = form.date

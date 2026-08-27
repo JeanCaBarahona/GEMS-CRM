@@ -371,18 +371,6 @@
                 />
               </div>
               <div>
-                <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="fas fa-list-check text-slate-300"></i>Tareas</h3>
-                <LinkedItemsSelector
-                  :model-value="linkedTaskIds"
-                  :items="taskLinkItems"
-                  :loading="loadingLinkCatalog.tasks"
-                  icon="fas fa-list-check"
-                  placeholder="Buscar tarea..."
-                  empty-label="No hay tareas disponibles"
-                  @update:model-value="(ids) => onToggleLinked('tasks', ids)"
-                />
-              </div>
-              <div>
                 <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="fas fa-calendar-check text-slate-300"></i>Actividades</h3>
                 <LinkedItemsSelector
                   :model-value="linkedActivityIds"
@@ -558,18 +546,6 @@
                     placeholder="Buscar ticket..."
                     empty-label="No hay tickets disponibles"
                     @update:model-value="(ids) => onToggleLinked('tickets', ids)"
-                  />
-                </div>
-                <div>
-                  <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="fas fa-list-check text-slate-300"></i>Tareas</h3>
-                  <LinkedItemsSelector
-                    :model-value="linkedTaskIds"
-                    :items="taskLinkItems"
-                    :loading="loadingLinkCatalog.tasks"
-                    icon="fas fa-list-check"
-                    placeholder="Buscar tarea..."
-                    empty-label="No hay tareas disponibles"
-                    @update:model-value="(ids) => onToggleLinked('tasks', ids)"
                   />
                 </div>
                 <div>
@@ -906,11 +882,6 @@ const ticketLinkItems = computed(() => ticketCatalog.value.map((t: any) => ({
   _id: t._id,
   label: t.subject || t.titulo || 'Sin asunto',
   sublabel: `#${t.ticketNumber || t._id.slice(-6).toUpperCase()} · ${t.status || ''}`
-})))
-const taskLinkItems = computed(() => taskCatalog.value.map((t: any) => ({
-  _id: t._id,
-  label: t.title,
-  sublabel: t.boardStatus || t.status || ''
 })))
 const activityLinkItems = computed(() => activityCatalog.value.map((a: any) => ({
   _id: a._id,

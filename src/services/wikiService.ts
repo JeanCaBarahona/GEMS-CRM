@@ -1,5 +1,13 @@
 import { API_CONFIG } from '../config/api'
 
+export interface WikiExternalLink {
+  _id?: string
+  nombre: string
+  url: string
+  agregadoPor?: string
+  fecha?: Date
+}
+
 export interface WikiArticle {
   _id?: string
   titulo: string
@@ -19,8 +27,18 @@ export interface WikiArticle {
   }>
   vistas?: number
   linkedTickets?: any[]
+  linkedTasks?: any[]
+  linkedActivities?: any[]
+  enlacesExternos?: WikiExternalLink[]
+  spreadsheet?: unknown
   createdAt?: Date
   updatedAt?: Date
+}
+
+// Forma que aceptan create/update: igual a WikiArticle pero `archivos` también
+// admite File[] (adjuntos aún no subidos, distinguidos en runtime con `instanceof File`).
+export type WikiArticleInput = Partial<Omit<WikiArticle, 'archivos'>> & {
+  archivos?: Array<{ nombre: string; url: string; tipo: string } | File>
 }
 
 class WikiService {
@@ -42,7 +60,7 @@ class WikiService {
     return await response.json()
   }
 
-  async create(data: Partial<WikiArticle>): Promise<WikiArticle> {
+  async create(data: WikiArticleInput): Promise<WikiArticle> {
     const formData = new FormData()
     Object.entries(data).forEach(([key, value]) => {
       if (value === undefined || value === null) return
@@ -69,9 +87,12 @@ class WikiService {
     return await response.json()
   }
 
-  async update(id: string, data: Partial<WikiArticle>): Promise<WikiArticle> {
+  async update(id: string, data: WikiArticleInput): Promise<WikiArticle> {
     // Campos gestionados por el servidor o por endpoints dedicados — no se envían al actualizar
-    const SKIP_FIELDS = new Set(['_id', 'autor', 'linkedTickets', 'vistas', 'createdAt', 'updatedAt'])
+    const SKIP_FIELDS = new Set([
+      '_id', 'autor', 'linkedTickets', 'linkedTasks', 'linkedActivities',
+      'enlacesExternos', 'spreadsheet', 'vistas', 'createdAt', 'updatedAt'
+    ])
 
     const formData = new FormData()
     Object.entries(data).forEach(([key, value]) => {
@@ -130,6 +151,74 @@ class WikiService {
       method: 'DELETE'
     })
     if (!response.ok) throw new Error('Error al desvincular el ticket')
+    return await response.json()
+  }
+
+  // Vincular / desvincular tarea
+  async linkTask(wikiId: string, taskId: string): Promise<WikiArticle> {
+    const response = await fetch(`${this.apiUrl}/${wikiId}/tasks`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ taskId })
+    })
+    if (!response.ok) throw new Error('Error al vincular la tarea')
+    return await response.json()
+  }
+
+  async unlinkTask(wikiId: string, taskId: string): Promise<WikiArticle> {
+    const response = await fetch(`${this.apiUrl}/${wikiId}/tasks/${taskId}`, { method: 'DELETE' })
+    if (!response.ok) throw new Error('Error al desvincular la tarea')
+    return await response.json()
+  }
+
+  // Vincular / desvincular actividad
+  async linkActivity(wikiId: string, activityId: string): Promise<WikiArticle> {
+    const response = await fetch(`${this.apiUrl}/${wikiId}/activities`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ activityId })
+    })
+    if (!response.ok) throw new Error('Error al vincular la actividad')
+    return await response.json()
+  }
+
+  async unlinkActivity(wikiId: string, activityId: string): Promise<WikiArticle> {
+    const response = await fetch(`${this.apiUrl}/${wikiId}/activities/${activityId}`, { method: 'DELETE' })
+    if (!response.ok) throw new Error('Error al desvincular la actividad')
+    return await response.json()
+  }
+
+  // Enlaces externos (Google Drive, OneDrive, etc.)
+  async addExternalLink(wikiId: string, link: { nombre: string; url: string }): Promise<WikiExternalLink> {
+    const response = await fetch(`${this.apiUrl}/${wikiId}/links`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(link)
+    })
+    if (!response.ok) throw new Error('Error al agregar el enlace')
+    return await response.json()
+  }
+
+  async removeExternalLink(wikiId: string, linkId: string): Promise<void> {
+    const response = await fetch(`${this.apiUrl}/${wikiId}/links/${linkId}`, { method: 'DELETE' })
+    if (!response.ok) throw new Error('Error al eliminar el enlace')
+  }
+
+  // Hoja de cálculo embebida
+  async getSpreadsheet(wikiId: string): Promise<unknown> {
+    const response = await fetch(`${this.apiUrl}/${wikiId}/spreadsheet`)
+    if (!response.ok) throw new Error('Error al obtener la hoja de cálculo')
+    const data = await response.json()
+    return data.spreadsheet
+  }
+
+  async saveSpreadsheet(wikiId: string, snapshot: unknown): Promise<{ success: boolean; updatedAt: string }> {
+    const response = await fetch(`${this.apiUrl}/${wikiId}/spreadsheet`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ snapshot })
+    })
+    if (!response.ok) throw new Error('Error al guardar la hoja de cálculo')
     return await response.json()
   }
 }

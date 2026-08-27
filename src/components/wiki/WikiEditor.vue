@@ -91,13 +91,35 @@
         <button type="button" @click="triggerImageUpload" title="Insertar imagen">
           <i class="fas fa-image"></i>
         </button>
-        <button type="button" @click="insertTable" title="Insertar tabla">
+        <button type="button" @click="insertTable" :class="{ active: editor.isActive('table') }" title="Insertar tabla">
           <i class="fas fa-table"></i>
         </button>
         <button type="button" @click="editor.chain().focus().setHorizontalRule().run()" title="Línea divisoria">
           <i class="fas fa-minus"></i>
         </button>
       </div>
+
+      <!-- Controles de tabla — solo visibles con el cursor dentro de una tabla -->
+      <template v-if="editor.isActive('table')">
+        <div class="wiki-editor__divider"></div>
+        <div class="wiki-editor__group">
+          <button type="button" @click="editor.chain().focus().addRowAfter().run()" title="Agregar fila">
+            <i class="fas fa-arrow-down"></i><i class="fas fa-plus wiki-editor__mini-badge"></i>
+          </button>
+          <button type="button" @click="editor.chain().focus().addColumnAfter().run()" title="Agregar columna">
+            <i class="fas fa-arrow-right"></i><i class="fas fa-plus wiki-editor__mini-badge"></i>
+          </button>
+          <button type="button" @click="editor.chain().focus().deleteRow().run()" title="Eliminar fila">
+            <i class="fas fa-arrow-down"></i><i class="fas fa-minus wiki-editor__mini-badge"></i>
+          </button>
+          <button type="button" @click="editor.chain().focus().deleteColumn().run()" title="Eliminar columna">
+            <i class="fas fa-arrow-right"></i><i class="fas fa-minus wiki-editor__mini-badge"></i>
+          </button>
+          <button type="button" @click="editor.chain().focus().deleteTable().run()" title="Eliminar tabla">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </template>
 
       <div class="wiki-editor__divider"></div>
 
@@ -256,12 +278,28 @@ onBeforeUnmount(() => {
 </script>
 
 <style>
+/*
+ * Nota: este bloque NO usa `scoped` a propósito. Las reglas de más abajo
+ * (.wiki-editor__content .ProseMirror ...) apuntan al DOM que Tiptap inyecta
+ * dinámicamente dentro de <editor-content>, que no forma parte del template
+ * de este componente — con `scoped`, Vue le agrega su atributo data-v-xxxx
+ * solo a los elementos que sí están en el template, así que ese contenido
+ * dinámico nunca lo recibiría y todo el estilo del editor (tablas, listas,
+ * código, imágenes) dejaría de aplicarse.
+ *
+ * BUG HISTÓRICO (ya corregido): .wiki-editor tenía `overflow: hidden`, y como
+ * .wiki-editor__toolbar (position: sticky) es su hijo directo, cualquier
+ * ancestro con overflow != visible entre un elemento sticky y su verdadero
+ * contenedor de scroll rompe el sticky — el toolbar dejaba de "pegarse" y
+ * se perdía al hacer scroll. Se quita overflow:hidden de la raíz y el
+ * redondeo de esquinas se reparte entre el toolbar (arriba) y el contenido
+ * (abajo) por separado, sin depender de recortar overflow.
+ */
 .wiki-editor {
   border: 1px solid #e2e8f0;
   border-radius: 1rem;
   background: white;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  overflow: hidden;
 }
 
 .wiki-editor--focused {
@@ -277,9 +315,16 @@ onBeforeUnmount(() => {
   padding: 8px 10px;
   background: #f8fafc;
   border-bottom: 1px solid #e2e8f0;
+  border-radius: 1rem 1rem 0 0;
   position: sticky;
   top: 0;
   z-index: 10;
+}
+
+.wiki-editor__mini-badge {
+  font-size: 6px;
+  margin-left: -2px;
+  vertical-align: super;
 }
 
 .wiki-editor__group {
@@ -329,6 +374,7 @@ onBeforeUnmount(() => {
   min-height: 360px;
   padding: 24px 28px;
   font-family: 'Inter', sans-serif;
+  border-radius: 0 0 1rem 1rem;
 }
 
 .wiki-editor__stats {
@@ -341,6 +387,7 @@ onBeforeUnmount(() => {
   text-align: right;
   letter-spacing: 0.02em;
   text-transform: uppercase;
+  border-radius: 0 0 1rem 1rem;
 }
 
 /* ProseMirror content styling */

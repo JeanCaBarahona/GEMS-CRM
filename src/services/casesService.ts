@@ -34,6 +34,14 @@ export interface CaseDailyLog {
   sentimiento: '😊' | '😐' | '😟' | '🔥'
 }
 
+export interface ExternalLink {
+  _id?: string
+  nombre: string
+  url: string
+  agregadoPor?: string
+  fecha?: Date
+}
+
 export interface Case {
   _id?: string
   titulo: string
@@ -57,9 +65,17 @@ export interface Case {
   metodologia?: string
   dailyLogs: CaseDailyLog[]
   linkedTickets?: any[]
+  linkedTasks?: any[]
+  linkedActivities?: any[]
+  enlacesExternos?: ExternalLink[]
+  spreadsheet?: unknown
   createdAt: Date
   updatedAt: Date
 }
+
+// Forma que aceptan createCase/updateCase: igual a Case pero `archivos` también
+// admite File[] (adjuntos aún no subidos, distinguidos en runtime con `instanceof File`).
+export type CaseInput = Partial<Omit<Case, 'archivos'>> & { archivos?: (CaseFile | File)[] }
 
 export interface CaseFilters {
   tipo?: string
@@ -125,7 +141,7 @@ class CasesService {
   }
 
   // Crear nuevo caso
-  async createCase(caseData: Partial<Case>): Promise<Case> {
+  async createCase(caseData: CaseInput): Promise<Case> {
     const formData = new FormData()
     
     Object.entries(caseData).forEach(([key, value]) => {
@@ -158,11 +174,13 @@ class CasesService {
   }
 
   // Actualizar caso
-  async updateCase(id: string, caseData: Partial<Case>): Promise<Case> {
+  async updateCase(id: string, caseData: CaseInput): Promise<Case> {
     // Campos gestionados por el servidor o por endpoints dedicados
     const SKIP_FIELDS = new Set([
       '_id', 'createdAt', 'updatedAt',
-      'comentarios', 'hitos', 'dailyLogs', 'linkedTickets', // arrays gestionados por endpoints dedicados
+      // arrays/campos gestionados por endpoints dedicados
+      'comentarios', 'hitos', 'dailyLogs', 'linkedTickets', 'linkedTasks', 'linkedActivities',
+      'enlacesExternos', 'spreadsheet',
     ])
 
     const formData = new FormData()
@@ -423,6 +441,74 @@ class CasesService {
       method: 'DELETE'
     })
     if (!response.ok) throw new Error('Error al desvincular el ticket')
+    return await response.json()
+  }
+
+  // Vincular / desvincular tarea
+  async linkTask(caseId: string, taskId: string): Promise<Case> {
+    const response = await fetch(`${this.apiUrl}/${caseId}/tasks`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ taskId })
+    })
+    if (!response.ok) throw new Error('Error al vincular la tarea')
+    return await response.json()
+  }
+
+  async unlinkTask(caseId: string, taskId: string): Promise<Case> {
+    const response = await fetch(`${this.apiUrl}/${caseId}/tasks/${taskId}`, { method: 'DELETE' })
+    if (!response.ok) throw new Error('Error al desvincular la tarea')
+    return await response.json()
+  }
+
+  // Vincular / desvincular actividad
+  async linkActivity(caseId: string, activityId: string): Promise<Case> {
+    const response = await fetch(`${this.apiUrl}/${caseId}/activities`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ activityId })
+    })
+    if (!response.ok) throw new Error('Error al vincular la actividad')
+    return await response.json()
+  }
+
+  async unlinkActivity(caseId: string, activityId: string): Promise<Case> {
+    const response = await fetch(`${this.apiUrl}/${caseId}/activities/${activityId}`, { method: 'DELETE' })
+    if (!response.ok) throw new Error('Error al desvincular la actividad')
+    return await response.json()
+  }
+
+  // Enlaces externos (Google Drive, OneDrive, etc.)
+  async addExternalLink(caseId: string, link: { nombre: string; url: string }): Promise<ExternalLink> {
+    const response = await fetch(`${this.apiUrl}/${caseId}/links`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(link)
+    })
+    if (!response.ok) throw new Error('Error al agregar el enlace')
+    return await response.json()
+  }
+
+  async removeExternalLink(caseId: string, linkId: string): Promise<void> {
+    const response = await fetch(`${this.apiUrl}/${caseId}/links/${linkId}`, { method: 'DELETE' })
+    if (!response.ok) throw new Error('Error al eliminar el enlace')
+  }
+
+  // Hoja de cálculo embebida
+  async getSpreadsheet(caseId: string): Promise<unknown> {
+    const response = await fetch(`${this.apiUrl}/${caseId}/spreadsheet`)
+    if (!response.ok) throw new Error('Error al obtener la hoja de cálculo')
+    const data = await response.json()
+    return data.spreadsheet
+  }
+
+  async saveSpreadsheet(caseId: string, snapshot: unknown): Promise<{ success: boolean; updatedAt: string }> {
+    const response = await fetch(`${this.apiUrl}/${caseId}/spreadsheet`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ snapshot })
+    })
+    if (!response.ok) throw new Error('Error al guardar la hoja de cálculo')
     return await response.json()
   }
 }

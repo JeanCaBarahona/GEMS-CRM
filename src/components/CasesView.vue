@@ -35,6 +35,28 @@
         </div>
       </div>
 
+      <!-- Árbol / Tabla -->
+      <div class="px-4 pb-2">
+        <div class="flex bg-slate-200/50 p-1 rounded-lg">
+          <button
+            @click="listDisplayMode = 'tree'"
+            :class="listDisplayMode === 'tree' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+            class="flex-1 py-1 text-[10px] font-bold rounded-md transition-all flex items-center justify-center gap-1.5"
+          >
+            <i class="fas fa-sitemap text-[9px]"></i>
+            Árbol
+          </button>
+          <button
+            @click="listDisplayMode = 'grid'"
+            :class="listDisplayMode === 'grid' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+            class="flex-1 py-1 text-[10px] font-bold rounded-md transition-all flex items-center justify-center gap-1.5"
+          >
+            <i class="fas fa-table text-[9px]"></i>
+            Tabla
+          </button>
+        </div>
+      </div>
+
       <!-- Search Box -->
       <div class="px-4 py-2">
         <div class="relative group">
@@ -104,9 +126,81 @@
 
     <!-- Main Content Area -->
     <main class="flex-1 overflow-y-auto relative bg-white custom-scrollbar">
-      
+
+      <!-- Vista de tabla: catálogo completo, ordenable y filtrable -->
+      <div v-if="listDisplayMode === 'grid'" class="max-w-6xl mx-auto px-6 md:px-12 py-10 animate-fade-in">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-black text-slate-900">{{ viewMode === 'cases' ? 'Todos los casos' : 'Todos los artículos' }}</h2>
+          <span class="text-xs font-bold text-slate-400">{{ viewMode === 'cases' ? casesGridRows.length : wikiGridRows.length }} resultados</span>
+        </div>
+
+        <template v-if="viewMode === 'cases'">
+          <div class="flex flex-wrap gap-2 mb-4">
+            <select v-model="gridFilterEstado" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold outline-none">
+              <option :value="null">Todos los estados</option>
+              <option value="abierto">Abierto</option>
+              <option value="en_progreso">En progreso</option>
+              <option value="resuelto">Resuelto</option>
+              <option value="cerrado">Cerrado</option>
+            </select>
+            <select v-model="gridFilterPrioridad" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold outline-none">
+              <option :value="null">Todas las prioridades</option>
+              <option value="baja">Baja</option>
+              <option value="media">Media</option>
+              <option value="alta">Alta</option>
+              <option value="critica">Crítica</option>
+            </select>
+          </div>
+          <DataGridTable
+            :columns="casesGridColumns"
+            :items="casesGridRows"
+            :row-key="(c: Case) => c._id!"
+            :sort-key="casesSortKey"
+            :sort-dir="casesSortDir"
+            @sort="toggleCasesSort"
+            @row-click="selectCaseFromGrid"
+          >
+            <template #cell-titulo="{ item }"><span class="font-bold text-slate-800">{{ item.titulo }}</span></template>
+            <template #cell-estado="{ item }">
+              <span class="inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full" :class="getStatusDot(item.estado)"></span><span class="capitalize text-xs font-medium">{{ item.estado?.replace('_', ' ') }}</span></span>
+            </template>
+            <template #cell-prioridad="{ item }"><span :class="getPriorityClass(item.prioridad)" class="px-2 py-0.5 rounded-md text-[10px] font-bold capitalize">{{ item.prioridad }}</span></template>
+            <template #cell-cliente="{ item }"><span class="text-xs text-slate-600">{{ getClientName(item.cliente_id) }}</span></template>
+            <template #cell-updatedAt="{ item }"><span class="text-xs text-slate-400">{{ formatDateRelative(item.updatedAt) }}</span></template>
+            <template #empty>No hay casos que coincidan con los filtros.</template>
+          </DataGridTable>
+        </template>
+
+        <template v-else>
+          <div class="flex flex-wrap gap-2 mb-4">
+            <select v-model="gridFilterCategoria" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold outline-none">
+              <option :value="null">Todas las categorías</option>
+              <option value="proceso">Proceso</option>
+              <option value="codigo">Código</option>
+              <option value="manual">Manual</option>
+              <option value="otros">Otros</option>
+            </select>
+          </div>
+          <DataGridTable
+            :columns="wikiGridColumns"
+            :items="wikiGridRows"
+            :row-key="(w: WikiArticle) => w._id!"
+            :sort-key="wikiSortKey"
+            :sort-dir="wikiSortDir"
+            @sort="toggleWikiSort"
+            @row-click="selectWikiFromGrid"
+          >
+            <template #cell-titulo="{ item }"><span class="font-bold text-slate-800">{{ item.titulo }}</span></template>
+            <template #cell-categoria="{ item }"><span :class="getWikiCatClass(item.categoria)" class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase">{{ item.categoria }}</span></template>
+            <template #cell-vistas="{ item }"><span class="text-xs text-slate-500">{{ item.vistas || 0 }}</span></template>
+            <template #cell-updatedAt="{ item }"><span class="text-xs text-slate-400">{{ formatDateRelative(item.updatedAt) }}</span></template>
+            <template #empty>No hay artículos que coincidan con los filtros.</template>
+          </DataGridTable>
+        </template>
+      </div>
+
       <!-- Cases Detail Mode -->
-      <template v-if="viewMode === 'cases'">
+      <template v-else-if="viewMode === 'cases'">
         <div v-if="selectedCase" class="max-w-4xl mx-auto px-6 md:px-12 py-10 animate-fade-in">
           <!-- Page Cover -->
           <div class="h-40 md:h-52 w-full rounded-2xl mb-8 overflow-hidden relative group no-print">
@@ -231,15 +325,9 @@
 
             <!-- Files -->
             <div v-if="activeViewTab === 'files'" class="animate-content-in space-y-6">
-               <div class="flex items-center justify-between">
-                 <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest m-0">Documentos Adjuntos</h3>
-                 <label class="cursor-pointer px-4 py-1.5 bg-slate-900 text-white text-[10px] font-bold rounded-lg shadow-md hover:shadow-lg transition-all flex items-center gap-2">
-                   <i class="fas fa-plus"></i>
-                   Subir Archivo
-                   <input type="file" multiple class="hidden" @change="uploadFilesToCase">
-                 </label>
-               </div>
-               <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+               <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest m-0">Documentos Adjuntos</h3>
+               <FileDropzone label="Subir archivos al caso" @files-selected="uploadFilesToCase" />
+               <div v-if="selectedCase.archivos?.length" class="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <div v-for="(file, idx) in selectedCase.archivos" :key="idx" class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center gap-3 hover:bg-white hover:shadow-md transition-all cursor-pointer group">
                     <div class="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center group-hover:border-primary-200">
                       <i :class="getFileIcon(file.nombre)" class="text-lg text-slate-400 group-hover:text-primary-500"></i>
@@ -250,46 +338,73 @@
                     </div>
                   </div>
                </div>
-            </div>
 
-            <!-- Linked Tickets Section -->
-            <div v-if="activeViewTab === 'tickets'" class="animate-content-in space-y-6">
-               <div class="flex items-center justify-between">
-                 <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest m-0">Tickets Vinculados</h3>
-                 <button @click="openLinkTicketModal" class="px-4 py-1.5 bg-primary-600 text-white text-[10px] font-bold rounded-lg shadow-md hover:bg-primary-700 transition-all flex items-center gap-2">
-                   <i class="fas fa-link"></i>
-                   Vincular Ticket
-                 </button>
-               </div>
-               
-               <div v-if="selectedCase.linkedTickets?.length" class="space-y-3">
-                 <div v-for="ticket in selectedCase.linkedTickets" :key="ticket._id" class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between group hover:shadow-md transition-all">
-                   <div class="flex items-center gap-4">
-                     <div class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-primary-50 group-hover:text-primary-600 transition-all">
-                       <i class="fas fa-ticket-alt"></i>
-                     </div>
-                     <div>
-                       <div class="flex items-center gap-2 mb-1">
-                         <span class="text-[10px] font-black text-slate-400">#{{ ticket.ticketNumber || ticket._id?.slice(-6).toUpperCase() }}</span>
-                         <span :class="getTicketStatusClass(ticket.status)" class="px-1.5 py-0.5 rounded text-[8px] font-black uppercase">{{ ticket.status }}</span>
-                       </div>
-                       <p class="text-sm font-bold text-slate-800 m-0">{{ ticket.subject || ticket.titulo }}</p>
-                     </div>
-                   </div>
-                   <div class="flex items-center gap-2">
-                     <button @click="goToTicket(ticket._id)" class="p-2 text-slate-400 hover:text-primary-600 transition-all" title="Ver Ticket">
-                       <i class="fas fa-external-link-alt"></i>
-                     </button>
-                     <button @click="handleUnlinkTicket(ticket._id)" class="p-2 text-slate-400 hover:text-rose-500 transition-all" title="Desvincular">
-                       <i class="fas fa-unlink"></i>
-                     </button>
+               <!-- Enlaces externos -->
+               <div class="pt-4 border-t border-slate-100 space-y-3">
+                 <h4 class="text-[11px] font-black text-slate-400 uppercase tracking-widest m-0">Enlaces externos</h4>
+                 <div class="flex gap-2">
+                   <input v-model="newLinkName" placeholder="Nombre (ej: Manual en Drive)" class="flex-1 px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl text-xs font-medium outline-none focus:bg-white" />
+                   <input v-model="newLinkUrl" placeholder="https://..." class="flex-1 px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl text-xs font-medium outline-none focus:bg-white" />
+                   <button @click="addLinkToCase" :disabled="!newLinkName || !newLinkUrl" class="px-4 py-2 bg-slate-900 text-white text-[10px] font-bold rounded-xl disabled:opacity-30 disabled:cursor-not-allowed">Agregar</button>
+                 </div>
+                 <div v-if="selectedCase.enlacesExternos?.length" class="space-y-2">
+                   <div v-for="link in selectedCase.enlacesExternos" :key="link._id" class="flex items-center justify-between bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-100">
+                     <a :href="link.url" target="_blank" class="text-xs font-bold text-primary-600 hover:underline truncate mr-2"><i class="fas fa-external-link-alt mr-1.5 text-[10px]"></i>{{ link.nombre }}</a>
+                     <button @click="removeLinkFromCase(link._id!)" class="text-slate-300 hover:text-rose-500 transition-colors flex-shrink-0"><i class="fas fa-times-circle text-xs"></i></button>
                    </div>
                  </div>
                </div>
-               <div v-else class="py-12 bg-slate-50 rounded-3xl border border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400">
-                 <i class="fas fa-link text-3xl mb-3 opacity-20"></i>
-                 <p class="text-xs font-bold uppercase tracking-widest">No hay tickets vinculados</p>
-               </div>
+            </div>
+
+            <!-- Linked Items Section (tickets + tareas + actividades) -->
+            <div v-if="activeViewTab === 'links'" class="animate-content-in space-y-8">
+              <div>
+                <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="fas fa-ticket-alt text-slate-300"></i>Tickets</h3>
+                <LinkedItemsSelector
+                  :model-value="linkedTicketIds"
+                  :items="ticketLinkItems"
+                  :loading="loadingLinkCatalog.tickets"
+                  icon="fas fa-ticket-alt"
+                  placeholder="Buscar ticket..."
+                  empty-label="No hay tickets disponibles"
+                  @update:model-value="(ids) => onToggleLinked('tickets', ids)"
+                />
+              </div>
+              <div>
+                <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="fas fa-list-check text-slate-300"></i>Tareas</h3>
+                <LinkedItemsSelector
+                  :model-value="linkedTaskIds"
+                  :items="taskLinkItems"
+                  :loading="loadingLinkCatalog.tasks"
+                  icon="fas fa-list-check"
+                  placeholder="Buscar tarea..."
+                  empty-label="No hay tareas disponibles"
+                  @update:model-value="(ids) => onToggleLinked('tasks', ids)"
+                />
+              </div>
+              <div>
+                <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="fas fa-calendar-check text-slate-300"></i>Actividades</h3>
+                <LinkedItemsSelector
+                  :model-value="linkedActivityIds"
+                  :items="activityLinkItems"
+                  :loading="loadingLinkCatalog.activities"
+                  icon="fas fa-calendar-check"
+                  placeholder="Buscar actividad..."
+                  empty-label="No hay actividades disponibles"
+                  @update:model-value="(ids) => onToggleLinked('activities', ids)"
+                />
+              </div>
+            </div>
+
+            <!-- Hoja de cálculo -->
+            <div v-if="activeViewTab === 'spreadsheet'" class="animate-content-in">
+              <EmbeddedSpreadsheet
+                v-if="selectedCase._id"
+                :key="selectedCase._id"
+                entity-type="cases"
+                :entity-id="selectedCase._id"
+                :active="activeViewTab === 'spreadsheet'"
+              />
             </div>
           </div>
         </div>
@@ -414,34 +529,80 @@
                 </div>
               </div>
 
-              <!-- Wiki Linked Tickets -->
-              <div v-if="!isEditingWikiItem" class="mt-12 pt-8 border-t border-slate-100">
-                <div class="flex items-center justify-between mb-6">
-                  <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Tickets Relacionados</p>
-                  <button @click="openLinkTicketModal" class="text-[10px] font-bold text-primary-500 hover:text-primary-600">
-                    <i class="fas fa-plus mr-1"></i> Vincular otro
-                  </button>
+              <!-- Wiki: Enlaces externos + Adjuntos rápidos -->
+              <div v-if="!isEditingWikiItem" class="mt-12 pt-8 border-t border-slate-100 space-y-3">
+                <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-2">Enlaces externos</p>
+                <div class="flex gap-2">
+                  <input v-model="newLinkName" placeholder="Nombre (ej: Manual en Drive)" class="flex-1 px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl text-xs font-medium outline-none focus:bg-white" />
+                  <input v-model="newLinkUrl" placeholder="https://..." class="flex-1 px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl text-xs font-medium outline-none focus:bg-white" />
+                  <button @click="addLinkToWiki" :disabled="!newLinkName || !newLinkUrl" class="px-4 py-2 bg-slate-900 text-white text-[10px] font-bold rounded-xl disabled:opacity-30 disabled:cursor-not-allowed">Agregar</button>
                 </div>
-                <div v-if="selectedWiki.linkedTickets?.length" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div v-for="ticket in selectedWiki.linkedTickets" :key="ticket._id" class="p-4 bg-white border border-slate-100 rounded-2xl flex items-center justify-between group hover:border-primary-200 transition-all">
-                    <div class="min-w-0 flex-1">
-                      <div class="flex items-center gap-2 mb-1">
-                        <span class="text-[9px] font-black text-slate-400">#{{ ticket.ticketNumber || ticket._id?.slice(-6).toUpperCase() }}</span>
-                        <span :class="getTicketStatusClass(ticket.status)" class="px-1.5 py-0.5 rounded text-[8px] font-black uppercase">{{ ticket.status }}</span>
-                      </div>
-                      <p class="text-xs font-bold text-slate-800 truncate m-0">{{ ticket.subject || ticket.titulo }}</p>
-                    </div>
-                    <div class="flex gap-1 ml-4">
-                      <button @click="goToTicket(ticket._id)" class="p-2 text-slate-300 hover:text-primary-500 transition-all"><i class="fas fa-external-link-alt"></i></button>
-                      <button @click="handleUnlinkTicket(ticket._id)" class="p-2 text-slate-300 hover:text-rose-500 transition-all"><i class="fas fa-unlink"></i></button>
-                    </div>
+                <div v-if="selectedWiki.enlacesExternos?.length" class="space-y-2">
+                  <div v-for="link in selectedWiki.enlacesExternos" :key="link._id" class="flex items-center justify-between bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-100">
+                    <a :href="link.url" target="_blank" class="text-xs font-bold text-primary-600 hover:underline truncate mr-2"><i class="fas fa-external-link-alt mr-1.5 text-[10px]"></i>{{ link.nombre }}</a>
+                    <button @click="removeLinkFromWiki(link._id!)" class="text-slate-300 hover:text-rose-500 transition-colors flex-shrink-0"><i class="fas fa-times-circle text-xs"></i></button>
                   </div>
                 </div>
-                <div v-else class="py-12 bg-slate-50 rounded-3xl border border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-300">
-                   <p class="text-[10px] font-bold uppercase tracking-widest">Sin tickets vinculados</p>
+              </div>
+
+              <!-- Wiki: Vinculados (tickets + tareas + actividades) -->
+              <div v-if="!isEditingWikiItem" class="mt-12 pt-8 border-t border-slate-100 space-y-8">
+                <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Vinculados</p>
+                <div>
+                  <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="fas fa-ticket-alt text-slate-300"></i>Tickets</h3>
+                  <LinkedItemsSelector
+                    :model-value="linkedTicketIds"
+                    :items="ticketLinkItems"
+                    :loading="loadingLinkCatalog.tickets"
+                    icon="fas fa-ticket-alt"
+                    placeholder="Buscar ticket..."
+                    empty-label="No hay tickets disponibles"
+                    @update:model-value="(ids) => onToggleLinked('tickets', ids)"
+                  />
+                </div>
+                <div>
+                  <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="fas fa-list-check text-slate-300"></i>Tareas</h3>
+                  <LinkedItemsSelector
+                    :model-value="linkedTaskIds"
+                    :items="taskLinkItems"
+                    :loading="loadingLinkCatalog.tasks"
+                    icon="fas fa-list-check"
+                    placeholder="Buscar tarea..."
+                    empty-label="No hay tareas disponibles"
+                    @update:model-value="(ids) => onToggleLinked('tasks', ids)"
+                  />
+                </div>
+                <div>
+                  <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="fas fa-calendar-check text-slate-300"></i>Actividades</h3>
+                  <LinkedItemsSelector
+                    :model-value="linkedActivityIds"
+                    :items="activityLinkItems"
+                    :loading="loadingLinkCatalog.activities"
+                    icon="fas fa-calendar-check"
+                    placeholder="Buscar actividad..."
+                    empty-label="No hay actividades disponibles"
+                    @update:model-value="(ids) => onToggleLinked('activities', ids)"
+                  />
                 </div>
               </div>
-              
+
+              <!-- Wiki: Hoja de cálculo (sección plegable, no se monta hasta abrirla) -->
+              <div v-if="!isEditingWikiItem" class="mt-12 pt-8 border-t border-slate-100">
+                <button @click="showWikiSpreadsheet = !showWikiSpreadsheet" class="flex items-center gap-2 text-[10px] font-black text-slate-300 uppercase tracking-widest hover:text-slate-500 transition-colors">
+                  <i class="fas fa-table"></i> Hoja de cálculo
+                  <i :class="showWikiSpreadsheet ? 'fa-chevron-up' : 'fa-chevron-down'" class="fas text-[8px]"></i>
+                </button>
+                <div v-if="showWikiSpreadsheet" class="mt-4">
+                  <EmbeddedSpreadsheet
+                    v-if="selectedWiki._id"
+                    :key="selectedWiki._id"
+                    entity-type="wiki"
+                    :entity-id="selectedWiki._id"
+                    :active="showWikiSpreadsheet"
+                  />
+                </div>
+              </div>
+
               <!-- Placeholder for empty content -->
               <div v-if="!selectedWiki.contenido" @click="isEditingWikiItem = true" class="py-20 border-2 border-dashed border-slate-50 rounded-3xl flex flex-col items-center justify-center text-slate-200 hover:border-slate-100 hover:text-slate-300 transition-all cursor-pointer">
                 <p class="text-xs font-bold uppercase tracking-widest">Esta página está vacía. Pulsa para editar.</p>
@@ -519,53 +680,16 @@
                   </div>
 
                   <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Vincular Ticket (Opcional)</label>
-                    <div class="flex gap-2">
-                      <div class="flex-1 relative">
-                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-xs"></i>
-                        <input 
-                          v-model="creationTicketSearch" 
-                          placeholder="Buscar ticket por título o #ID..." 
-                          class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold outline-none focus:bg-white transition-all"
-                          @input="handleCreationTicketSearch"
-                        >
-                        <!-- Results Dropdown -->
-                        <div v-if="creationTicketResults.length" class="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-40 overflow-y-auto">
-                          <button 
-                            v-for="t in creationTicketResults" :key="t._id"
-                            @click="selectTicketForCreation(t)"
-                            class="w-full text-left px-4 py-2 hover:bg-slate-50 border-b border-slate-50 last:border-none flex items-center justify-between"
-                          >
-                            <span class="text-[10px] font-bold text-slate-700 truncate mr-2">{{ t.subject || t.titulo }}</span>
-                            <span class="text-[9px] font-black text-slate-300">#{{ t.ticketNumber || t._id.slice(-4) }}</span>
-                          </button>
-                        </div>
-                      </div>
-                      <div v-if="newCase.linkedTicketId" class="px-4 py-3 bg-primary-50 text-primary-600 rounded-xl text-[10px] font-black flex items-center gap-2">
-                        VINCULADO
-                        <button @click="newCase.linkedTicketId = ''; creationTicketSearch = ''"><i class="fas fa-times"></i></button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="space-y-1">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Descripción Breve</label>
                     <textarea v-model="newCase.descripcion" rows="3" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium outline-none focus:bg-white"></textarea>
                   </div>
 
                   <div class="space-y-1">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Adjuntos (Opcional)</label>
-                    <div class="flex items-center gap-3">
-                      <label class="flex-1 cursor-pointer p-4 bg-slate-50 border border-slate-100 border-dashed rounded-xl hover:bg-white hover:border-primary-300 transition-all group">
-                        <div class="flex flex-col items-center justify-center gap-1">
-                          <i class="fas fa-cloud-upload-alt text-slate-300 group-hover:text-primary-400"></i>
-                          <span class="text-[10px] font-bold text-slate-400 group-hover:text-slate-600">
-                            {{ newCase.archivos?.length ? `${newCase.archivos.length} seleccionados` : 'Click para subir archivos' }}
-                          </span>
-                        </div>
-                        <input type="file" multiple class="hidden" @change="(e: any) => newCase.archivos = Array.from(e.target.files)">
-                      </label>
-                    </div>
+                    <FileDropzone
+                      :label="newCase.archivos?.length ? `${newCase.archivos.length} seleccionados` : 'Subir archivos'"
+                      @files-selected="(files) => newCase.archivos = [...(newCase.archivos || []), ...files]"
+                    />
                   </div>
                 </div>
              </template>
@@ -623,44 +747,11 @@
                   </div>
 
                   <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Vincular Ticket (Opcional)</label>
-                    <div class="flex gap-2">
-                      <div class="flex-1 relative">
-                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-xs"></i>
-                        <input 
-                          v-model="creationTicketSearch" 
-                          placeholder="Buscar ticket por título o #ID..." 
-                          class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold outline-none focus:bg-white transition-all"
-                          @input="handleCreationTicketSearch"
-                        >
-                        <!-- Results Dropdown -->
-                        <div v-if="creationTicketResults.length" class="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-40 overflow-y-auto">
-                          <button 
-                            v-for="t in creationTicketResults" :key="t._id"
-                            @click="selectTicketForCreation(t)"
-                            class="w-full text-left px-4 py-2 hover:bg-slate-50 border-b border-slate-50 last:border-none flex items-center justify-between"
-                          >
-                            <span class="text-[10px] font-bold text-slate-700 truncate mr-2">{{ t.subject || t.titulo }}</span>
-                            <span class="text-[9px] font-black text-slate-300">#{{ t.ticketNumber || t._id.slice(-4) }}</span>
-                          </button>
-                        </div>
-                      </div>
-                      <div v-if="newWiki.linkedTicketId" class="px-4 py-3 bg-primary-50 text-primary-600 rounded-xl text-[10px] font-black flex items-center gap-2">
-                        VINCULADO
-                        <button @click="newWiki.linkedTicketId = ''; creationTicketSearch = ''"><i class="fas fa-times"></i></button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="space-y-1">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Adjuntos (Opcional)</label>
-                    <label class="cursor-pointer p-4 bg-slate-50 border border-slate-100 border-dashed rounded-xl hover:bg-white hover:border-primary-300 transition-all group flex flex-col items-center justify-center gap-1">
-                      <i class="fas fa-cloud-upload-alt text-slate-300 group-hover:text-primary-400"></i>
-                      <span class="text-[10px] font-bold text-slate-400 group-hover:text-slate-600">
-                        {{ newWiki.archivos?.length ? `${newWiki.archivos.length} seleccionados` : 'Subir documentos' }}
-                      </span>
-                      <input type="file" multiple class="hidden" @change="(e: any) => newWiki.archivos = Array.from(e.target.files)">
-                    </label>
+                    <FileDropzone
+                      :label="newWiki.archivos?.length ? `${newWiki.archivos.length} seleccionados` : 'Subir documentos'"
+                      @files-selected="(files) => newWiki.archivos = [...(newWiki.archivos || []), ...files]"
+                    />
                   </div>
 
                   <div class="space-y-1">
@@ -710,77 +801,6 @@
        </div>
     </div>
 
-     <!-- Modal Vincular Ticket -->
-     <div v-if="showLinkModal" class="fixed inset-0 z-[110] flex items-center justify-center p-4 animate-fade-in">
-        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showLinkModal = false"></div>
-        <div class="relative bg-white w-full max-w-xl rounded-3xl shadow-2xl p-0 overflow-hidden border border-slate-200 animate-scale-up">
-           <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-             <div>
-               <h3 class="text-lg font-bold text-slate-900">Vincular Ticket</h3>
-               <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Búsqueda inteligente de incidencias</p>
-             </div>
-             <button @click="showLinkModal = false" class="w-8 h-8 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-400"><i class="fas fa-times"></i></button>
-           </div>
-           
-           <div class="p-6 space-y-4">
-             <!-- Search & Filters -->
-             <div class="flex gap-2">
-               <div class="flex-1 relative">
-                 <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-sm"></i>
-                 <input 
-                   v-model="ticketSearchQuery" 
-                   placeholder="Buscar por ID, título o descripción..." 
-                   class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium outline-none focus:bg-white focus:ring-2 focus:ring-primary-500/10 transition-all"
-                   @input="handleTicketSearch"
-                 >
-               </div>
-               <select v-model="ticketFilterStatus" class="px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none" @change="handleTicketSearch">
-                 <option value="">Todos</option>
-                 <option value="open">Abiertos</option>
-                 <option value="waiting">Esperando</option>
-                 <option value="solved">Resueltos</option>
-               </select>
-             </div>
-
-             <!-- Results List -->
-             <div class="max-h-[400px] overflow-y-auto custom-scrollbar-slim space-y-2 pr-2">
-               <div v-if="isSearchingTickets" class="py-12 flex flex-col items-center gap-3 text-slate-300">
-                 <i class="fas fa-circle-notch fa-spin text-2xl"></i>
-                 <p class="text-xs font-bold uppercase tracking-widest">Buscando lo más acertado...</p>
-               </div>
-               <template v-else>
-                 <div 
-                   v-for="ticket in rankedTickets" :key="ticket._id"
-                   @click="handleLinkTicket(ticket)"
-                   class="p-4 bg-slate-50 hover:bg-white border border-transparent hover:border-primary-200 rounded-2xl cursor-pointer transition-all flex items-center justify-between group"
-                 >
-                   <div class="min-w-0 flex-1">
-                     <div class="flex items-center gap-2 mb-1">
-                       <span class="text-[9px] font-black text-slate-400 group-hover:text-primary-500">#{{ ticket.ticketNumber || ticket._id.slice(-6).toUpperCase() }}</span>
-                       <span :class="getTicketStatusClass(ticket.status)" class="px-1.5 py-0.5 rounded text-[8px] font-black uppercase">{{ ticket.status }}</span>
-                       <span v-if="ticket.score > 80" class="text-[8px] font-bold text-emerald-500 bg-emerald-50 px-1 rounded">ALTA COINCIDENCIA</span>
-                     </div>
-                     <p class="text-sm font-bold text-slate-800 m-0 truncate">{{ ticket.subject || ticket.titulo }}</p>
-                     <p class="text-[10px] text-slate-500 truncate m-0 opacity-60">{{ ticket.description || 'Sin descripción' }}</p>
-                   </div>
-                   <div class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                     <div class="w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center">
-                       <i class="fas fa-plus text-xs"></i>
-                     </div>
-                   </div>
-                 </div>
-                 <div v-if="!rankedTickets.length" class="py-12 text-center text-slate-300">
-                   <p class="text-xs font-bold uppercase tracking-widest">No se encontraron tickets</p>
-                 </div>
-               </template>
-             </div>
-           </div>
-           
-           <div class="p-4 bg-slate-50 border-t border-slate-100 text-center">
-             <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Selecciona un ticket para vincularlo inmediatamente</p>
-           </div>
-        </div>
-     </div>
   </div>
 </template>
 
@@ -788,13 +808,18 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { casesService, type Case } from '../services/casesService'
 import { clientService, type ClientData } from '../services/clientService'
-import { wikiService, type WikiArticle } from '../services/wikiService'
+import { wikiService, type WikiArticle, type WikiArticleInput } from '../services/wikiService'
 import { useNotifications } from '../composables/useNotifications'
 import { useAuthStore } from '../stores/auth'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import WikiEditor from './wiki/WikiEditor.vue'
 import WikiContent from './wiki/WikiContent.vue'
+import FileDropzone from './ui/FileDropzone.vue'
+import LinkedItemsSelector from './forms/LinkedItemsSelector.vue'
+import EmbeddedSpreadsheet from './EmbeddedSpreadsheet.vue'
+import DataGridTable, { type DataGridColumn } from './ui/DataGridTable.vue'
+import { useSortableFilterableList } from '../composables/useSortableFilterableList'
 
 const { showSuccess, showError, showLoading, closeLoading, confirmDelete } = useNotifications()
 const authStore = useAuthStore()
@@ -803,6 +828,11 @@ const authStore = useAuthStore()
 const viewMode = ref<'cases' | 'wiki'>('cases')
 const searchTerm = ref('')
 const expandedGroups = ref<string[]>([])
+/** 'tree' = árbol lateral de siempre. 'grid' = tabla ordenable/filtrable de todo el catálogo. */
+const listDisplayMode = ref<'tree' | 'grid'>('tree')
+const gridFilterEstado = ref<string | null>(null)
+const gridFilterPrioridad = ref<string | null>(null)
+const gridFilterCategoria = ref<string | null>(null)
 
 // Data State
 const cases = ref<Case[]>([])
@@ -812,7 +842,7 @@ const selectedCase = ref<Case | null>(null)
 const selectedWiki = ref<WikiArticle | null>(null)
 
 // UI State
-const activeViewTab = ref<'wiki' | 'dailies' | 'files'>('wiki')
+const activeViewTab = ref<'wiki' | 'dailies' | 'files' | 'links' | 'spreadsheet'>('wiki')
 const isEditingWiki = ref(false)
 const isEditingWikiItem = ref(false)
 const showCreateModal = ref(false)
@@ -820,23 +850,140 @@ const showAddDailyLog = ref(false)
 const wikiTagsRaw = ref('')
 const modalMode = ref<'create' | 'edit'>('create')
 
-// Ticket Linking State
 import { ticketService } from '../services/ticketService'
-const showLinkModal = ref(false)
-const ticketSearchQuery = ref('')
-const ticketFilterStatus = ref('')
-const isSearchingTickets = ref(false)
-const availableTickets = ref<any[]>([])
-const rankedTickets = ref<any[]>([])
-
-// Creation Linking State
-const creationTicketSearch = ref('')
-const creationTicketResults = ref<any[]>([])
+import { useTasksStore } from '../stores/tasks'
+import { activityService } from '../services/activityService'
 
 // Form State
-const newCase = ref({ titulo: '', tipo: 'seguimiento' as any, prioridad: 'media' as any, descripcion: '', cliente_id: '', categoria: '', tags: [] as string[], archivos: [] as File[], linkedTicketId: '' })
-const newWiki = ref<Partial<WikiArticle> & { archivos?: File[], linkedTicketId?: string }>({ titulo: '', categoria: 'proceso', contenido: '', descripcion: '', tags: [], archivos: [], linkedTicketId: '' })
+const newCase = ref({ titulo: '', tipo: 'seguimiento' as any, prioridad: 'media' as any, descripcion: '', cliente_id: '', categoria: '', tags: [] as string[], archivos: [] as File[] })
+const newWiki = ref<WikiArticleInput>({ titulo: '', categoria: 'proceso', contenido: '', descripcion: '', tags: [], archivos: [] })
 const newLog = ref({ que_se_hizo: '', sentimiento: '😐' as any })
+
+// Enlaces externos
+const newLinkName = ref('')
+const newLinkUrl = ref('')
+
+// Hoja de cálculo (Wiki — sección plegable, se monta solo al abrirla)
+const showWikiSpreadsheet = ref(false)
+
+// Vinculación múltiple (tickets / tareas / actividades)
+const tasksStore = useTasksStore()
+const loadingLinkCatalog = ref({ tickets: false, tasks: false, activities: false })
+const ticketCatalog = ref<any[]>([])
+const taskCatalog = ref<any[]>([])
+const activityCatalog = ref<any[]>([])
+const linkCatalogLoaded = ref(false)
+
+const loadLinkCatalogs = async () => {
+  if (linkCatalogLoaded.value) return
+  linkCatalogLoaded.value = true
+  loadingLinkCatalog.value = { tickets: true, tasks: true, activities: true }
+  try {
+    const [ticketsRes] = await Promise.all([ticketService.getAll({ limit: 100 })])
+    ticketCatalog.value = ticketsRes.data || []
+  } catch (err) { console.error('Error cargando tickets:', err) }
+  finally { loadingLinkCatalog.value.tickets = false }
+
+  try {
+    await tasksStore.fetchTasks()
+    taskCatalog.value = tasksStore.tasks
+  } catch (err) { console.error('Error cargando tareas:', err) }
+  finally { loadingLinkCatalog.value.tasks = false }
+
+  try {
+    activityCatalog.value = await activityService.getAll()
+  } catch (err) { console.error('Error cargando actividades:', err) }
+  finally { loadingLinkCatalog.value.activities = false }
+}
+
+const currentLinkedEntity = computed(() => (viewMode.value === 'cases' ? selectedCase.value : selectedWiki.value))
+
+const linkedTicketIds = computed(() => (currentLinkedEntity.value?.linkedTickets || []).map((t: any) => t._id || t))
+const linkedTaskIds = computed(() => (currentLinkedEntity.value?.linkedTasks || []).map((t: any) => t._id || t))
+const linkedActivityIds = computed(() => (currentLinkedEntity.value?.linkedActivities || []).map((a: any) => a._id || a))
+
+const ticketLinkItems = computed(() => ticketCatalog.value.map((t: any) => ({
+  _id: t._id,
+  label: t.subject || t.titulo || 'Sin asunto',
+  sublabel: `#${t.ticketNumber || t._id.slice(-6).toUpperCase()} · ${t.status || ''}`
+})))
+const taskLinkItems = computed(() => taskCatalog.value.map((t: any) => ({
+  _id: t._id,
+  label: t.title,
+  sublabel: t.boardStatus || t.status || ''
+})))
+const activityLinkItems = computed(() => activityCatalog.value.map((a: any) => ({
+  _id: a._id,
+  label: a.title,
+  sublabel: a.status || ''
+})))
+
+/** Compara el array de ids nuevo contra el actual y llama al endpoint de link/unlink
+ *  por cada diferencia — LinkedItemsSelector emite la lista completa, no un toggle. */
+const onToggleLinked = async (type: 'tickets' | 'tasks' | 'activities', newIds: string[]) => {
+  const entity = currentLinkedEntity.value
+  if (!entity?._id) return
+  const currentIds = type === 'tickets' ? linkedTicketIds.value : type === 'tasks' ? linkedTaskIds.value : linkedActivityIds.value
+  const added = newIds.filter(id => !currentIds.includes(id))
+  const removed = currentIds.filter((id: string) => !newIds.includes(id))
+  if (!added.length && !removed.length) return
+
+  const svc = viewMode.value === 'cases' ? casesService : wikiService
+  // Envueltos en closures para preservar el `this` del servicio — svc.linkTicket
+  // como referencia suelta pierde el binding y rompe `this.apiUrl` internamente.
+  const linkFn = (id: string) => type === 'tickets' ? svc.linkTicket(entity._id!, id) : type === 'tasks' ? svc.linkTask(entity._id!, id) : svc.linkActivity(entity._id!, id)
+  const unlinkFn = (id: string) => type === 'tickets' ? svc.unlinkTicket(entity._id!, id) : type === 'tasks' ? svc.unlinkTask(entity._id!, id) : svc.unlinkActivity(entity._id!, id)
+
+  try {
+    let updated: any = entity
+    for (const id of added) updated = await linkFn(id)
+    for (const id of removed) updated = await unlinkFn(id)
+
+    if (viewMode.value === 'cases') {
+      selectedCase.value = updated
+      const idx = cases.value.findIndex(c => c._id === updated._id)
+      if (idx !== -1) cases.value[idx] = updated
+    } else {
+      selectedWiki.value = updated
+      const idx = wikiArticles.value.findIndex(w => w._id === updated._id)
+      if (idx !== -1) wikiArticles.value[idx] = updated
+    }
+  } catch (err: any) {
+    showError('Error', err.message || 'No se pudo actualizar el vínculo')
+  }
+}
+
+// Enlaces externos
+const addLinkToCase = async () => {
+  if (!selectedCase.value?._id || !newLinkName.value || !newLinkUrl.value) return
+  try {
+    const link = await casesService.addExternalLink(selectedCase.value._id, { nombre: newLinkName.value, url: newLinkUrl.value })
+    selectedCase.value.enlacesExternos = [...(selectedCase.value.enlacesExternos || []), link]
+    newLinkName.value = ''; newLinkUrl.value = ''
+  } catch (err: any) { showError('Error', err.message) }
+}
+const removeLinkFromCase = async (linkId: string) => {
+  if (!selectedCase.value?._id) return
+  try {
+    await casesService.removeExternalLink(selectedCase.value._id, linkId)
+    selectedCase.value.enlacesExternos = (selectedCase.value.enlacesExternos || []).filter(l => l._id !== linkId)
+  } catch (err: any) { showError('Error', err.message) }
+}
+const addLinkToWiki = async () => {
+  if (!selectedWiki.value?._id || !newLinkName.value || !newLinkUrl.value) return
+  try {
+    const link = await wikiService.addExternalLink(selectedWiki.value._id, { nombre: newLinkName.value, url: newLinkUrl.value })
+    selectedWiki.value.enlacesExternos = [...(selectedWiki.value.enlacesExternos || []), link]
+    newLinkName.value = ''; newLinkUrl.value = ''
+  } catch (err: any) { showError('Error', err.message) }
+}
+const removeLinkFromWiki = async (linkId: string) => {
+  if (!selectedWiki.value?._id) return
+  try {
+    await wikiService.removeExternalLink(selectedWiki.value._id, linkId)
+    selectedWiki.value.enlacesExternos = (selectedWiki.value.enlacesExternos || []).filter(l => l._id !== linkId)
+  } catch (err: any) { showError('Error', err.message) }
+}
 
 // Grouping Logic
 const groupedCases = computed(() => {
@@ -871,11 +1018,73 @@ const groupedWiki = computed(() => {
   return result
 })
 
+// ── Vista de tabla (grid ordenable/filtrable) — adicional al árbol, no lo reemplaza ──
+const estadoFilterFn = computed(() => (gridFilterEstado.value ? (c: Case) => c.estado === gridFilterEstado.value : null))
+const prioridadFilterFn = computed(() => (gridFilterPrioridad.value ? (c: Case) => c.prioridad === gridFilterPrioridad.value : null))
+const categoriaFilterFn = computed(() => (gridFilterCategoria.value ? (w: WikiArticle) => w.categoria === gridFilterCategoria.value : null))
+
+const {
+  sortKey: casesSortKey, sortDir: casesSortDir, toggleSort: toggleCasesSort, filteredSorted: casesGridRows
+} = useSortableFilterableList(cases, {
+  filters: { estado: estadoFilterFn, prioridad: prioridadFilterFn },
+  sortAccessors: {
+    titulo: (c: Case) => c.titulo,
+    estado: (c: Case) => c.estado,
+    prioridad: (c: Case) => c.prioridad,
+    cliente: (c: Case) => getClientName(c.cliente_id),
+    updatedAt: (c: Case) => new Date(c.updatedAt)
+  },
+  defaultSortKey: 'updatedAt',
+  defaultSortDir: 'desc'
+})
+
+const {
+  sortKey: wikiSortKey, sortDir: wikiSortDir, toggleSort: toggleWikiSort, filteredSorted: wikiGridRows
+} = useSortableFilterableList(wikiArticles, {
+  filters: { categoria: categoriaFilterFn },
+  sortAccessors: {
+    titulo: (w: WikiArticle) => w.titulo,
+    categoria: (w: WikiArticle) => w.categoria,
+    vistas: (w: WikiArticle) => w.vistas || 0,
+    updatedAt: (w: WikiArticle) => (w.updatedAt ? new Date(w.updatedAt) : null)
+  },
+  defaultSortKey: 'updatedAt',
+  defaultSortDir: 'desc'
+})
+
+const casesGridColumns: DataGridColumn[] = [
+  { key: 'titulo', label: 'Título' },
+  { key: 'estado', label: 'Estado' },
+  { key: 'prioridad', label: 'Prioridad' },
+  { key: 'cliente', label: 'Cliente' },
+  { key: 'updatedAt', label: 'Actualizado' }
+]
+
+const wikiGridColumns: DataGridColumn[] = [
+  { key: 'titulo', label: 'Título' },
+  { key: 'categoria', label: 'Categoría' },
+  { key: 'vistas', label: 'Vistas', align: 'right' },
+  { key: 'updatedAt', label: 'Actualizado' }
+]
+
+const selectCaseFromGrid = (c: Case) => {
+  selectCase(c)
+  listDisplayMode.value = 'tree'
+}
+const selectWikiFromGrid = (w: WikiArticle) => {
+  selectedWiki.value = w
+  listDisplayMode.value = 'tree'
+}
+
 const tabs = computed(() => [
   { id: 'wiki', label: 'Documentación', icon: 'fas fa-book-open' },
-  { id: 'tickets', label: 'Tickets', icon: 'fas fa-ticket-alt', count: selectedCase.value?.linkedTickets?.length },
+  {
+    id: 'links', label: 'Vinculados', icon: 'fas fa-link',
+    count: (selectedCase.value?.linkedTickets?.length || 0) + (selectedCase.value?.linkedTasks?.length || 0) + (selectedCase.value?.linkedActivities?.length || 0)
+  },
   { id: 'dailies', label: 'Actividad', icon: 'fas fa-history', count: selectedCase.value?.dailyLogs?.length },
-  { id: 'files', label: 'Adjuntos', icon: 'fas fa-paperclip', count: selectedCase.value?.archivos?.length }
+  { id: 'files', label: 'Adjuntos', icon: 'fas fa-paperclip', count: (selectedCase.value?.archivos?.length || 0) + (selectedCase.value?.enlacesExternos?.length || 0) },
+  { id: 'spreadsheet', label: 'Hoja de cálculo', icon: 'fas fa-table' }
 ])
 
 const sortedDailyLogs = computed(() => {
@@ -917,11 +1126,9 @@ const openCreateModal = () => {
 }
 
 const resetForm = () => {
-  newCase.value = { titulo: '', tipo: 'seguimiento', prioridad: 'media', descripcion: '', cliente_id: '', categoria: '', tags: [], archivos: [], linkedTicketId: '' }
-  newWiki.value = { titulo: '', categoria: 'proceso', contenido: WIKI_TEMPLATE, descripcion: '', tags: [], archivos: [], linkedTicketId: '' }
+  newCase.value = { titulo: '', tipo: 'seguimiento', prioridad: 'media', descripcion: '', cliente_id: '', categoria: '', tags: [], archivos: [] }
+  newWiki.value = { titulo: '', categoria: 'proceso', contenido: WIKI_TEMPLATE, descripcion: '', tags: [], archivos: [] }
   wikiTagsRaw.value = ''
-  creationTicketSearch.value = ''
-  creationTicketResults.value = []
 }
 
 const WIKI_TEMPLATE = `<h2>Síntomas</h2>
@@ -1022,13 +1229,7 @@ const handleCreateCase = async () => {
   if (!newCase.value.titulo) return showError('Requerido', 'El título es obligatorio.')
   showLoading('Creando página...')
   try {
-    let created = await casesService.createCase(newCase.value);
-
-    // Link ticket if selected
-    if (newCase.value.linkedTicketId) {
-      created = await casesService.linkTicket(created._id!, newCase.value.linkedTicketId)
-    }
-    
+    const created = await casesService.createCase(newCase.value);
     cases.value.unshift(created); selectedCase.value = created; showCreateModal.value = false
     closeLoading(); showSuccess('¡Éxito!', 'Proyecto creado.')
   } catch (err: any) { closeLoading(); showError('Error', err.message) }
@@ -1057,13 +1258,7 @@ const handleCreateWiki = async () => {
   newWiki.value.tags = wikiTagsRaw.value.split(',').map(t => t.trim()).filter(t => t)
   showLoading('Publicando...')
   try {
-    let created = await wikiService.create(newWiki.value);
-    
-    // Link ticket if selected
-    if (newWiki.value.linkedTicketId) {
-      created = await wikiService.linkTicket(created._id!, newWiki.value.linkedTicketId)
-    }
-    
+    const created = await wikiService.create(newWiki.value);
     wikiArticles.value.unshift(created); selectedWiki.value = created; showCreateModal.value = false
     closeLoading(); showSuccess('¡Éxito!', 'Artículo publicado.')
   } catch (err: any) { closeLoading(); showError('Error', err.message) }
@@ -1174,142 +1369,10 @@ const uploadFilesToCase = async (e: any) => {
     closeLoading(); showSuccess('Éxito', 'Archivos añadidos correctamente.')
   } catch (err: any) { closeLoading(); showError('Error', err.message) }
 }
-// Ticket Linking Logic (The "Mas Acertado" Search)
-const openLinkTicketModal = async () => {
-  showLinkModal.value = true
-  isSearchingTickets.value = true
-  try {
-    const response = await ticketService.getAll({ limit: 50 })
-    availableTickets.value = response.data
-    handleTicketSearch()
-  } catch (err) { showError('Error', 'No se pudieron cargar tickets') }
-  finally { isSearchingTickets.value = false }
-}
-
-const handleTicketSearch = () => {
-  const query = ticketSearchQuery.value.toLowerCase()
-  const status = ticketFilterStatus.value
-  
-  const filtered = availableTickets.value.filter(t => {
-    const matchStatus = !status || t.status === status
-    const matchText = !query || 
-      t.subject?.toLowerCase().includes(query) || 
-      t.titulo?.toLowerCase().includes(query) || 
-      t.ticketNumber?.toLowerCase().includes(query) ||
-      t._id.toLowerCase().includes(query)
-    return matchStatus && matchText
-  })
-
-  // Ranking logic ("Lo más acertado")
-  rankedTickets.value = filtered.map(t => {
-    let score = 0
-    const subject = (t.subject || t.titulo || '').toLowerCase()
-    const tNum = (t.ticketNumber || '').toLowerCase()
-    
-    if (query) {
-      if (tNum === query || t._id.toLowerCase() === query) score += 100 // Exact match ID/Number
-      else if (tNum.includes(query)) score += 50
-      
-      if (subject === query) score += 80 // Exact title match
-      else if (subject.startsWith(query)) score += 40
-      else if (subject.includes(query)) score += 20
-      
-      if (t.description?.toLowerCase().includes(query)) score += 10
-    } else {
-      score = t.status === 'open' ? 10 : 0 // Default ranking
-    }
-    
-    return { ...t, score }
-  }).sort((a, b) => b.score - a.score)
-}
-
-const handleLinkTicket = async (ticket: any) => {
-  const targetId = viewMode.value === 'cases' ? selectedCase.value?._id : selectedWiki.value?._id
-  if (!targetId) return
-
-  showLoading('Vinculando...')
-  try {
-    let updated
-    if (viewMode.value === 'cases') {
-      updated = await casesService.linkTicket(targetId, ticket._id)
-      selectedCase.value = updated
-      const idx = cases.value.findIndex(c => c._id === updated._id)
-      if (idx !== -1) cases.value[idx] = updated
-    } else {
-      updated = await wikiService.linkTicket(targetId, ticket._id)
-      selectedWiki.value = updated
-      const idx = wikiArticles.value.findIndex(w => w._id === updated._id)
-      if (idx !== -1) wikiArticles.value[idx] = updated
-    }
-    showLinkModal.value = false
-    closeLoading(); showSuccess('Vinculado', 'Ticket asociado correctamente')
-  } catch (err: any) { closeLoading(); showError('Error', err.message) }
-}
-
-const handleUnlinkTicket = async (ticketId: string) => {
-  const targetId = viewMode.value === 'cases' ? selectedCase.value?._id : selectedWiki.value?._id
-  if (!targetId) return
-
-  const result = await confirmDelete('vínculo con este ticket')
-  if (!result.isConfirmed) return
-
-  showLoading('Desvinculando...')
-  try {
-    let updated
-    if (viewMode.value === 'cases') {
-      updated = await casesService.unlinkTicket(targetId, ticketId)
-      selectedCase.value = updated
-      const idx = cases.value.findIndex(c => c._id === updated._id)
-      if (idx !== -1) cases.value[idx] = updated
-    } else {
-      updated = await wikiService.unlinkTicket(targetId, ticketId)
-      selectedWiki.value = updated
-      const idx = wikiArticles.value.findIndex(w => w._id === updated._id)
-      if (idx !== -1) wikiArticles.value[idx] = updated
-    }
-    closeLoading(); showSuccess('Desvinculado', 'Vínculo eliminado')
-  } catch (err: any) { closeLoading(); showError('Error', err.message) }
-}
-
-const getTicketStatusClass = (status: string) => {
-  const classes: Record<string, string> = {
-    open: 'bg-emerald-500/10 text-emerald-600',
-    waiting: 'bg-amber-500/10 text-amber-600',
-    solved: 'bg-blue-500/10 text-blue-600',
-    closed: 'bg-slate-500/10 text-slate-600'
-  }
-  return classes[status] || classes.open
-}
-
-const goToTicket = (id: string) => window.open(`/tickets?id=${id}`, '_blank')
-
-const handleCreationTicketSearch = async () => {
-  if (creationTicketSearch.value.length < 2) {
-    creationTicketResults.value = []
-    return
-  }
-  try {
-    const response = await ticketService.getAll({ limit: 10 })
-    const query = creationTicketSearch.value.toLowerCase()
-    creationTicketResults.value = response.data.filter((t: any) => 
-      t.subject?.toLowerCase().includes(query) || 
-      t.ticketNumber?.toLowerCase().includes(query) ||
-      t._id.toLowerCase().includes(query)
-    )
-  } catch (err) { console.error(err) }
-}
-
-const selectTicketForCreation = (ticket: any) => {
-  if (viewMode.value === 'cases') {
-    newCase.value.linkedTicketId = ticket._id
-  } else {
-    newWiki.value.linkedTicketId = ticket._id
-  }
-  creationTicketSearch.value = ticket.subject || ticket.titulo
-  creationTicketResults.value = []
-}
-
-onMounted(() => loadData())
+onMounted(() => {
+  loadData()
+  loadLinkCatalogs()
+})
 watch(viewMode, () => { searchTerm.value = ''; expandedGroups.value = [] })
 </script>
 

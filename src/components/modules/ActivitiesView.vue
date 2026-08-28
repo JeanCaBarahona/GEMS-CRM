@@ -234,6 +234,22 @@
             ]"
           />
         </div>
+        <!-- Filtro por proyecto (solo si ya hay un cliente seleccionado) -->
+        <div v-if="selectedClient" class="flex-1 min-w-[180px]">
+          <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-0.5 ml-1">
+            Proyecto
+          </label>
+          <CustomSelect
+            v-model="selectedProject"
+            size="sm"
+            searchable
+            :loading="loadingClientProjects"
+            :options="[
+              { value: '', label: 'Todos los proyectos' },
+              ...clientProjects.map(p => ({ value: p._id || '', label: p.name }))
+            ]"
+          />
+        </div>
         <!-- Filtro por departamento -->
         <div class="flex-1 min-w-[140px]">
           <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-0.5 ml-1">
@@ -2660,7 +2676,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { activityService, type ActivityData } from '../../services/activityService'
-import { clientService, type ClientData } from '../../services/clientService'
+import { clientService, type ClientData, type ProjectData } from '../../services/clientService'
 import { teamService } from '../../services/teamService'
 import { useNotifications } from '../../composables/useNotifications'
 import { useAuthStore } from '../../stores/auth'
@@ -2799,8 +2815,28 @@ const selectedDepartment = ref('')
 const selectedTeamMember = ref('')
 const selectedStatus = ref('')
 const selectedClient = ref('')
+const selectedProject = ref('')
 const startDate = ref('')
 const endDate = ref('')
+
+// Proyectos del cliente seleccionado, para el filtro por proyecto
+const clientProjects = ref<ProjectData[]>([])
+const loadingClientProjects = ref(false)
+watch(selectedClient, async (clientId) => {
+  selectedProject.value = ''
+  if (!clientId) {
+    clientProjects.value = []
+    return
+  }
+  loadingClientProjects.value = true
+  try {
+    clientProjects.value = await clientService.getProjects(clientId)
+  } catch {
+    clientProjects.value = []
+  } finally {
+    loadingClientProjects.value = false
+  }
+})
 
 // Modales para tableros
 const showCreateBoardModal = ref(false)
@@ -2965,6 +3001,14 @@ const filteredActivities = computed(() => {
     filtered = filtered.filter(a => {
       const id = (typeof a.clientId === 'object' && a.clientId !== null) ? (a.clientId as any)._id : a.clientId
       return id === selectedClient.value
+    })
+  }
+
+  // Filtrar por proyecto (solo aplica si ya hay un cliente seleccionado)
+  if (selectedProject.value) {
+    filtered = filtered.filter(a => {
+      const id = (typeof a.projectId === 'object' && a.projectId !== null) ? (a.projectId as any)._id : a.projectId
+      return id === selectedProject.value
     })
   }
 

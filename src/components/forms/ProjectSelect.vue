@@ -145,8 +145,12 @@ watch(() => props.clientId, (next, prev) => {
   if (next !== prev) {
     creating.value = false
     newName.value = ''
-    // Al cambiar de cliente, el proyecto anterior ya no aplica.
-    if (props.modelValue) emit('update:modelValue', null)
+    // Al cambiar de cliente, el proyecto anterior ya no aplica — pero solo cuando
+    // YA había un cliente real antes (`prev` truthy). En el montaje de un formulario
+    // de edición, clientId pasa de '' (valor inicial del form) al cliente real como
+    // parte de la misma hidratación, no de un cambio hecho por el usuario; tratar
+    // ese caso como "cambio de cliente" borraba el proyecto ya guardado.
+    if (prev && props.modelValue) emit('update:modelValue', null)
     loadProjects()
   }
 }, { immediate: true })

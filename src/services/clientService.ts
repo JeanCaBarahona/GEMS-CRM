@@ -1,5 +1,22 @@
 import { API_CONFIG } from '../config/api'
 
+export interface ProjectExternalLink {
+  _id?: string
+  nombre: string
+  url: string
+  agregadoPor?: string
+  fecha?: string
+}
+
+export interface ProjectFile {
+  _id?: string
+  nombre: string
+  url: string
+  tipo: string
+  tamaño: number
+  fecha_subida: string
+}
+
 export interface ProjectData {
   _id?: string
   name: string
@@ -9,6 +26,8 @@ export interface ProjectData {
   startDate?: string
   endDate?: string
   isDefault?: boolean
+  enlacesExternos?: ProjectExternalLink[]
+  archivos?: ProjectFile[]
   createdAt?: string
   updatedAt?: string
 }
@@ -117,6 +136,39 @@ class ClientService {
   async deleteProject(clientId: string, projectId: string): Promise<{ success: boolean; archived: boolean; message?: string }> {
     return this.request(
       `/${clientId}/projects/${projectId}`, { method: 'DELETE' }, 'No se pudo eliminar el proyecto'
+    )
+  }
+
+  // ───────── Enlaces externos y adjuntos del proyecto ─────────
+
+  async addProjectLink(clientId: string, projectId: string, link: { nombre: string; url: string }): Promise<ProjectExternalLink> {
+    return this.request(
+      `/${clientId}/projects/${projectId}/links`, { method: 'POST', body: JSON.stringify(link) }, 'No se pudo agregar el enlace'
+    )
+  }
+
+  async removeProjectLink(clientId: string, projectId: string, linkId: string): Promise<void> {
+    await this.request(
+      `/${clientId}/projects/${projectId}/links/${linkId}`, { method: 'DELETE' }, 'No se pudo eliminar el enlace'
+    )
+  }
+
+  async uploadProjectFiles(clientId: string, projectId: string, files: File[]): Promise<ProjectFile[]> {
+    const formData = new FormData()
+    files.forEach(f => formData.append('archivos', f))
+    const token = localStorage.getItem('token')
+    const response = await fetch(`${this.baseUrl}${this.endpoint}/${clientId}/projects/${projectId}/files`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      body: formData
+    })
+    if (!response.ok) throw new Error('No se pudieron subir los archivos')
+    return await response.json()
+  }
+
+  async removeProjectFile(clientId: string, projectId: string, fileId: string): Promise<void> {
+    await this.request(
+      `/${clientId}/projects/${projectId}/files/${fileId}`, { method: 'DELETE' }, 'No se pudo eliminar el archivo'
     )
   }
 }

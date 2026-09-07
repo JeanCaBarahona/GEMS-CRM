@@ -125,7 +125,14 @@
           </div>
 
           <div v-if="client.projects?.length" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div v-for="pr in client.projects" :key="pr._id" class="bg-white border border-slate-200 rounded-xl p-5 hover:border-primary-300 hover:shadow-md transition-all shadow-sm">
+            <div
+              v-for="pr in client.projects"
+              :key="pr._id"
+              class="bg-white border border-slate-200 rounded-xl p-5 hover:border-primary-300 hover:shadow-md transition-all shadow-sm"
+              :class="editingProjectId !== pr._id ? 'cursor-pointer' : ''"
+              :title="editingProjectId !== pr._id ? 'Doble click para ver detalle' : ''"
+              @dblclick="editingProjectId !== pr._id && openProjectDetail(pr)"
+            >
               <div v-if="editingProjectId !== pr._id" class="flex flex-col h-full justify-between gap-3">
                 <div class="flex justify-between items-start">
                   <div>
@@ -145,8 +152,9 @@
                     </div>
                   </div>
                   <div class="flex gap-1">
-                    <button @click="startEditProject(pr)" class="p-2 text-primary-500 hover:bg-primary-50 rounded-lg transition-colors"><i class="fas fa-edit"></i></button>
-                    <button v-if="!pr.isDefault" @click="deleteProject(pr._id)" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"><i class="fas fa-trash"></i></button>
+                    <button @click.stop="openProjectDetail(pr)" title="Ver detalle" class="p-2 text-slate-400 hover:bg-slate-100 rounded-lg transition-colors"><i class="fas fa-up-right-and-down-left-from-center"></i></button>
+                    <button @click.stop="startEditProject(pr)" class="p-2 text-primary-500 hover:bg-primary-50 rounded-lg transition-colors"><i class="fas fa-edit"></i></button>
+                    <button v-if="!pr.isDefault" @click.stop="deleteProject(pr._id)" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"><i class="fas fa-trash"></i></button>
                   </div>
                 </div>
                 <p v-if="pr.description" class="text-slate-600 text-sm p-3 bg-slate-50 rounded-lg border border-slate-100 mt-2">{{ pr.description }}</p>
@@ -441,14 +449,23 @@
       </div>
     </div>
   </div>
+
+  <ProjectDetailModal
+    v-if="selectedProject"
+    :client-id="id"
+    :project="selectedProject"
+    @close="selectedProject = null"
+    @updated="onProjectUpdated"
+  />
 </template>
 
 <script setup lang="ts">
 import { onMounted, reactive, ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { clientService } from '@/services/clientService'
+import { clientService, type ProjectData } from '@/services/clientService'
 import { API_CONFIG } from '@/config/api'
 import { useNotifications } from '@/composables/useNotifications'
+import ProjectDetailModal from '@/components/clients/ProjectDetailModal.vue'
 
 const { showError } = useNotifications()
 
@@ -606,6 +623,15 @@ const editingProjectId = ref<string | null>(null)
 const editProjectName = ref('')
 const editProjectStatus = ref<'active' | 'paused' | 'completed' | 'archived'>('active')
 const editProjectDescription = ref('')
+
+// Detalle de proyecto (doble click en la tarjeta): links, adjuntos y tareas/actividades vinculadas.
+const selectedProject = ref<ProjectData | null>(null)
+const openProjectDetail = (pr: ProjectData) => { selectedProject.value = pr }
+const onProjectUpdated = (updated: ProjectData) => {
+  selectedProject.value = updated
+  const idx = (client.projects || []).findIndex((p: any) => p._id === updated._id)
+  if (idx >= 0) client.projects[idx] = updated
+}
 
 const projectStatusLabel = (st?: string) =>
   st === 'active' ? 'Activo' : st === 'paused' ? 'Pausado' : st === 'completed' ? 'Completado' : 'Archivado'

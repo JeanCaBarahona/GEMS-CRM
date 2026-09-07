@@ -461,13 +461,19 @@ interface Props {
   initialBoardStatus?: string
   boardId?: string
   sprints?: any[]
+  // Preseleccionan cliente/proyecto solo al crear (props.activity === null) —
+  // para abrir el modal ya "anclado" a un proyecto, ej. desde su página de detalle.
+  initialClientId?: string
+  initialProjectId?: string | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
   activity: null,
   clients: () => [],
   teamMembers: () => [],
-  initialBoardStatus: 'backlog'
+  initialBoardStatus: 'backlog',
+  initialClientId: '',
+  initialProjectId: null
 })
 
 const emit = defineEmits<{
@@ -535,8 +541,8 @@ const populateForm = () => {
       // Valores por defecto para nueva tarea
       form.title = ''
       form.description = ''
-      form.clientId = ''
-      form.projectId = null
+      form.clientId = props.initialClientId || ''
+      form.projectId = props.initialProjectId || null
       form.assignedTo = []
       form.priority = 'medium'
       form.status = 'pending'

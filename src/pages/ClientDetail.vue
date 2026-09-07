@@ -449,27 +449,19 @@
       </div>
     </div>
   </div>
-
-  <ProjectDetailModal
-    v-if="selectedProject"
-    :client-id="id"
-    :project="selectedProject"
-    @close="selectedProject = null"
-    @updated="onProjectUpdated"
-  />
 </template>
 
 <script setup lang="ts">
 import { onMounted, reactive, ref, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { clientService, type ProjectData } from '@/services/clientService'
 import { API_CONFIG } from '@/config/api'
 import { useNotifications } from '@/composables/useNotifications'
-import ProjectDetailModal from '@/components/clients/ProjectDetailModal.vue'
 
 const { showError } = useNotifications()
 
 const route = useRoute()
+const router = useRouter()
 const id = route.params.id as string
 const client = reactive<any>({})
 const draft = reactive<any>({ profile: {}, tags: [] })
@@ -624,13 +616,11 @@ const editProjectName = ref('')
 const editProjectStatus = ref<'active' | 'paused' | 'completed' | 'archived'>('active')
 const editProjectDescription = ref('')
 
-// Detalle de proyecto (doble click en la tarjeta): links, adjuntos y tareas/actividades vinculadas.
-const selectedProject = ref<ProjectData | null>(null)
-const openProjectDetail = (pr: ProjectData) => { selectedProject.value = pr }
-const onProjectUpdated = (updated: ProjectData) => {
-  selectedProject.value = updated
-  const idx = (client.projects || []).findIndex((p: any) => p._id === updated._id)
-  if (idx >= 0) client.projects[idx] = updated
+// Detalle de proyecto (doble click en la tarjeta): página propia con
+// documentación, enlaces/adjuntos y tareas/actividades vinculadas.
+const openProjectDetail = (pr: ProjectData) => {
+  if (!pr._id) return
+  router.push(`/clients/${id}/projects/${pr._id}`)
 }
 
 const projectStatusLabel = (st?: string) =>

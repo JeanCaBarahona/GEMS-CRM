@@ -102,9 +102,9 @@
             </div>
 
             <!-- Fila 2: Cliente/Equipo y Detalles -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
               <!-- Columna Izquierda -->
-              <div class="space-y-4">
+              <div class="space-y-4 flex flex-col h-full">
                 <div class="space-y-2">
                   <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Cliente / Proyecto</label>
                   <CustomSelect
@@ -122,6 +122,17 @@
                     :client-id="form.clientId || null"
                     auto-select-default
                   />
+                </div>
+                <!-- Se estira para llenar el alto de la columna derecha (Detalles + Tiempo) -->
+                <!-- y evitar el hueco vacío que quedaba antes debajo de Proyecto. -->
+                <div class="space-y-2 flex-1 flex flex-col min-h-0 max-h-[280px]">
+                  <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Equipo Responsable</label>
+                  <div class="bg-slate-50/50 border border-slate-200 rounded-2xl p-2.5 shadow-inner flex-1 flex flex-col overflow-hidden min-h-0">
+                    <AssignedUsersSelector
+                      v-model="form.assignedTo"
+                      :teamMembers="teamMembers"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -194,18 +205,6 @@
                     />
                   </div>
                 </div>
-              </div>
-            </div>
-
-            <!-- Equipo Responsable: ancho completo, para que el buscador y los filtros de -->
-            <!-- departamento no queden apretados en la mitad de una columna angosta. -->
-            <div class="space-y-2">
-              <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Equipo Responsable</label>
-              <div class="bg-slate-50/50 border border-slate-200 rounded-2xl p-4 shadow-inner h-[280px] flex flex-col overflow-hidden">
-                <AssignedUsersSelector
-                  v-model="form.assignedTo"
-                  :teamMembers="teamMembers"
-                />
               </div>
             </div>
           </div>

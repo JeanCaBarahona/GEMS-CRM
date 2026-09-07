@@ -132,7 +132,11 @@
                         <span class="text-xs text-gray-500">{{ formatDate(comment.createdAt) }}</span>
                       </div>
 
-                      <p v-if="comment.text" class="text-gray-300 text-sm whitespace-pre-wrap ml-9 leading-relaxed">{{ comment.text }}</p>
+                      <p
+                        v-if="comment.text"
+                        class="text-gray-300 text-sm whitespace-pre-wrap break-words ml-9 leading-relaxed"
+                        v-html="renderCommentText(comment.text)"
+                      ></p>
 
                       <!-- Images in comment -->
                       <div v-if="comment.images && comment.images.length > 0" class="mt-2 ml-9 flex flex-wrap gap-2">
@@ -490,6 +494,17 @@ function openImagePreview(url: string) {
 
 function getInitials(name: string): string {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
+}
+
+function renderCommentText(text: string): string {
+  const escaped = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+  return escaped.replace(
+    /(https?:\/\/[^\s<]+)/g,
+    '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-purple-400 underline break-all hover:text-purple-300">$1</a>'
+  )
 }
 
 function formatDate(date: Date | string | undefined): string {

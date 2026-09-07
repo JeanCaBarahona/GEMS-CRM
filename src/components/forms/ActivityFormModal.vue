@@ -1,4 +1,4 @@
-11  |q1|<template>
+<template>
   <div class="fixed -inset-1 bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-4 z-[100] animate-in fade-in duration-300" @click="closeOnOutsideClick">
     <div
       class="bg-white rounded-[2.5rem] shadow-2xl border border-slate-200/60 w-full max-h-[95vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-300"
@@ -123,15 +123,6 @@
                     auto-select-default
                   />
                 </div>
-                <div class="space-y-2">
-                  <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Equipo Responsable</label>
-                  <div class="bg-slate-50/50 border border-slate-200 rounded-2xl p-3 shadow-inner h-[320px] flex flex-col overflow-hidden">
-                    <AssignedUsersSelector
-                      v-model="form.assignedTo"
-                      :teamMembers="teamMembers"
-                    />
-                  </div>
-                </div>
               </div>
 
               <!-- Columna Derecha: Descripción y Tiempo -->
@@ -203,6 +194,18 @@
                     />
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <!-- Equipo Responsable: ancho completo, para que el buscador y los filtros de -->
+            <!-- departamento no queden apretados en la mitad de una columna angosta. -->
+            <div class="space-y-2">
+              <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Equipo Responsable</label>
+              <div class="bg-slate-50/50 border border-slate-200 rounded-2xl p-4 shadow-inner h-[280px] flex flex-col overflow-hidden">
+                <AssignedUsersSelector
+                  v-model="form.assignedTo"
+                  :teamMembers="teamMembers"
+                />
               </div>
             </div>
           </div>
@@ -320,7 +323,7 @@
             <!-- Texto con menciones resaltadas -->
             <p
               v-else-if="comment.text"
-              class="text-[12px] text-slate-600 leading-relaxed ml-8 whitespace-pre-wrap"
+              class="text-[12px] text-slate-600 leading-relaxed ml-8 whitespace-pre-wrap break-words"
               v-html="renderMentions(comment.text)"
             ></p>
 
@@ -749,8 +752,13 @@ function renderMentions(text: string): string {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
+  // Enlaces clicables — antes de menciones para no interferir con el regex de @nombre.
+  const withLinks = escaped.replace(
+    /(https?:\/\/[^\s<]+)/g,
+    '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-primary-600 underline break-all hover:text-primary-700">$1</a>'
+  )
   // Resaltar menciones @nombre (acepta tildes/ñ)
-  return escaped.replace(/@([\p{L}\p{N}_]+)/gu, '<span class="text-primary-500 font-bold bg-primary-50 px-1 rounded">@$1</span>')
+  return withLinks.replace(/@([\p{L}\p{N}_]+)/gu, '<span class="text-primary-500 font-bold bg-primary-50 px-1 rounded">@$1</span>')
 }
 
 // ── Editar / eliminar comentarios ─────────────────────────────────────────────

@@ -35,7 +35,7 @@
     </div>
 
     <!-- Department Filter -->
-    <div v-if="availableDepartments.length > 0" class="flex items-center gap-1.5 overflow-x-auto pb-1.5 shrink-0 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
+    <div v-if="availableDepartments.length > 0" class="flex flex-wrap items-center gap-1.5 shrink-0">
       <button
         type="button"
         @click="selectedDepartment = ''"
@@ -57,13 +57,13 @@
     </div>
 
     <!-- Users List -->
-    <div class="flex-1 overflow-y-auto pr-1 space-y-1 custom-scrollbar min-h-0">
+    <div class="flex-1 overflow-y-auto pr-1 grid grid-cols-1 sm:grid-cols-2 gap-1.5 content-start custom-scrollbar min-h-0">
       <button
         v-for="member in filteredMembers"
         :key="member._id"
         type="button"
         @click="typeof member._id === 'string' && toggleAssigned(member._id)"
-        class="flex items-center w-full px-3 py-2 rounded-xl transition-all border group"
+        class="flex items-center w-full px-3 py-2.5 rounded-xl transition-all border group"
         :class="isUserSelected(member._id!) 
           ? 'bg-primary-50 border-primary-200 text-primary-700 shadow-sm ring-1 ring-primary-200/50' 
           : 'bg-white border-transparent text-slate-600 hover:bg-slate-50 hover:border-slate-200 hover:text-slate-900'"
@@ -86,7 +86,7 @@
         </div>
       </button>
 
-      <div v-if="filteredMembers.length === 0" class="text-center py-6 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+      <div v-if="filteredMembers.length === 0" class="col-span-full text-center py-6 bg-slate-50 rounded-xl border border-dashed border-slate-200">
         <i class="fas fa-user-slash text-slate-300 mb-2"></i>
         <p class="text-xs text-slate-500 font-medium">No se encontraron miembros</p>
       </div>

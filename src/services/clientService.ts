@@ -68,7 +68,9 @@ class ClientService {
         const body = await response.json()
         detail = body?.message || ''
       } catch { /* respuesta sin cuerpo JSON */ }
-      throw new Error(detail || `${errorMsg} (HTTP ${response.status})`)
+      const error = new Error(detail || `${errorMsg} (HTTP ${response.status})`) as Error & { status?: number }
+      error.status = response.status
+      throw error
     }
     if (response.status === 204) return undefined as T
     return await response.json()
@@ -98,6 +100,13 @@ class ClientService {
 
   async deleteClient(id: string): Promise<void> {
     await this.request<void>(`/${id}`, { method: 'DELETE' }, 'No se pudo eliminar el cliente')
+  }
+
+  // Alternativa a borrar: conserva la trazabilidad histórica del cliente.
+  async setStatus(id: string, status: 'active' | 'inactive'): Promise<ClientData> {
+    return this.request<ClientData>(
+      `/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }, 'No se pudo actualizar el estado del cliente'
+    )
   }
 
   async search(query: string): Promise<ClientData[]> {

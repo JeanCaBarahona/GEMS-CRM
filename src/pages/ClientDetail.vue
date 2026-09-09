@@ -83,16 +83,31 @@
             
             <div class="bg-slate-50 border border-slate-200 p-5 rounded-xl space-y-4 shadow-sm">
               <div>
-                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2"><i class="fas fa-envelope mr-1 text-slate-400"></i> Correo Electrónico</label>
-                <input v-model="draft.email" :readonly="!editOverview" class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all font-medium" :class="!editOverview ? 'opacity-80' : 'shadow-sm'"/>
-              </div>
-              <div>
-                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2"><i class="fas fa-phone mr-1 text-slate-400"></i> Teléfono</label>
-                <input v-model="draft.phone" :readonly="!editOverview" class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all font-medium" :class="!editOverview ? 'opacity-80' : 'shadow-sm'"/>
-              </div>
-              <div>
-                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2"><i class="fas fa-building mr-1 text-slate-400"></i> Nombre Comercial</label>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2"><i class="fas fa-building mr-1 text-slate-400"></i> Empresa / Organización</label>
                 <input v-model="draft.company" :readonly="!editOverview" class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all font-medium" :class="!editOverview ? 'opacity-80' : 'shadow-sm'"/>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2"><i class="fas fa-id-card mr-1 text-slate-400"></i> NIT</label>
+                <input v-model="draft.nit" :readonly="!editOverview" class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all font-medium" :class="!editOverview ? 'opacity-80' : 'shadow-sm'"/>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2"><i class="fas fa-user mr-1 text-slate-400"></i> Nombre de Contacto</label>
+                <input v-model="draft.name" :readonly="!editOverview" class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all font-medium" :class="!editOverview ? 'opacity-80' : 'shadow-sm'"/>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2"><i class="fas fa-envelope mr-1 text-slate-400"></i> Correo Electrónico</label>
+                <input
+                  v-model="draft.email"
+                  :readonly="!editOverview"
+                  class="w-full bg-white border rounded-lg px-4 py-2.5 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all font-medium"
+                  :class="[!editOverview ? 'opacity-80' : 'shadow-sm', emailError ? 'border-red-300' : 'border-slate-200']"
+                  @blur="validateEmail"
+                />
+                <p v-if="emailError" class="text-red-500 text-[11px] font-bold mt-1">{{ emailError }}</p>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2"><i class="fas fa-phone mr-1 text-slate-400"></i> WhatsApp</label>
+                <input v-model="draft.phone" :readonly="!editOverview" class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all font-medium" :class="!editOverview ? 'opacity-80' : 'shadow-sm'"/>
               </div>
             </div>
           </div>
@@ -512,9 +527,21 @@ const fetchDetail = async () => {
   }
 }
 
+const emailError = ref('')
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const validateEmail = () => {
+  emailError.value = draft.email && !EMAIL_RE.test(draft.email)
+    ? 'Ingresa un correo electrónico con un formato válido'
+    : ''
+  return !emailError.value
+}
+
 const saveOverview = async () => {
+  if (!validateEmail()) return
   try {
     const payload = {
+      name: draft.name,
+      nit: draft.nit,
       email: draft.email,
       phone: draft.phone,
       company: draft.company,
@@ -540,14 +567,17 @@ const saveOverview = async () => {
       })
     }
 
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    if (!res.ok) {
+      const body = await parseJsonSafe(res).catch(() => null)
+      throw new Error(body?.message || `HTTP ${res.status}`)
+    }
     const data = await parseJsonSafe(res)
     Object.assign(client, data)
     Object.assign(draft, JSON.parse(JSON.stringify(data)))
     editOverview.value = false
-  } catch (err) {
+  } catch (err: any) {
     console.error('Error guardando cambios:', err)
-    showError('No se pudieron guardar los cambios.')
+    showError(err.message || 'No se pudieron guardar los cambios.')
   }
 }
 

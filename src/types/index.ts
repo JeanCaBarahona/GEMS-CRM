@@ -5,6 +5,8 @@ export interface Client {
   email: string
   phone: string
   company: string
+  nit?: string
+  status?: 'active' | 'inactive' | 'prospect'
   tags?: string[]
   profile?: {
     about?: string
@@ -219,6 +221,7 @@ export interface ClientForm {
   email: string
   phone: string
   company: string
+  nit?: string
 }
 
 export interface ActivityForm {

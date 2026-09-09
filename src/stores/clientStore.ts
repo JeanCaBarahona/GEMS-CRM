@@ -75,7 +75,27 @@ export const useClientStore = defineStore('client', () => {
         clients.value.splice(index, 1)
       }
     } catch (err: any) {
-      error.value = err.message || 'Error al eliminar cliente'
+      // 409 = bloqueo esperado (tiene historial asociado) — el caller lo muestra
+      // en su propio modal; no lo tratamos como un error de conexión genérico.
+      if (err.status !== 409) {
+        error.value = err.message || 'Error al eliminar cliente'
+      }
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const setClientStatus = async (id: string, status: 'active' | 'inactive') => {
+    loading.value = true
+    error.value = null
+    try {
+      const updated = await clientService.setStatus(id, status)
+      const index = clients.value.findIndex(c => c._id === id)
+      if (index !== -1) clients.value[index] = updated
+      return updated
+    } catch (err: any) {
+      error.value = err.message || 'Error al actualizar el estado del cliente'
       throw err
     } finally {
       loading.value = false
@@ -116,6 +136,7 @@ export const useClientStore = defineStore('client', () => {
     createClient,
     updateClient,
     deleteClient,
+    setClientStatus,
     searchClients,
 
     // Getters

@@ -9,7 +9,7 @@
       
       <PermissionGuard :permissions="['create-clients']" :fallback="false">
         <button 
-          @click="showModal = true; editingClient = null; resetForm()" 
+          @click="showModal = true; resetForm()"
           class="btn-primary"
         >
           <PlusIcon class="w-5 h-5" />
@@ -89,15 +89,18 @@
                   class="hover:bg-slate-50/80 transition-all group"
                 >
                   <td class="px-8 py-6 whitespace-nowrap">
-                    <div class="flex items-center gap-4">
+                    <router-link :to="`/clients/${client._id}`" class="flex items-center gap-4 w-fit">
                       <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-50 to-primary-100/50 flex items-center justify-center text-primary-600 font-black text-sm shadow-sm ring-1 ring-primary-100">
                         {{ client.name.charAt(0).toUpperCase() }}
                       </div>
                       <div>
-                        <div class="text-slate-900 font-bold text-sm leading-tight group-hover:text-primary-600 transition-colors">{{ client.name }}</div>
+                        <div class="flex items-center gap-2">
+                          <span class="text-slate-900 font-bold text-sm leading-tight group-hover:text-primary-600 group-hover:underline transition-colors">{{ client.name }}</span>
+                          <span v-if="client.status === 'inactive'" class="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-500">Inactivo</span>
+                        </div>
                         <div class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-0.5">Persona Física</div>
                       </div>
-                    </div>
+                    </router-link>
                   </td>
                   <td class="px-8 py-6 whitespace-nowrap">
                     <div class="flex items-center gap-2">
@@ -125,16 +128,11 @@
                   </td>
                   <td class="px-8 py-6 whitespace-nowrap text-right">
                     <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                      <router-link :to="`/clients/${client._id}`" class="p-2 text-slate-400 hover:text-primary-500 hover:bg-primary-50 rounded-xl transition-all" title="Ver Perfil">
+                      <router-link :to="`/clients/${client._id}`" class="p-2 text-slate-400 hover:text-primary-500 hover:bg-primary-50 rounded-xl transition-all" title="Ver expediente y editar datos del cliente">
                         <i class="fas fa-arrow-right text-sm"></i>
                       </router-link>
-                      <PermissionGuard :permissions="['edit-clients']" :fallback="false">
-                        <button @click="editClient(client)" class="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-all" title="Editar">
-                          <PencilIcon class="w-4 h-4" />
-                        </button>
-                      </PermissionGuard>
                       <PermissionGuard :permissions="['delete-clients']" :fallback="false">
-                        <button @click="confirmDelete(client)" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all" title="Eliminar">
+                        <button @click="confirmDelete(client)" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all" title="Eliminar o inactivar este cliente">
                           <TrashIcon class="w-4 h-4" />
                         </button>
                       </PermissionGuard>
@@ -153,20 +151,18 @@
               class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-all active:scale-[0.98]"
             >
               <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-50">
-                <div class="flex items-center gap-3">
+                <router-link :to="`/clients/${client._id}`" class="flex items-center gap-3">
                   <div class="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center text-primary-600 font-black text-sm">
                     {{ client.name.charAt(0).toUpperCase() }}
                   </div>
                   <div>
-                    <h3 class="text-slate-900 font-bold text-sm">{{ client.name }}</h3>
+                    <div class="flex items-center gap-2">
+                      <h3 class="text-slate-900 font-bold text-sm">{{ client.name }}</h3>
+                      <span v-if="client.status === 'inactive'" class="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-500">Inactivo</span>
+                    </div>
                     <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">{{ client.company }}</p>
                   </div>
-                </div>
-                <div class="flex gap-2">
-                  <PermissionGuard :permissions="['edit-clients']" :fallback="false">
-                    <button @click="editClient(client)" class="w-8 h-8 flex items-center justify-center text-slate-400 bg-slate-50 rounded-lg"><PencilIcon class="w-4 h-4" /></button>
-                  </PermissionGuard>
-                </div>
+                </router-link>
               </div>
               
               <div class="space-y-2 mb-4">
@@ -195,7 +191,7 @@
             <p class="text-slate-400 text-sm font-medium max-w-xs mx-auto mb-8">
               {{ searchTerm ? 'No encontramos ningún cliente que coincida con tu búsqueda. Intenta con otros términos.' : 'Aún no tienes clientes registrados en la plataforma. Comienza a construir tu base de contactos.' }}
             </p>
-            <button v-if="!searchTerm" @click="showModal = true; editingClient = null; resetForm()" class="btn-primary">
+            <button v-if="!searchTerm" @click="showModal = true; resetForm()" class="btn-primary">
               <PlusIcon class="w-5 h-5" />
               Añadir Primer Cliente
             </button>
@@ -236,53 +232,62 @@
        </button>
     </div>
     
-    <!-- Create/Edit Modal -->
+    <!-- Create Modal — la edición se centraliza en el expediente del cliente (/clients/:id) -->
     <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showModal = false"></div>
       <div class="relative bg-white rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in border border-slate-100">
         <div class="flex items-center justify-between p-8 border-b border-slate-50">
           <div>
-            <h3 class="text-xl font-black text-slate-900 leading-tight">
-              {{ editingClient ? 'Editar Expediente' : 'Nuevo Cliente' }}
-            </h3>
+            <h3 class="text-xl font-black text-slate-900 leading-tight">Nuevo Cliente</h3>
             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Completa los datos de contacto</p>
           </div>
           <button @click="showModal = false" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all">
             <i class="fas fa-times"></i>
           </button>
         </div>
-        
+
         <form @submit.prevent="saveClient" class="p-8">
           <div class="space-y-6">
             <div class="space-y-2">
-              <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Nombre Completo</label>
+              <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Empresa / Organización</label>
+              <input v-model="form.company" type="text" required placeholder="Nombre de la empresa" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 outline-none focus:bg-white focus:ring-2 focus:ring-primary-500/10 focus:border-primary-500 transition-all" />
+            </div>
+
+            <div class="space-y-2">
+              <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">NIT</label>
+              <input v-model="form.nit" type="text" placeholder="Ej: 900123456-7" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 outline-none focus:bg-white focus:ring-2 focus:ring-primary-500/10 focus:border-primary-500 transition-all" />
+            </div>
+
+            <div class="space-y-2">
+              <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Nombre de Contacto</label>
               <input v-model="form.name" type="text" required placeholder="Ej: Juan Pérez" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 outline-none focus:bg-white focus:ring-2 focus:ring-primary-500/10 focus:border-primary-500 transition-all" />
             </div>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div class="space-y-2">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Correo Electrónico</label>
-                <input v-model="form.email" type="email" required placeholder="correo@ejemplo.com" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 outline-none focus:bg-white focus:ring-2 focus:ring-primary-500/10 transition-all" />
-              </div>
-              
-              <div class="space-y-2">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">WhatsApp / Tel</label>
-                <input v-model="form.phone" type="tel" required placeholder="+57 ..." class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 outline-none focus:bg-white focus:ring-2 focus:ring-primary-500/10 transition-all" />
-              </div>
-            </div>
-            
+
             <div class="space-y-2">
-              <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Empresa / Organización</label>
-              <input v-model="form.company" type="text" required placeholder="Nombre de la empresa" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 outline-none focus:bg-white focus:ring-2 focus:ring-primary-500/10 transition-all" />
+              <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Correo Electrónico</label>
+              <input
+                v-model="form.email"
+                type="email"
+                required
+                placeholder="correo@ejemplo.com"
+                class="w-full bg-slate-50 border rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 outline-none focus:bg-white focus:ring-2 focus:ring-primary-500/10 transition-all"
+                :class="emailError ? 'border-red-300' : 'border-slate-100'"
+              />
+              <p v-if="emailError" class="text-red-500 text-[11px] font-bold pl-1">{{ emailError }}</p>
+            </div>
+
+            <div class="space-y-2">
+              <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">WhatsApp</label>
+              <input v-model="form.phone" type="tel" required placeholder="+57 ..." class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 outline-none focus:bg-white focus:ring-2 focus:ring-primary-500/10 transition-all" />
             </div>
           </div>
-          
+
           <div class="flex items-center gap-4 mt-10 pt-8 border-t border-slate-50">
             <button type="button" @click="showModal = false" class="btn-secondary flex-1">Cancelar</button>
             <button type="submit" :disabled="loading" class="btn-primary flex-1">
               <i v-if="!loading" class="fas fa-check mr-2"></i>
               <div v-else class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              {{ editingClient ? 'Actualizar' : 'Guardar Cliente' }}
+              Guardar Cliente
             </button>
           </div>
         </form>
@@ -296,19 +301,34 @@
         <div class="w-20 h-20 bg-red-50 text-red-500 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
           <TrashIcon class="w-10 h-10" />
         </div>
-        <h3 class="text-xl font-black text-slate-900 mb-2">¿Eliminar Cliente?</h3>
-        <p class="text-slate-400 text-sm font-medium mb-8 leading-relaxed">
-          Esta acción eliminará permanentemente a <span class="text-slate-900 font-bold">{{ clientToDelete?.name }}</span>. ¿Estás seguro de continuar?
-        </p>
-        
-        <div class="flex flex-col gap-3">
-          <button @click="deleteClient" :disabled="loading" class="btn-danger w-full">
-            <i v-if="!loading" class="fas fa-trash-alt mr-2"></i>
-            <div v-else class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 mx-auto"></div>
-            {{ loading ? 'Eliminando...' : 'Sí, Eliminar' }}
-          </button>
-          <button @click="showDeleteModal = false" class="btn-ghost w-full">Cancelar</button>
-        </div>
+        <template v-if="!deleteBlockedMessage">
+          <h3 class="text-xl font-black text-slate-900 mb-2">¿Eliminar Cliente?</h3>
+          <p class="text-slate-400 text-sm font-medium mb-8 leading-relaxed">
+            Esta acción eliminará permanentemente a <span class="text-slate-900 font-bold">{{ clientToDelete?.name }}</span>. ¿Estás seguro de continuar?
+          </p>
+          <div class="flex flex-col gap-3">
+            <button @click="deleteClient" :disabled="loading" class="btn-danger w-full">
+              <i v-if="!loading" class="fas fa-trash-alt mr-2"></i>
+              <div v-else class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 mx-auto"></div>
+              {{ loading ? 'Eliminando...' : 'Sí, Eliminar' }}
+            </button>
+            <button @click="showDeleteModal = false" class="btn-ghost w-full">Cancelar</button>
+          </div>
+        </template>
+
+        <!-- El cliente tiene historial asociado: no se puede borrar, se ofrece inactivar -->
+        <template v-else>
+          <h3 class="text-xl font-black text-slate-900 mb-2">No se puede eliminar</h3>
+          <p class="text-slate-400 text-sm font-medium mb-8 leading-relaxed">{{ deleteBlockedMessage }}</p>
+          <div class="flex flex-col gap-3">
+            <button @click="deactivateClient" :disabled="loading" class="btn-primary w-full">
+              <i v-if="!loading" class="fas fa-user-slash mr-2"></i>
+              <div v-else class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 mx-auto"></div>
+              {{ loading ? 'Inactivando...' : 'Inactivar cliente' }}
+            </button>
+            <button @click="showDeleteModal = false" class="btn-ghost w-full">Cancelar</button>
+          </div>
+        </template>
       </div>
     </div>
   </div>
@@ -321,7 +341,6 @@ import type { Client, ClientForm } from '../types'
 import {
   PlusIcon,
   MagnifyingGlassIcon,
-  PencilIcon,
   TrashIcon,
   UserGroupIcon,
   ExclamationTriangleIcon
@@ -332,8 +351,9 @@ const showModal = ref(false)
 const showDeleteModal = ref(false)
 const searchTerm = ref('')
 const sortBy = ref('name')
-const editingClient = ref<Client | null>(null)
 const clientToDelete = ref<Client | null>(null)
+const deleteBlockedMessage = ref('')
+const emailError = ref('')
 
 // Pagination
 const currentPage = ref(1)
@@ -345,7 +365,8 @@ const form = ref<ClientForm>({
   name: '',
   email: '',
   phone: '',
-  company: ''
+  company: '',
+  nit: ''
 })
 
 const clients = computed(() => clientsStore.clients)
@@ -396,36 +417,34 @@ const resetForm = () => {
     name: '',
     email: '',
     phone: '',
-    company: ''
+    company: '',
+    nit: ''
   }
-}
-
-const editClient = (client: Client) => {
-  editingClient.value = client
-  form.value = {
-    name: client.name,
-    email: client.email,
-    phone: client.phone,
-    company: client.company
-  }
-  showModal.value = true
+  emailError.value = ''
 }
 
 const confirmDelete = (client: Client) => {
   clientToDelete.value = client
+  deleteBlockedMessage.value = ''
   showDeleteModal.value = true
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const validateEmail = () => {
+  emailError.value = form.value.email && !EMAIL_RE.test(form.value.email)
+    ? 'Ingresa un correo electrónico con un formato válido'
+    : ''
+  return !emailError.value
+}
+
+// La edición se hace desde el expediente del cliente (/clients/:id) — este
+// modal solo crea, para no tener dos puntos distintos de edición.
 const saveClient = async () => {
+  if (!validateEmail()) return
   try {
-    if (editingClient.value) {
-      await clientsStore.updateClient(editingClient.value._id!, form.value)
-    } else {
-      await clientsStore.createClient(form.value)
-    }
+    await clientsStore.createClient(form.value)
     showModal.value = false
     resetForm()
-    editingClient.value = null
   } catch (error) {
     console.error('Error saving client:', error)
   }
@@ -433,13 +452,29 @@ const saveClient = async () => {
 
 const deleteClient = async () => {
   if (!clientToDelete.value?._id) return
-  
+
   try {
     await clientsStore.deleteClient(clientToDelete.value._id)
     showDeleteModal.value = false
     clientToDelete.value = null
-  } catch (error) {
-    console.error('Error deleting client:', error)
+  } catch (err: any) {
+    if (err.status === 409) {
+      deleteBlockedMessage.value = err.message
+    } else {
+      console.error('Error deleting client:', err)
+    }
+  }
+}
+
+const deactivateClient = async () => {
+  if (!clientToDelete.value?._id) return
+  try {
+    await clientsStore.setClientStatus(clientToDelete.value._id, 'inactive')
+    showDeleteModal.value = false
+    clientToDelete.value = null
+    deleteBlockedMessage.value = ''
+  } catch (err) {
+    console.error('Error deactivating client:', err)
   }
 }
 

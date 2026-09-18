@@ -1,22 +1,32 @@
 <template>
   <div class="fixed -inset-1 bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-4 z-[100] animate-in fade-in duration-300" @click="closeOnOutsideClick">
     <div
-      class="bg-white rounded-[2.5rem] shadow-2xl border border-slate-200/60 w-full max-h-[95vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-300"
+      class="bg-white rounded-3xl shadow-2xl border border-slate-200/60 w-full max-h-[95vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-300"
       :class="isEditingTask ? 'max-w-6xl' : 'max-w-3xl'"
       @click.stop
     >
-      <!-- Header -->
-      <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-slate-50/30">
-        <div class="flex items-center gap-4">
-          <div class="w-12 h-12 bg-primary-50 rounded-[1rem] flex items-center justify-center border border-primary-100 shadow-sm transition-transform hover:rotate-3">
-            <i :class="isEditing ? 'fas fa-pen-nib text-primary-500' : 'fas fa-rocket text-primary-500'" class="text-xl"></i>
+      <!-- Header compacto: al editar muestra autor y responsables -->
+      <div class="flex items-center justify-between gap-4 px-5 py-3 border-b border-slate-100 bg-slate-50/30 shrink-0">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-9 h-9 bg-primary-50 rounded-xl flex items-center justify-center border border-primary-100 shrink-0">
+            <i :class="isEditing ? 'fas fa-pen-nib text-primary-500' : 'fas fa-rocket text-primary-500'" class="text-sm"></i>
           </div>
-          <div>
-            <h2 class="text-2xl font-black text-slate-800 tracking-tight">
+          <div class="min-w-0">
+            <h2 class="text-lg font-black text-slate-800 tracking-tight leading-tight">
               {{ isEditing ? 'Refinar Tarea' : 'Lanzar Nueva Tarea' }}
             </h2>
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1 flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-primary-400 animate-pulse"></span>
+            <div v-if="isEditing" class="flex flex-wrap items-center gap-x-4 gap-y-0.5 mt-0.5 text-[11px] text-slate-400">
+              <span class="flex items-center gap-1.5">
+                <i class="fas fa-user-pen text-[10px]"></i>
+                Creada por <b class="font-bold text-slate-600">{{ creatorName }}</b>
+                <template v-if="createdAtLabel">· {{ createdAtLabel }}</template>
+              </span>
+              <span class="flex items-center gap-1.5" :title="ownerNames.join(', ')">
+                <i class="fas fa-user-check text-[10px]"></i>
+                Responsable: <b class="font-bold text-slate-600">{{ ownersLabel }}</b>
+              </span>
+            </div>
+            <p v-else class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-0.5">
               Gestión de Productividad Customer Touch
             </p>
           </div>
@@ -24,17 +34,17 @@
         <button
           type="button"
           @click="$emit('close')"
-          class="w-12 h-12 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-2xl transition-all border border-transparent hover:border-rose-100"
+          class="w-9 h-9 shrink-0 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all border border-transparent hover:border-rose-100"
         >
-          <i class="fas fa-times text-xl"></i>
+          <i class="fas fa-times text-lg"></i>
         </button>
       </div>
 
-      <div class="flex flex-1 overflow-hidden">
-      <!-- ── Formulario ── -->
-      <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
-        <form @submit.prevent="handleSubmit" class="flex flex-col h-full">
-          <div class="space-y-6 flex-1">
+      <div class="flex flex-1 min-h-0 overflow-hidden">
+      <!-- ── Formulario: cuerpo con scroll y acciones fijas abajo ── -->
+      <form @submit.prevent="handleSubmit" class="flex-1 min-w-0 flex flex-col min-h-0">
+        <div class="flex-1 overflow-y-auto px-5 py-4 custom-scrollbar">
+          <div class="space-y-4">
             
             <!-- Título -->
             <div class="space-y-2">
@@ -46,7 +56,7 @@
                 v-model="form.title"
                 type="text"
                 required
-                class="w-full px-5 py-3.5 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all text-sm font-bold shadow-sm placeholder-slate-300"
+                class="w-full px-5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all text-sm font-bold shadow-sm placeholder-slate-300"
                 placeholder="Ej: Implementar pasarela de pagos..."
               />
             </div>
@@ -84,7 +94,7 @@
                   <input
                     v-model="form.date"
                     type="datetime-local"
-                    class="w-full pl-10 pr-4 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all text-xs font-bold shadow-sm"
+                    class="w-full pl-10 pr-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all text-xs font-bold shadow-sm"
                   />
                 </div>
               </div>
@@ -95,14 +105,14 @@
                   <input
                     v-model="form.dueDate"
                     type="datetime-local"
-                    class="w-full pl-10 pr-4 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all text-xs font-bold shadow-sm"
+                    class="w-full pl-10 pr-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all text-xs font-bold shadow-sm"
                   />
                 </div>
               </div>
             </div>
 
             <!-- Fila 2: Cliente/Equipo y Detalles -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
               <!-- Columna Izquierda -->
               <div class="space-y-4 flex flex-col h-full">
                 <div class="space-y-2">
@@ -145,7 +155,7 @@
                   </div>
                   <textarea
                     v-model="form.description"
-                    rows="5"
+                    rows="4"
                     class="w-full px-5 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 placeholder-slate-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all resize-none text-sm font-medium leading-relaxed shadow-sm custom-scrollbar"
                     placeholder="Describe los pasos, criterios de aceptación o contexto..."
                   ></textarea>
@@ -208,31 +218,28 @@
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Footer Actions -->
-          <div class="flex items-center justify-end pt-6 border-t border-slate-100 mt-6">
-            
-            <div class="flex items-center gap-4">
-              <button
-                type="button"
-                @click="$emit('close')"
-                class="px-8 py-4 bg-white text-slate-500 hover:text-slate-800 border border-slate-200 rounded-2xl transition-all font-black text-[11px] uppercase tracking-widest hover:bg-slate-50 active:scale-95 shadow-sm"
-              >
-                Descartar
-              </button>
-              <button
-                type="submit"
-                :disabled="loading"
-                class="px-12 py-5 bg-primary-500 text-white rounded-[1.5rem] hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-black text-xs uppercase tracking-[0.15em] shadow-xl shadow-primary-200 flex items-center justify-center gap-4 active:scale-95 group"
-              >
-                <div v-if="loading" class="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                <i v-else :class="isEditing ? 'fas fa-save' : 'fas fa-paper-plane'" class="group-hover:translate-x-1 transition-transform"></i>
-                {{ loading ? 'Sincronizando...' : (isEditing ? 'Guardar Cambios' : 'Lanzar Tarea') }}
-              </button>
-            </div>
-          </div>
-        </form>
-      </div>
+        <!-- Acciones fijas: Guardar siempre visible sin hacer scroll -->
+        <div class="shrink-0 flex items-center justify-end gap-3 px-5 py-3 border-t border-slate-100 bg-white">
+          <button
+            type="button"
+            @click="$emit('close')"
+            class="px-5 py-2.5 bg-white text-slate-500 hover:text-slate-800 border border-slate-200 rounded-xl transition-all font-black text-[11px] uppercase tracking-widest hover:bg-slate-50 active:scale-95"
+          >
+            Descartar
+          </button>
+          <button
+            type="submit"
+            :disabled="loading"
+            class="px-6 py-2.5 bg-primary-500 text-white rounded-xl hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-black text-[11px] uppercase tracking-[0.15em] shadow-lg shadow-primary-200 flex items-center justify-center gap-2 active:scale-95 group"
+          >
+            <div v-if="loading" class="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+            <i v-else :class="isEditing ? 'fas fa-save' : 'fas fa-paper-plane'" class="group-hover:translate-x-0.5 transition-transform"></i>
+            {{ loading ? 'Sincronizando...' : (isEditing ? 'Guardar Cambios' : 'Lanzar Tarea') }}
+          </button>
+        </div>
+      </form>
       <!-- ── Fin formulario ── -->
 
       <!-- ── Columna de Comentarios (solo al editar una tarea) ── -->
@@ -255,9 +262,7 @@
             v-if="localComments.length > 0"
             class="px-2 py-0.5 bg-primary-100 text-primary-600 text-[10px] font-black rounded-full"
           >{{ localComments.length }}</span>
-          <!-- El historial solo existe en tareas de tablero, no en actividades -->
           <button
-            v-if="isBoardTask"
             type="button"
             @click="sideTab = 'history'"
             class="ml-auto text-[11px] font-black uppercase tracking-widest transition-colors"
@@ -267,7 +272,7 @@
 
         <!-- Historial de la tarea (scrollable) -->
         <div v-if="showHistory" class="flex-1 overflow-y-auto px-4 py-3 custom-scrollbar">
-          <TaskHistory :task="localTask" variant="light" />
+          <TaskHistory :task="localTask" variant="light" :show-creator="false" />
         </div>
 
         <!-- Lista de comentarios (scrollable) -->
@@ -677,7 +682,44 @@ const isEditingTask = computed(() => isEditing.value && !!commentEntityId.value)
 const localTask = ref<any>(props.activity)
 const loadingComments = ref(false)
 const sideTab = ref<'comments' | 'history'>('comments')
-const showHistory = computed(() => sideTab.value === 'history' && isBoardTask.value)
+const showHistory = computed(() => sideTab.value === 'history')
+
+// ── Autor y responsables (header) ────────────────────────────────────────────
+// Registros antiguos pueden no tener autor
+const creatorName = computed(() => localTask.value?.createdBy?.name || 'Desconocido')
+
+const createdAtLabel = computed(() => {
+  const date = localTask.value?.createdAt
+  if (!date) return ''
+  try {
+    return format(new Date(date), 'd MMM yyyy', { locale: es })
+  } catch {
+    return ''
+  }
+})
+
+// Refleja la selección actual del formulario; los nombres salen del equipo
+// o, si no está cargado, de los usuarios poblados en la tarea.
+const ownerNames = computed<string[]>(() => {
+  const names = new Map<string, string>()
+  const saved = localTask.value?.assignedTo
+  for (const user of Array.isArray(saved) ? saved : saved ? [saved] : []) {
+    if (user && typeof user === 'object' && user._id && user.name) names.set(String(user._id), user.name)
+  }
+  for (const member of (props.teamMembers || []) as any[]) {
+    const id = member?._id || member?.id
+    if (id && member.name) names.set(String(id), member.name)
+  }
+  return form.assignedTo
+    .map(id => names.get(String(id)))
+    .filter((name): name is string => !!name)
+})
+
+const ownersLabel = computed(() => {
+  const names = ownerNames.value
+  if (names.length === 0) return 'Sin asignar'
+  return names.length <= 2 ? names.join(', ') : `${names.slice(0, 2).join(', ')} +${names.length - 2}`
+})
 
 const localComments = computed(() => localTask.value?.comments || [])
 

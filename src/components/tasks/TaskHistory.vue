@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- Autor de la tarea (distinto de la persona asignada) -->
-    <div :class="['flex items-start gap-2 rounded-lg px-3 py-2 mb-4 text-xs', theme.summary]">
+    <div v-if="showCreator" :class="['flex items-start gap-2 rounded-lg px-3 py-2 mb-4 text-xs', theme.summary]">
       <UserIcon :class="['w-4 h-4 shrink-0 mt-px', theme.icon]" />
       <div class="min-w-0">
         <p class="break-words">
@@ -71,8 +71,11 @@ const props = withDefaults(defineProps<{
     createdAt?: Date | string
   } | null
   variant?: 'dark' | 'light'
+  // Ocultar el resumen "Creada por" cuando el contenedor ya lo muestra
+  showCreator?: boolean
 }>(), {
-  variant: 'light'
+  variant: 'light',
+  showCreator: true
 })
 
 interface TimelineItem {
@@ -130,6 +133,8 @@ const FIELD_LABELS: Record<string, string> = {
   sprint: 'el sprint',
   dueDate: 'la fecha límite',
   startDate: 'la fecha de inicio',
+  date: 'la fecha de inicio',
+  estimatedTime: 'el tiempo estimado',
   estimatedHours: 'las horas estimadas',
   actualHours: 'las horas reales',
   completionPercentage: 'el avance',
@@ -151,8 +156,8 @@ const FIELD_LABELS: Record<string, string> = {
 
 // Campos cuyo valor anterior/nuevo es legible; el resto guarda ids y solo se indica que cambió.
 const VALUE_FIELDS = new Set([
-  'title', 'type', 'status', 'boardStatus', 'priority', 'dueDate', 'startDate',
-  'estimatedHours', 'actualHours', 'completionPercentage', 'tags'
+  'title', 'type', 'status', 'boardStatus', 'priority', 'dueDate', 'startDate', 'date',
+  'estimatedTime', 'estimatedHours', 'actualHours', 'completionPercentage', 'tags'
 ])
 
 const ENUM_LABELS: Record<string, Record<string, string>> = {
@@ -160,25 +165,29 @@ const ENUM_LABELS: Record<string, Record<string, string>> = {
     backlog: 'Backlog', todo: 'Por Hacer', 'in-progress': 'En Progreso',
     review: 'Revisión', testing: 'Testing', done: 'Hecho'
   },
+  // Estados de tareas de tablero y de actividades
   status: {
-    new: 'Nueva', active: 'Activa', resolved: 'Resuelta', closed: 'Cerrada', removed: 'Eliminada'
+    new: 'Nueva', active: 'Activa', resolved: 'Resuelta', closed: 'Cerrada', removed: 'Eliminada',
+    pending: 'Pendiente', 'in-progress': 'En progreso', completed: 'Completada',
+    cancelled: 'Cancelada', overdue: 'Vencida'
   },
-  priority: { low: 'Baja', medium: 'Media', high: 'Alta', critical: 'Crítica' },
+  priority: { low: 'Baja', medium: 'Media', high: 'Alta', critical: 'Crítica', urgent: 'Urgente' },
   type: {
     epic: 'Épica', feature: 'Feature', 'user-story': 'Historia',
     task: 'Tarea', bug: 'Bug', subtask: 'Subtarea'
   }
 }
 
-const DATE_FIELDS = new Set(['dueDate', 'startDate'])
+const DATE_FIELDS = new Set(['dueDate', 'startDate', 'date'])
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/
 
-function userName(user: unknown): string {
+function userName(user: unknown, fallback = 'Usuario'): string {
   if (user && typeof user === 'object' && (user as UserRef).name) return (user as UserRef).name as string
-  return 'Usuario'
+  return fallback
 }
 
-const creatorName = computed(() => userName(props.task?.createdBy))
+// Registros antiguos pueden no tener autor
+const creatorName = computed(() => userName(props.task?.createdBy, 'Desconocido'))
 
 // Forma comparable de un valor, para descartar entradas antiguas que registraban
 // "cambios" entre valores equivalentes (ObjectId vs string, [id] vs id, fechas).

@@ -252,6 +252,14 @@ function closeTaskDetail() {
   selectedTask.value = null
 }
 
+// El store reemplaza currentTask tras comentar o adjuntar; reflejarlo en el detalle
+// abierto para que aparezcan el comentario y su entrada en el historial.
+watch(() => tasksStore.currentTask, (task) => {
+  if (task && selectedTask.value?._id === task._id) {
+    selectedTask.value = task
+  }
+})
+
 onMounted(async () => {
   const boardId = route.params.id as string
   await boardsStore.fetchBoardById(boardId)

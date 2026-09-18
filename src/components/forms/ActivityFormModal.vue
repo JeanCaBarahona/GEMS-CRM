@@ -245,15 +245,33 @@
           <div class="w-7 h-7 rounded-xl bg-primary-50 flex items-center justify-center border border-primary-100">
             <i class="fas fa-comments text-primary-400 text-xs"></i>
           </div>
-          <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest">Comentarios</span>
+          <button
+            type="button"
+            @click="sideTab = 'comments'"
+            class="text-[11px] font-black uppercase tracking-widest transition-colors"
+            :class="sideTab === 'comments' ? 'text-primary-500' : 'text-slate-400 hover:text-slate-600'"
+          >Comentarios</button>
           <span
             v-if="localComments.length > 0"
-            class="ml-auto px-2 py-0.5 bg-primary-100 text-primary-600 text-[10px] font-black rounded-full"
+            class="px-2 py-0.5 bg-primary-100 text-primary-600 text-[10px] font-black rounded-full"
           >{{ localComments.length }}</span>
+          <!-- El historial solo existe en tareas de tablero, no en actividades -->
+          <button
+            v-if="isBoardTask"
+            type="button"
+            @click="sideTab = 'history'"
+            class="ml-auto text-[11px] font-black uppercase tracking-widest transition-colors"
+            :class="sideTab === 'history' ? 'text-primary-500' : 'text-slate-400 hover:text-slate-600'"
+          >Historial</button>
+        </div>
+
+        <!-- Historial de la tarea (scrollable) -->
+        <div v-if="showHistory" class="flex-1 overflow-y-auto px-4 py-3 custom-scrollbar">
+          <TaskHistory :task="localTask" variant="light" />
         </div>
 
         <!-- Lista de comentarios (scrollable) -->
-        <div class="flex-1 overflow-y-auto px-4 py-3 space-y-3 custom-scrollbar">
+        <div v-else class="flex-1 overflow-y-auto px-4 py-3 space-y-3 custom-scrollbar">
           <!-- Empty state -->
           <div v-if="localComments.length === 0 && !loadingComments" class="flex flex-col items-center justify-center py-10 text-center">
             <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mb-3">
@@ -340,7 +358,7 @@
         </div>
 
         <!-- Input nuevo comentario (fijo al fondo) -->
-        <div class="px-4 py-3 border-t border-slate-100 bg-white shrink-0 relative">
+        <div v-if="!showHistory" class="px-4 py-3 border-t border-slate-100 bg-white shrink-0 relative">
           <!-- Dropdown de menciones @ -->
           <div
             v-if="mentionOpen && mentionMatches.length > 0"
@@ -440,6 +458,7 @@ import AssignedUsersSelector from '../AssignedUsersSelector.vue'
 import CustomSelect from '../ui/CustomSelect.vue'
 import ProjectSelect from './ProjectSelect.vue'
 import VoiceDictateButton from '@/components/ui/VoiceDictateButton.vue'
+import TaskHistory from '../tasks/TaskHistory.vue'
 import { activityService } from '../../services/activityService'
 import { useBoardsStore } from '../../stores/boards'
 import { useTasksStore } from '../../stores/tasks'
@@ -657,6 +676,8 @@ const isEditingTask = computed(() => isEditing.value && !!commentEntityId.value)
 
 const localTask = ref<any>(props.activity)
 const loadingComments = ref(false)
+const sideTab = ref<'comments' | 'history'>('comments')
+const showHistory = computed(() => sideTab.value === 'history' && isBoardTask.value)
 
 const localComments = computed(() => localTask.value?.comments || [])
 

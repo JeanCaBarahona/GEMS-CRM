@@ -6,6 +6,27 @@ import { API_CONFIG } from '../config/api'
 
 const API_URL = API_CONFIG.BASE_URL.replace('/api', '')
 
+export type TaskHistoryAction =
+  | 'created'
+  | 'updated'
+  | 'moved'
+  | 'comment_added'
+  | 'comment_edited'
+  | 'comment_deleted'
+  | 'attachment_added'
+
+export interface TaskHistoryEntry {
+  _id?: string
+  // Las entradas anteriores al registro de acciones no traen `action` (equivale a 'updated')
+  action?: TaskHistoryAction
+  field?: string
+  oldValue?: unknown
+  newValue?: unknown
+  // Poblado en el detalle y en las respuestas de mutaciones; id suelto en el listado
+  changedBy?: { _id: string; name: string; email?: string; photo?: string } | string | null
+  changedAt: Date | string
+}
+
 export interface Task {
   _id: string
   title: string
@@ -19,11 +40,14 @@ export interface Task {
     name: string
     email: string
   }
-  reporter: {
+  // Quién creó la tarea (distinto de a quién está asignada)
+  createdBy?: {
     _id: string
     name: string
     email: string
-  }
+    photo?: string
+  } | null
+  history?: TaskHistoryEntry[]
   board: string
   sprint?: {
     _id: string

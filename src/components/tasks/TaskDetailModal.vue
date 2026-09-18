@@ -126,9 +126,9 @@
                     >
                       <div class="flex items-center gap-2 mb-2">
                         <div class="w-7 h-7 bg-purple-700 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                          {{ getInitials(comment.author.name) }}
+                          {{ getInitials(commentAuthorName(comment)) }}
                         </div>
-                        <span class="text-sm font-semibold text-white">{{ comment.author.name }}</span>
+                        <span class="text-sm font-semibold text-white">{{ commentAuthorName(comment) }}</span>
                         <span class="text-xs text-gray-500">{{ formatDate(comment.createdAt) }}</span>
                       </div>
 
@@ -242,6 +242,9 @@
                   </div>
                 </div>
 
+                <!-- ===== History Tab ===== -->
+                <TaskHistory v-if="activeTab === 'history'" :task="task" variant="dark" />
+
               </div>
             </div>
 
@@ -253,23 +256,26 @@
                 <div class="space-y-4">
                   <div>
                     <p class="text-xs text-gray-500 mb-1">Asignado a</p>
-                    <div v-if="task.assignedTo" class="flex items-center gap-2">
-                      <div class="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                        {{ getInitials(task.assignedTo.name) }}
+                    <div v-if="assignees.length > 0" class="space-y-1.5">
+                      <div v-for="user in assignees" :key="user._id" class="flex items-center gap-2">
+                        <div class="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                          {{ getInitials(user.name) }}
+                        </div>
+                        <span class="text-sm text-white">{{ user.name }}</span>
                       </div>
-                      <span class="text-sm text-white">{{ task.assignedTo.name }}</span>
                     </div>
                     <span v-else class="text-sm text-gray-500">Sin asignar</span>
                   </div>
 
                   <div>
-                    <p class="text-xs text-gray-500 mb-1">Reportado por</p>
-                    <div class="flex items-center gap-2">
+                    <p class="text-xs text-gray-500 mb-1">Creado por</p>
+                    <div v-if="task.createdBy?.name" class="flex items-center gap-2">
                       <div class="w-6 h-6 rounded-full bg-gray-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                        {{ getInitials(task.reporter.name) }}
+                        {{ getInitials(task.createdBy.name) }}
                       </div>
-                      <span class="text-sm text-white">{{ task.reporter.name }}</span>
+                      <span class="text-sm text-white">{{ task.createdBy.name }}</span>
                     </div>
+                    <span v-else class="text-sm text-gray-500">Desconocido</span>
                   </div>
 
                   <div v-if="task.sprint">
@@ -366,6 +372,7 @@ import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import type { Task } from '@/stores/tasks'
 import { useTasksStore } from '@/stores/tasks'
+import TaskHistory from './TaskHistory.vue'
 
 const props = defineProps<{
   isOpen: boolean
@@ -384,7 +391,25 @@ const activeTab = ref('comments')
 const tabs = computed(() => [
   { id: 'comments', label: 'Comentarios', count: props.task?.comments.length ?? 0 },
   { id: 'attachments', label: 'Adjuntos', count: props.task?.attachments.length ?? 0 },
+  { id: 'history', label: 'Historial' },
 ])
+
+type UserSummary = { _id: string; name: string }
+
+// El backend guarda assignedTo como array de usuarios; el tipo Task lo declara
+// como un solo objeto, así que se aceptan ambas formas.
+const assignees = computed<UserSummary[]>(() => {
+  const value = props.task?.assignedTo as UserSummary | UserSummary[] | null | undefined
+  if (!value) return []
+  const list = Array.isArray(value) ? value : [value]
+  return list.filter(user => user && typeof user === 'object' && user.name)
+})
+
+// El backend devuelve el autor poblado en comment.userId
+function commentAuthorName(comment: Task['comments'][number]): string {
+  const populated = (comment as { userId?: { name?: string } }).userId
+  return populated?.name || comment.author?.name || 'Usuario'
+}
 
 // Comment state
 const newCommentText = ref('')
@@ -492,8 +517,8 @@ function openImagePreview(url: string) {
   previewImageUrl.value = url
 }
 
-function getInitials(name: string): string {
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
+function getInitials(name: string | undefined): string {
+  return (name || '?').split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
 }
 
 function renderCommentText(text: string): string {

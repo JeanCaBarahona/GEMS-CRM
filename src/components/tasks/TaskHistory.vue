@@ -12,21 +12,22 @@
       </div>
     </div>
 
-    <p v-if="items.length === 0" :class="['text-center py-6 text-xs', theme.muted]">
-      Sin actividad registrada.
-    </p>
-
-    <ol v-else>
-      <li v-for="(item, idx) in items" :key="item.key" class="relative flex gap-3 pb-4 last:pb-0">
+    <TransitionGroup v-if="items.length > 0" tag="ol" name="timeline" appear>
+      <li
+        v-for="(item, idx) in items"
+        :key="item.key"
+        class="relative flex gap-3 pb-3 last:pb-0"
+        :style="{ transitionDelay: `${Math.min(idx, 8) * 35}ms` }"
+      >
         <span
           v-if="idx < items.length - 1"
-          :class="['absolute left-3.5 top-7 bottom-0 w-px', theme.line]"
+          :class="['absolute left-3.5 bottom-0 w-px', theme.lineTop, theme.line]"
           aria-hidden="true"
         />
-        <div :class="['relative w-7 h-7 rounded-full border flex items-center justify-center shrink-0', theme.dot]">
+        <div :class="['relative w-7 h-7 rounded-full border flex items-center justify-center shrink-0', theme.dotOffset, theme.dot]">
           <component :is="item.icon" class="w-3.5 h-3.5" />
         </div>
-        <div class="min-w-0 flex-1 pt-0.5">
+        <div :class="['min-w-0 flex-1', theme.card]">
           <p :class="['text-xs leading-relaxed break-words', theme.text]">
             <span :class="['font-semibold', theme.name]">{{ item.who }}</span>
             {{ item.verb }}
@@ -43,7 +44,19 @@
           <p :class="['text-[11px] mt-1', theme.muted]">{{ formatDateTime(item.date) }}</p>
         </div>
       </li>
-    </ol>
+    </TransitionGroup>
+
+    <!-- Solo existe la creación: registros anteriores al historial o sin cambios aún -->
+    <div
+      v-if="items.length <= 1"
+      :class="['rounded-xl border border-dashed px-4 py-5 text-center', items.length ? 'mt-4' : '', theme.hint]"
+    >
+      <ClockIcon class="w-5 h-5 mx-auto mb-2 opacity-60" />
+      <p class="text-xs font-semibold">Aún no hay cambios registrados</p>
+      <p class="text-[11px] mt-1 leading-relaxed">
+        Aquí aparecerán los cambios de estado, prioridad, fechas y responsables, y los comentarios, con quién los hizo.
+      </p>
+    </div>
   </div>
 </template>
 
@@ -58,7 +71,8 @@ import {
   ChatBubbleLeftIcon,
   PaperClipIcon,
   TrashIcon,
-  UserIcon
+  UserIcon,
+  ClockIcon
 } from '@heroicons/vue/20/solid'
 import type { TaskHistoryEntry } from '@/stores/tasks'
 
@@ -98,10 +112,14 @@ const THEMES = {
     name: 'text-white',
     muted: 'text-gray-500',
     line: 'bg-gray-700',
+    lineTop: 'top-7',
     dot: 'bg-gray-800 border-gray-700 text-purple-300',
+    dotOffset: '',
+    card: 'pt-0.5',
     from: 'text-gray-500',
     to: 'text-gray-100',
-    quote: 'bg-gray-800/60 text-gray-300'
+    quote: 'bg-gray-800/60 text-gray-300',
+    hint: 'border-gray-700 text-gray-400'
   },
   light: {
     summary: 'bg-white border border-slate-100',
@@ -110,10 +128,15 @@ const THEMES = {
     name: 'text-slate-800',
     muted: 'text-slate-400',
     line: 'bg-slate-200',
-    dot: 'bg-white border-slate-200 text-primary-500',
+    lineTop: 'top-9',
+    dot: 'bg-white border-slate-200 text-primary-500 shadow-sm',
+    dotOffset: 'mt-1.5',
+    // Cada entrada en tarjeta para que no quede pegada al borde de la columna
+    card: 'bg-white border border-slate-100 rounded-xl px-3 py-2.5 shadow-sm transition-shadow duration-200 hover:shadow-md',
     from: 'text-slate-400',
     to: 'text-slate-700',
-    quote: 'bg-white border border-slate-100 text-slate-600'
+    quote: 'bg-slate-50 text-slate-600',
+    hint: 'border-slate-200 bg-white/60 text-slate-400'
   }
 }
 
@@ -342,3 +365,20 @@ const items = computed<TimelineItem[]>(() => {
   return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 })
 </script>
+
+<style scoped>
+/* Entrada suave de las entradas de la línea de tiempo (escalonada con transitionDelay) */
+.timeline-enter-active {
+  transition: opacity 300ms ease, transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.timeline-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timeline-enter-active {
+    transition: none;
+  }
+}
+</style>

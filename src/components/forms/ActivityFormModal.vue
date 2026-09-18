@@ -45,28 +45,29 @@
       <form @submit.prevent="handleSubmit" class="flex-1 min-w-0 flex flex-col min-h-0">
         <div class="flex-1 overflow-y-auto px-5 py-4 custom-scrollbar">
           <div class="space-y-4">
-            
+
             <!-- Título -->
-            <div class="space-y-2">
-              <div class="flex items-center justify-between ml-1">
-                <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest">Título de la Actividad</label>
+            <div class="form-section group/field space-y-1.5">
+              <div class="flex items-center justify-between">
+                <label :class="labelClass">Título de la Actividad</label>
                 <VoiceDictateButton v-model="form.title" size="xs" />
               </div>
               <input
                 v-model="form.title"
                 type="text"
                 required
-                class="w-full px-5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all text-sm font-bold shadow-sm placeholder-slate-300"
+                class="w-full px-5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 hover:border-slate-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all text-sm font-bold shadow-sm placeholder-slate-300"
                 placeholder="Ej: Implementar pasarela de pagos..."
               />
             </div>
 
             <!-- Fila 1: Tipo, Prioridad, Fechas -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div class="space-y-2">
-                <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Tipo</label>
+            <div class="form-section grid grid-cols-1 md:grid-cols-[1fr_1fr_1.2fr_1.2fr] gap-4">
+              <div class="group/field space-y-1.5">
+                <label :class="labelClass">Tipo</label>
                 <CustomSelect
                   v-model="form.type"
+                  size="dense"
                   :options="[
                     { value: 'task', label: 'Tarea Estándar' },
                     { value: 'bug', label: 'Bug / Error' },
@@ -75,10 +76,11 @@
                   ]"
                 />
               </div>
-              <div class="space-y-2">
-                <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Prioridad</label>
+              <div class="group/field space-y-1.5">
+                <label :class="labelClass">Prioridad</label>
                 <CustomSelect
                   v-model="form.priority"
+                  size="dense"
                   :options="[
                     { value: 'low', label: 'Baja (Mantenimiento)' },
                     { value: 'medium', label: 'Media (Normal)' },
@@ -87,38 +89,37 @@
                   ]"
                 />
               </div>
-              <div class="space-y-2">
-                <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Inicio</label>
+              <div class="group/field space-y-1.5">
+                <label :class="labelClass">Inicio</label>
                 <div class="relative group">
-                  <i class="fas fa-calendar-alt absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary-400 transition-colors"></i>
                   <input
                     v-model="form.date"
                     type="datetime-local"
-                    class="w-full pl-10 pr-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all text-xs font-bold shadow-sm"
+                    class="w-full px-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 hover:border-slate-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all text-xs font-bold shadow-sm"
                   />
                 </div>
               </div>
-              <div class="space-y-2">
-                <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Entrega</label>
+              <div class="group/field space-y-1.5">
+                <label :class="labelClass">Entrega</label>
                 <div class="relative group">
-                  <i class="fas fa-flag-checkered absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary-400 transition-colors"></i>
                   <input
                     v-model="form.dueDate"
                     type="datetime-local"
-                    class="w-full pl-10 pr-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all text-xs font-bold shadow-sm"
+                    class="w-full px-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 hover:border-slate-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all text-xs font-bold shadow-sm"
                   />
                 </div>
               </div>
             </div>
 
             <!-- Fila 2: Cliente/Equipo y Detalles -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+            <div class="form-section grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
               <!-- Columna Izquierda -->
-              <div class="space-y-4 flex flex-col h-full">
-                <div class="space-y-2">
-                  <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Cliente / Proyecto</label>
+              <div class="flex flex-col gap-4 min-h-0">
+                <div class="group/field space-y-1.5">
+                  <label :class="labelClass">Cliente / Proyecto</label>
                   <CustomSelect
                     v-model="form.clientId"
+                    size="dense"
                     searchable
                     :options="[
                       { value: '', label: 'Interno' },
@@ -126,18 +127,16 @@
                     ]"
                   />
                 </div>
-                <div class="space-y-2">
-                  <ProjectSelect
-                    v-model="form.projectId"
-                    :client-id="form.clientId || null"
-                    auto-select-default
-                  />
-                </div>
-                <!-- Se estira para llenar el alto de la columna derecha (Detalles + Tiempo) -->
-                <!-- y evitar el hueco vacío que quedaba antes debajo de Proyecto. -->
-                <div class="space-y-2 flex-1 flex flex-col min-h-0 max-h-[280px]">
-                  <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Equipo Responsable</label>
-                  <div class="bg-slate-50/50 border border-slate-200 rounded-2xl p-2.5 shadow-inner flex-1 flex flex-col overflow-hidden min-h-0">
+                <ProjectSelect
+                  v-model="form.projectId"
+                  :client-id="form.clientId || null"
+                  size="dense"
+                  auto-select-default
+                />
+                <!-- Se estira para llenar el alto de la fila; tope para que la lista no crezca sin fin -->
+                <div class="group/field flex-1 flex flex-col gap-1.5 min-h-0 max-h-[280px]">
+                  <label :class="labelClass">Equipo Responsable</label>
+                  <div class="bg-slate-50/50 border border-slate-200 rounded-2xl p-2.5 shadow-inner flex-1 flex flex-col overflow-hidden min-h-0 transition-colors group-focus-within/field:border-primary-300">
                     <AssignedUsersSelector
                       v-model="form.assignedTo"
                       :teamMembers="teamMembers"
@@ -146,74 +145,75 @@
                 </div>
               </div>
 
-              <!-- Columna Derecha: Descripción y Tiempo -->
-              <div class="space-y-4">
-                <div class="space-y-2">
-                  <div class="flex items-center justify-between ml-1">
-                    <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest">Detalles y Notas</label>
+              <!-- Columna Derecha: la descripción crece para que Tiempo y Avance
+                   queden alineados con el final del Equipo Responsable -->
+              <div class="flex flex-col gap-4 min-h-0">
+                <div class="group/field flex-1 flex flex-col gap-1.5 min-h-0">
+                  <div class="flex items-center justify-between">
+                    <label :class="labelClass">Detalles y Notas</label>
                     <VoiceDictateButton v-model="form.description" size="xs" />
                   </div>
                   <textarea
                     v-model="form.description"
                     rows="4"
-                    class="w-full px-5 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 placeholder-slate-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all resize-none text-sm font-medium leading-relaxed shadow-sm custom-scrollbar"
+                    class="flex-1 min-h-[8rem] w-full px-5 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 placeholder-slate-300 hover:border-slate-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all resize-none text-sm font-medium leading-relaxed shadow-sm custom-scrollbar"
                     placeholder="Describe los pasos, criterios de aceptación o contexto..."
                   ></textarea>
                 </div>
 
-                <!-- Tiempo Estimado y Progreso -->
-                <div class="space-y-5 shrink-0">
-                  <div class="space-y-2">
-                    <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1 flex justify-between">
-                    <span>Tiempo Estimado</span>
-                    <button type="button" @click="form.estimatedTime = ''" class="text-primary-500 hover:text-primary-600">Limpiar</button>
-                  </label>
+                <!-- Tiempo Estimado -->
+                <div class="group/field shrink-0 space-y-1.5">
+                  <div class="flex items-center justify-between">
+                    <label :class="labelClass">Tiempo Estimado</label>
+                    <button
+                      type="button"
+                      @click="form.estimatedTime = ''"
+                      class="text-[11px] font-black uppercase tracking-widest text-primary-500 hover:text-primary-600 transition-opacity duration-200"
+                      :class="form.estimatedTime ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+                    >Limpiar</button>
+                  </div>
                   <div class="grid grid-cols-4 gap-2">
                     <button
-                      v-for="time in [
-                        { val: '15m', label: '15m' },
-                        { val: '30m', label: '30m' },
-                        { val: '1h', label: '1h' },
-                        { val: '2h', label: '2h' },
-                        { val: '4h', label: '4h' },
-                        { val: '8h', label: '8h' }
-                      ]"
-                      :key="time.val"
+                      v-for="time in ESTIMATE_PRESETS"
+                      :key="time"
                       type="button"
-                      @click="form.estimatedTime = time.val"
-                      class="px-1 py-2 rounded-xl text-[11px] font-black tracking-wider uppercase transition-all border shadow-sm flex items-center justify-center gap-1"
-                      :class="form.estimatedTime === time.val 
-                        ? 'bg-primary-500 text-white border-primary-600 ring-2 ring-primary-500/20 shadow-primary-500/20' 
-                        : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-700'"
+                      @click="form.estimatedTime = time"
+                      class="px-1 py-2 rounded-xl text-[11px] font-black tracking-wider uppercase transition-all duration-200 border shadow-sm flex items-center justify-center gap-1 active:scale-95"
+                      :class="form.estimatedTime === time
+                        ? 'bg-primary-500 text-white border-primary-600 ring-2 ring-primary-500/20 shadow-primary-500/20'
+                        : 'bg-white text-slate-500 border-slate-200 hover:-translate-y-px hover:bg-slate-50 hover:border-slate-300 hover:text-slate-700'"
                     >
                       <i class="fas fa-clock opacity-70 hidden sm:inline-block"></i>
-                      {{ time.label }}
+                      {{ time }}
                     </button>
-                    
+
                     <div class="col-span-2 relative group">
                       <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <i class="fas fa-pen text-[10px] text-slate-400 group-focus-within:text-primary-500 transition-colors"></i>
                       </div>
-                      <input 
+                      <input
                         v-model="form.estimatedTime"
                         type="text"
                         placeholder="Ej: 3.5h"
-                        class="w-full h-full pl-8 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 text-[11px] font-black focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all shadow-sm placeholder-slate-300"
+                        class="w-full h-full pl-8 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 text-[11px] font-black hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all shadow-sm placeholder-slate-300"
                       />
                     </div>
-                    </div>
                   </div>
+                </div>
 
-                  <!-- Progreso -->
-                  <div class="mt-3 bg-white p-2 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3">
-                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest w-12 text-right">{{ form.completionPercentage || 0 }}%</span>
-                    <input 
-                      type="range" 
-                      v-model.number="form.completionPercentage" 
-                      min="0" max="100" step="5"
-                      class="flex-1 h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-primary-500"
-                    />
-                  </div>
+                <!-- Avance -->
+                <div class="shrink-0 bg-white px-3 py-2 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3">
+                  <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Avance</span>
+                  <input
+                    type="range"
+                    v-model.number="form.completionPercentage"
+                    min="0" max="100" step="5"
+                    class="flex-1 h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-primary-500"
+                  />
+                  <span
+                    class="w-10 text-right text-[11px] font-black tabular-nums transition-colors duration-300"
+                    :class="(form.completionPercentage || 0) >= 100 ? 'text-emerald-500' : 'text-slate-500'"
+                  >{{ form.completionPercentage || 0 }}%</span>
                 </div>
               </div>
             </div>
@@ -221,23 +221,36 @@
         </div>
 
         <!-- Acciones fijas: Guardar siempre visible sin hacer scroll -->
-        <div class="shrink-0 flex items-center justify-end gap-3 px-5 py-3 border-t border-slate-100 bg-white">
-          <button
-            type="button"
-            @click="$emit('close')"
-            class="px-5 py-2.5 bg-white text-slate-500 hover:text-slate-800 border border-slate-200 rounded-xl transition-all font-black text-[11px] uppercase tracking-widest hover:bg-slate-50 active:scale-95"
+        <div class="shrink-0 flex items-center gap-3 px-5 py-3 border-t border-slate-100 bg-white shadow-[0_-8px_16px_-12px_rgba(15,23,42,0.18)]">
+          <Transition
+            enter-active-class="transition duration-200 ease-out"
+            enter-from-class="opacity-0 -translate-x-1"
+            leave-active-class="transition duration-150 ease-in"
+            leave-to-class="opacity-0"
           >
-            Descartar
-          </button>
-          <button
-            type="submit"
-            :disabled="loading"
-            class="px-6 py-2.5 bg-primary-500 text-white rounded-xl hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-black text-[11px] uppercase tracking-[0.15em] shadow-lg shadow-primary-200 flex items-center justify-center gap-2 active:scale-95 group"
-          >
-            <div v-if="loading" class="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-            <i v-else :class="isEditing ? 'fas fa-save' : 'fas fa-paper-plane'" class="group-hover:translate-x-0.5 transition-transform"></i>
-            {{ loading ? 'Sincronizando...' : (isEditing ? 'Guardar Cambios' : 'Lanzar Tarea') }}
-          </button>
+            <span v-if="isEditing && isDirty" class="flex items-center gap-1.5 text-[11px] font-bold text-amber-600">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+              Cambios sin guardar
+            </span>
+          </Transition>
+          <div class="ml-auto flex items-center gap-3">
+            <button
+              type="button"
+              @click="$emit('close')"
+              class="px-5 py-2.5 bg-white text-slate-500 hover:text-slate-800 border border-slate-200 rounded-xl transition-all font-black text-[11px] uppercase tracking-widest hover:bg-slate-50 active:scale-95"
+            >
+              Descartar
+            </button>
+            <button
+              type="submit"
+              :disabled="loading"
+              class="px-6 py-2.5 bg-primary-500 text-white rounded-xl hover:bg-primary-600 hover:-translate-y-px disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 transition-all font-black text-[11px] uppercase tracking-[0.15em] shadow-lg shadow-primary-200 flex items-center justify-center gap-2 active:scale-95 group"
+            >
+              <div v-if="loading" class="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+              <i v-else :class="isEditing ? 'fas fa-save' : 'fas fa-paper-plane'" class="group-hover:translate-x-0.5 transition-transform"></i>
+              {{ loading ? 'Sincronizando...' : (isEditing ? 'Guardar Cambios' : 'Lanzar Tarea') }}
+            </button>
+          </div>
         </div>
       </form>
       <!-- ── Fin formulario ── -->
@@ -245,38 +258,51 @@
       <!-- ── Columna de Comentarios (solo al editar una tarea) ── -->
       <div
         v-if="isEditingTask"
-        class="w-80 shrink-0 border-l border-slate-100 flex flex-col bg-slate-50/40"
+        class="w-[22rem] shrink-0 border-l border-slate-100 flex flex-col bg-slate-50/60"
       >
-        <!-- Header comentarios -->
-        <div class="px-5 py-4 border-b border-slate-100 flex items-center gap-2 shrink-0">
-          <div class="w-7 h-7 rounded-xl bg-primary-50 flex items-center justify-center border border-primary-100">
-            <i class="fas fa-comments text-primary-400 text-xs"></i>
+        <!-- Pestañas tipo segmento: Comentarios / Historial -->
+        <div class="px-4 pt-4 pb-3 shrink-0">
+          <div class="relative grid grid-cols-2 p-1 bg-slate-100/80 rounded-xl">
+            <!-- Indicador deslizante de la pestaña activa -->
+            <span
+              class="absolute top-1 bottom-1 left-1 w-[calc(50%-0.25rem)] bg-white rounded-lg shadow-sm transition-transform duration-300 ease-out"
+              :class="sideTab === 'history' ? 'translate-x-full' : 'translate-x-0'"
+              aria-hidden="true"
+            ></span>
+            <button
+              type="button"
+              @click="sideTab = 'comments'"
+              class="relative z-10 flex items-center justify-center gap-1.5 py-1.5 text-[11px] font-black uppercase tracking-wider transition-colors"
+              :class="sideTab === 'comments' ? 'text-primary-600' : 'text-slate-400 hover:text-slate-600'"
+            >
+              <i class="fas fa-comments text-[11px]"></i>
+              Comentarios
+              <span
+                v-if="localComments.length > 0"
+                class="min-w-[1.25rem] px-1.5 py-px rounded-full text-[10px] transition-colors"
+                :class="sideTab === 'comments' ? 'bg-primary-100 text-primary-600' : 'bg-slate-200 text-slate-500'"
+              >{{ localComments.length }}</span>
+            </button>
+            <button
+              type="button"
+              @click="sideTab = 'history'"
+              class="relative z-10 flex items-center justify-center gap-1.5 py-1.5 text-[11px] font-black uppercase tracking-wider transition-colors"
+              :class="sideTab === 'history' ? 'text-primary-600' : 'text-slate-400 hover:text-slate-600'"
+            >
+              <i class="fas fa-clock-rotate-left text-[11px]"></i>
+              Historial
+            </button>
           </div>
-          <button
-            type="button"
-            @click="sideTab = 'comments'"
-            class="text-[11px] font-black uppercase tracking-widest transition-colors"
-            :class="sideTab === 'comments' ? 'text-primary-500' : 'text-slate-400 hover:text-slate-600'"
-          >Comentarios</button>
-          <span
-            v-if="localComments.length > 0"
-            class="px-2 py-0.5 bg-primary-100 text-primary-600 text-[10px] font-black rounded-full"
-          >{{ localComments.length }}</span>
-          <button
-            type="button"
-            @click="sideTab = 'history'"
-            class="ml-auto text-[11px] font-black uppercase tracking-widest transition-colors"
-            :class="sideTab === 'history' ? 'text-primary-500' : 'text-slate-400 hover:text-slate-600'"
-          >Historial</button>
         </div>
 
+        <Transition name="side-panel" mode="out-in">
         <!-- Historial de la tarea (scrollable) -->
-        <div v-if="showHistory" class="flex-1 overflow-y-auto px-4 py-3 custom-scrollbar">
+        <div v-if="showHistory" key="history" class="flex-1 overflow-y-auto px-4 pb-4 custom-scrollbar">
           <TaskHistory :task="localTask" variant="light" :show-creator="false" />
         </div>
 
         <!-- Lista de comentarios (scrollable) -->
-        <div v-else class="flex-1 overflow-y-auto px-4 py-3 space-y-3 custom-scrollbar">
+        <div v-else key="comments" class="flex-1 overflow-y-auto px-4 pb-4 space-y-3 custom-scrollbar">
           <!-- Empty state -->
           <div v-if="localComments.length === 0 && !loadingComments" class="flex flex-col items-center justify-center py-10 text-center">
             <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mb-3">
@@ -290,7 +316,7 @@
           <div
             v-for="comment in localComments"
             :key="comment._id"
-            class="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 group"
+            class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 hover:shadow-md hover:border-slate-200 transition-all duration-200 group"
           >
             <div class="flex items-center gap-2 mb-1.5">
               <div class="w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center text-white text-[9px] font-black shrink-0">
@@ -361,6 +387,7 @@
             </div>
           </div>
         </div>
+        </Transition>
 
         <!-- Input nuevo comentario (fijo al fondo) -->
         <div v-if="!showHistory" class="px-4 py-3 border-t border-slate-100 bg-white shrink-0 relative">
@@ -524,6 +551,15 @@ const form = reactive({
   completionPercentage: 0
 })
 
+// Etiqueta de campo: se resalta mientras su campo (group/field) tiene el foco
+const labelClass = 'block ml-1 text-[11px] font-black text-slate-400 uppercase tracking-widest transition-colors duration-200 group-focus-within/field:text-primary-500'
+
+const ESTIMATE_PRESETS = ['15m', '30m', '1h', '2h', '4h', '8h']
+
+// Estado del formulario al abrirlo, para avisar de cambios sin guardar
+const savedSnapshot = ref('')
+const isDirty = computed(() => !!savedSnapshot.value && JSON.stringify(form) !== savedSnapshot.value)
+
 const populateForm = () => {
   try {
     console.log('Populating ActivityFormModal with:', props.activity)
@@ -576,6 +612,7 @@ const populateForm = () => {
       form.date = new Date().toISOString().slice(0, 16)
       form.dueDate = ''
     }
+    savedSnapshot.value = JSON.stringify(form)
   } catch (err) {
     console.error('Error in populateForm:', err)
   }
@@ -983,8 +1020,8 @@ onMounted(() => {
 }
 
 @keyframes zoom-in-95 {
-  from { transform: scale(0.95); }
-  to { transform: scale(1); }
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes slide-in-from-top-2 {
@@ -992,8 +1029,47 @@ onMounted(() => {
   to { transform: translateY(0); opacity: 1; }
 }
 
+/* Las utilidades duration-* de Tailwind son de transition, no de animation:
+   sin esto las animaciones de entrada duraban 0s. */
 .animate-in {
-  animation-fill-mode: forwards;
+  animation-duration: 280ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-fill-mode: backwards;
+}
+
+/* Entrada escalonada de las secciones del formulario */
+@keyframes section-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.form-section {
+  animation: section-in 320ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+.form-section:nth-child(2) { animation-delay: 50ms; }
+.form-section:nth-child(3) { animation-delay: 100ms; }
+
+/* Cambio entre Comentarios e Historial */
+.side-panel-enter-active,
+.side-panel-leave-active {
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+.side-panel-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+.side-panel-leave-to {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-in,
+  .form-section {
+    animation: none;
+  }
+  .side-panel-enter-active,
+  .side-panel-leave-active {
+    transition: none;
+  }
 }
 .fade-in {
   animation-name: fade-in;

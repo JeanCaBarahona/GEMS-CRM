@@ -7,7 +7,7 @@
       :disabled="disabled"
       :class="[
         'w-full bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all shadow-sm flex items-center justify-between group',
-        size === 'sm' ? 'px-3 py-1.5 text-xs' : 'px-4 py-2.5 text-sm',
+        size === 'sm' ? 'px-3 py-1.5 text-xs' : size === 'dense' ? 'px-4 py-2.5 text-xs' : 'px-4 py-2.5 text-sm',
         { 'ring-4 ring-primary-500/10 border-primary-500 bg-white': isOpen },
         { 'opacity-60 cursor-not-allowed hover:bg-slate-50': disabled }
       ]"
@@ -106,7 +106,8 @@ const props = withDefaults(defineProps<{
   modelValue: string | number | null
   options: SelectOption[]
   placeholder?: string
-  size?: 'sm' | 'md'
+  // dense: misma altura que md con texto más pequeño (formularios densos)
+  size?: 'sm' | 'md' | 'dense'
   searchable?: boolean
   disabled?: boolean
   loading?: boolean

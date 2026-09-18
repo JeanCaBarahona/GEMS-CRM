@@ -23,6 +23,7 @@
         :placeholder="!clientId ? 'Primero selecciona un cliente' : 'Sin proyecto'"
         :disabled="!clientId"
         :loading="loading"
+        :size="size"
         searchable
         @change="onSelect"
       />
@@ -83,6 +84,8 @@ const props = defineProps<{
   required?: boolean
   /** Si el cliente tiene un proyecto por defecto, seleccionarlo automáticamente. */
   autoSelectDefault?: boolean
+  /** Tamaño del CustomSelect interno */
+  size?: 'md' | 'dense'
 }>()
 
 const emit = defineEmits<{

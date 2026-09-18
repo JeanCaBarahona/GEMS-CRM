@@ -722,8 +722,9 @@ const sideTab = ref<'comments' | 'history'>('comments')
 const showHistory = computed(() => sideTab.value === 'history')
 
 // ── Autor y responsables (header) ────────────────────────────────────────────
-// Registros antiguos pueden no tener autor
-const creatorName = computed(() => localTask.value?.createdBy?.name || 'Desconocido')
+// Actividades creadas antes de esta función no tienen autor registrado en la BD;
+// no hay forma de reconstruirlo, así que se muestra como tal en vez de adivinar.
+const creatorName = computed(() => localTask.value?.createdBy?.name || 'No registrado (actividad anterior)')
 
 const createdAtLabel = computed(() => {
   const date = localTask.value?.createdAt

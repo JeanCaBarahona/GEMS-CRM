@@ -275,7 +275,7 @@
                       </div>
                       <span class="text-sm text-white">{{ task.createdBy.name }}</span>
                     </div>
-                    <span v-else class="text-sm text-gray-500">Desconocido</span>
+                    <span v-else class="text-sm text-gray-500">No registrado (tarea anterior)</span>
                   </div>
 
                   <div v-if="task.sprint">

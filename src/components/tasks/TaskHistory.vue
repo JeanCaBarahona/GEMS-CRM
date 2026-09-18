@@ -209,8 +209,9 @@ function userName(user: unknown, fallback = 'Usuario'): string {
   return fallback
 }
 
-// Registros antiguos pueden no tener autor
-const creatorName = computed(() => userName(props.task?.createdBy, 'Desconocido'))
+// Registros creados antes de esta función no tienen autor en la BD; no hay
+// forma de reconstruirlo, así que se muestra como tal en vez de adivinar.
+const creatorName = computed(() => userName(props.task?.createdBy, 'No registrado (registro anterior)'))
 
 // Forma comparable de un valor, para descartar entradas antiguas que registraban
 // "cambios" entre valores equivalentes (ObjectId vs string, [id] vs id, fechas).

@@ -14,6 +14,7 @@ export type TaskHistoryAction =
   | 'comment_edited'
   | 'comment_deleted'
   | 'attachment_added'
+  | 'attachment_deleted'
 
 export interface TaskHistoryEntry {
   _id?: string

@@ -28,7 +28,7 @@
             <input
               v-model="searchTerm"
               type="text"
-              placeholder="Buscar por nombre, email o empresa..."
+              placeholder="Buscar por empresa, contacto o correo..."
               class="w-full bg-slate-50 border border-slate-100 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-700 placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all"
             />
           </div>
@@ -39,8 +39,8 @@
               v-model="sortBy" 
               class="bg-slate-50 border border-slate-100 rounded-xl px-4 py-2.5 text-[11px] font-bold text-slate-700 outline-none cursor-pointer focus:bg-white focus:border-primary-500 transition-all"
             >
-              <option value="name">Nombre</option>
-              <option value="company">Empresa</option>
+              <option value="company">Empresa / Organización</option>
+              <option value="name">Nombre de contacto</option>
               <option value="createdAt">Recientes</option>
             </select>
           </div>
@@ -75,9 +75,9 @@
             <table class="min-w-full divide-y divide-slate-100">
               <thead>
                 <tr class="bg-slate-50/50">
-                  <th class="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Cliente</th>
-                  <th class="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Empresa</th>
-                  <th class="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Contacto</th>
+                  <th class="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Empresa / Organización</th>
+                  <th class="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Nombre de Contacto</th>
+                  <th class="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Correo / WhatsApp</th>
                   <th class="px-8 py-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Registro</th>
                   <th class="px-8 py-4 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Acciones</th>
                 </tr>
@@ -89,23 +89,23 @@
                   class="hover:bg-slate-50/80 transition-all group"
                 >
                   <td class="px-8 py-6 whitespace-nowrap">
-                    <router-link :to="`/clients/${client._id}`" class="flex items-center gap-4 w-fit">
+                    <router-link :to="`/clients/${client._id}`" class="flex items-center gap-4 w-fit" title="Abrir el expediente del cliente">
                       <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-50 to-primary-100/50 flex items-center justify-center text-primary-600 font-black text-sm shadow-sm ring-1 ring-primary-100">
-                        {{ client.name.charAt(0).toUpperCase() }}
+                        {{ clientOrgName(client).charAt(0).toUpperCase() }}
                       </div>
                       <div>
                         <div class="flex items-center gap-2">
-                          <span class="text-slate-900 font-bold text-sm leading-tight group-hover:text-primary-600 group-hover:underline transition-colors">{{ client.name }}</span>
+                          <span class="text-slate-900 font-bold text-sm leading-tight group-hover:text-primary-600 group-hover:underline transition-colors">{{ clientOrgName(client) }}</span>
                           <span v-if="client.status === 'inactive'" class="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-500">Inactivo</span>
                         </div>
-                        <div class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-0.5">Persona Física</div>
+                        <div class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-0.5">{{ clientNit(client) ? `NIT ${clientNit(client)}` : 'Sin NIT' }}</div>
                       </div>
                     </router-link>
                   </td>
                   <td class="px-8 py-6 whitespace-nowrap">
                     <div class="flex items-center gap-2">
-                      <div class="w-2 h-2 rounded-full bg-slate-200"></div>
-                      <span class="text-slate-700 text-xs font-black">{{ client.company }}</span>
+                      <i class="fas fa-user text-slate-300 text-[11px]"></i>
+                      <span class="text-slate-700 text-xs font-bold">{{ client.name || '—' }}</span>
                     </div>
                   </td>
                   <td class="px-8 py-6 whitespace-nowrap">
@@ -115,7 +115,7 @@
                         {{ client.email }}
                       </div>
                       <div class="text-slate-400 text-[11px] font-medium flex items-center gap-2">
-                        <i class="fas fa-phone text-slate-300 w-3 text-center"></i> 
+                        <i class="fab fa-whatsapp text-slate-300 w-3 text-center"></i>
                         {{ client.phone }}
                       </div>
                     </div>
@@ -153,14 +153,14 @@
               <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-50">
                 <router-link :to="`/clients/${client._id}`" class="flex items-center gap-3">
                   <div class="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center text-primary-600 font-black text-sm">
-                    {{ client.name.charAt(0).toUpperCase() }}
+                    {{ clientOrgName(client).charAt(0).toUpperCase() }}
                   </div>
                   <div>
                     <div class="flex items-center gap-2">
-                      <h3 class="text-slate-900 font-bold text-sm">{{ client.name }}</h3>
+                      <h3 class="text-slate-900 font-bold text-sm">{{ clientOrgName(client) }}</h3>
                       <span v-if="client.status === 'inactive'" class="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-500">Inactivo</span>
                     </div>
-                    <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">{{ client.company }}</p>
+                    <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Contacto: {{ client.name || '—' }}</p>
                   </div>
                 </router-link>
               </div>
@@ -170,7 +170,7 @@
                   <i class="fas fa-envelope text-slate-300 w-4"></i> {{ client.email }}
                 </div>
                 <div class="flex items-center gap-2 text-xs text-slate-600 font-medium">
-                  <i class="fas fa-phone text-slate-300 w-4"></i> {{ client.phone }}
+                  <i class="fab fa-whatsapp text-slate-300 w-4"></i> {{ client.phone }}
                 </div>
               </div>
 
@@ -303,8 +303,11 @@
         </div>
         <template v-if="!deleteBlockedMessage">
           <h3 class="text-xl font-black text-slate-900 mb-2">¿Eliminar Cliente?</h3>
-          <p class="text-slate-400 text-sm font-medium mb-8 leading-relaxed">
-            Esta acción eliminará permanentemente a <span class="text-slate-900 font-bold">{{ clientToDelete?.name }}</span>. ¿Estás seguro de continuar?
+          <p class="text-slate-400 text-sm font-medium mb-3 leading-relaxed">
+            Se eliminará permanentemente a <span class="text-slate-900 font-bold">{{ clientToDelete ? clientOrgName(clientToDelete) : '' }}</span>.
+          </p>
+          <p class="text-slate-400 text-xs font-medium mb-8 leading-relaxed bg-slate-50 rounded-xl px-3 py-2">
+            <i class="fas fa-circle-info mr-1"></i>Si el cliente ya tiene proyectos, tareas o historial, no se borrará: podrás inactivarlo para conservar su trazabilidad.
           </p>
           <div class="flex flex-col gap-3">
             <button @click="deleteClient" :disabled="loading" class="btn-danger w-full">
@@ -477,6 +480,12 @@ const deactivateClient = async () => {
     console.error('Error deactivating client:', err)
   }
 }
+
+// El cliente se identifica por su Empresa / Organización (así se captura en el
+// formulario); los registros viejos sin empresa caen al nombre de contacto.
+type ClientLike = { company?: string; name?: string; nit?: string }
+const clientOrgName = (client: ClientLike) => client.company || client.name || 'Sin nombre'
+const clientNit = (client: ClientLike) => client.nit || ''
 
 const formatDate = (dateString?: string) => {
   if (!dateString) return 'N/A'

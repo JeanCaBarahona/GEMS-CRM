@@ -167,20 +167,21 @@ const FIELD_LABELS: Record<string, string> = {
   projectId: 'el proyecto',
   parentTask: 'la tarea padre',
   epicId: 'la épica',
-  featureId: 'el feature',
+  featureId: 'la feature',
   userStoryId: 'la historia de usuario',
   blockedBy: 'los bloqueos',
   relatedTasks: 'las tareas relacionadas',
   linkedCases: 'los casos vinculados',
   linkedWikiArticles: 'los artículos de wiki vinculados',
   acceptanceCriteria: 'los criterios de aceptación',
-  github: 'la información de GitHub'
+  github: 'la información de GitHub',
+  environment: 'el ambiente'
 }
 
 // Campos cuyo valor anterior/nuevo es legible; el resto guarda ids y solo se indica que cambió.
 const VALUE_FIELDS = new Set([
   'title', 'type', 'status', 'boardStatus', 'priority', 'dueDate', 'startDate', 'date',
-  'estimatedTime', 'estimatedHours', 'actualHours', 'completionPercentage', 'tags'
+  'estimatedTime', 'estimatedHours', 'actualHours', 'completionPercentage', 'tags', 'environment'
 ])
 
 const ENUM_LABELS: Record<string, Record<string, string>> = {
@@ -198,7 +199,8 @@ const ENUM_LABELS: Record<string, Record<string, string>> = {
   type: {
     epic: 'Épica', feature: 'Feature', 'user-story': 'Historia',
     task: 'Tarea', bug: 'Bug', subtask: 'Subtarea'
-  }
+  },
+  environment: { development: 'En Desarrollo', testing: 'Prueba', production: 'Producción' }
 }
 
 const DATE_FIELDS = new Set(['dueDate', 'startDate', 'date'])
@@ -340,6 +342,12 @@ function describe(entry: TaskHistoryEntry, index: number): TimelineItem | null {
         ...base,
         icon: PaperClipIcon,
         verb: entry.newValue ? `adjuntó «${entry.newValue}»` : 'adjuntó un archivo'
+      }
+    case 'attachment_deleted':
+      return {
+        ...base,
+        icon: TrashIcon,
+        verb: entry.oldValue ? `eliminó el adjunto «${entry.oldValue}»` : 'eliminó un adjunto'
       }
     default:
       return describeUpdate(entry, base)

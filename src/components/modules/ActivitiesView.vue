@@ -352,8 +352,39 @@
 
     <!-- Vista de Lista -->
     <div v-else-if="currentView === 'tasks'" class="mt-6">
+      <!-- Filtros de la lista: proyecto → feature → tipo -->
+      <div class="flex flex-wrap items-center gap-2 mb-3">
+        <div class="w-full sm:w-72" title="Mostrar solo las tareas de un proyecto">
+          <CustomSelect v-model="listProjectFilter" size="sm" searchable :options="listProjectOptions" placeholder="Todos los proyectos" />
+        </div>
+        <div class="w-full sm:w-56" :title="listProjectFilter ? 'Mostrar solo una feature y sus tareas' : 'Primero elige un proyecto para filtrar por feature'">
+          <CustomSelect v-model="listFeatureFilter" size="sm" searchable :disabled="!listProjectFilter" :options="listFeatureOptions" placeholder="Todas las features" />
+        </div>
+        <div class="w-full sm:w-44" title="Ver features, tareas o ambas">
+          <CustomSelect
+            v-model="listTypeFilter"
+            size="sm"
+            :options="[
+              { value: '', label: 'Features y tareas' },
+              { value: 'feature', label: 'Solo features' },
+              { value: 'task', label: 'Solo tareas' }
+            ]"
+          />
+        </div>
+        <button
+          v-if="listProjectFilter || listFeatureFilter || listTypeFilter"
+          type="button"
+          @click="listProjectFilter = ''; listFeatureFilter = ''; listTypeFilter = ''"
+          class="px-3 py-1.5 text-[11px] font-black uppercase tracking-wider text-slate-400 hover:text-primary-600 transition-colors"
+          title="Quitar todos los filtros de la lista"
+        >
+          <i class="fas fa-xmark mr-1"></i>Limpiar filtros
+        </button>
+      </div>
+
       <TaskListView
         :groups="activityListGroups"
+        show-kind-badge
         :can-edit="authStore.canEditActivities"
         :can-delete="authStore.canDeleteActivities"
         @open="editActivity"
@@ -2962,11 +2993,56 @@ function activityAssignees(activity: any): TaskListRow['assignees'] {
   })
 }
 
+// Filtros de la Lista (sin cliente): proyecto → feature → tipo
+const listProjectFilter = ref('')
+const listFeatureFilter = ref('') // '' = todas, NO_FEATURE = sin feature, o el id de una feature
+const listTypeFilter = ref<'' | 'feature' | 'task'>('')
+const NO_FEATURE = '__none__'
+
+const listProjectOptions = computed(() => [
+  { value: '', label: 'Todos los proyectos' },
+  ...clients.value.flatMap(c => (c.projects || [])
+    .filter(p => p._id)
+    .map(p => ({ value: p._id!, label: `${c.company || c.name} · ${p.name}` })))
+])
+
+const listFeatureOptions = computed(() => [
+  { value: '', label: 'Todas las features' },
+  { value: NO_FEATURE, label: 'Sin feature' },
+  ...activities.value
+    .filter(a => a.type === 'feature' && a.projectId === listProjectFilter.value)
+    .map(f => ({ value: f._id!, label: f.title }))
+])
+
+// Una feature de otro proyecto deja de tener sentido al cambiar de proyecto
+watch(listProjectFilter, () => { listFeatureFilter.value = '' })
+
+const featureTitles = computed(() => new Map(
+  activities.value.filter(a => a.type === 'feature').map(f => [f._id!, f.title])
+))
+
+const listFilteredActivities = computed(() => filteredActivities.value.filter(a => {
+  if (listProjectFilter.value && a.projectId !== listProjectFilter.value) return false
+  if (listTypeFilter.value === 'feature' && a.type !== 'feature') return false
+  if (listTypeFilter.value === 'task' && a.type === 'feature') return false
+  if (listFeatureFilter.value === NO_FEATURE) {
+    if (a.type === 'feature' || a.featureId) return false
+  } else if (listFeatureFilter.value) {
+    // La feature elegida y sus tareas
+    if (a._id !== listFeatureFilter.value && a.featureId !== listFeatureFilter.value) return false
+  }
+  return true
+}))
+
 function activityToListRow(activity: ActivityData): TaskListRow {
+  const featureTitle = activity.featureId ? featureTitles.value.get(activity.featureId) : undefined
   return {
     id: activity._id!,
     title: activity.title,
-    description: activity.description,
+    // Las tareas de una feature muestran a cuál pertenecen
+    description: featureTitle ? `Feature: ${featureTitle}` : activity.description,
+    kindLabel: activity.type === 'feature' ? 'Feature' : undefined,
+    kindClass: 'bg-violet-50 text-violet-600',
     done: visualStatusFor(activity) === 'completed',
     assignees: activityAssignees(activity),
     dueDateLabel: activity.dueDate ? formatDate(activity.dueDate) : undefined,
@@ -2980,7 +3056,7 @@ function activityToListRow(activity: ActivityData): TaskListRow {
 
 const activityListGroups = computed<TaskListGroup[]>(() => {
   const byStatus = (status: ReturnType<typeof visualStatusFor>) =>
-    sortActivities(filteredActivities.value.filter(a => visualStatusFor(a) === status)).map(activityToListRow)
+    sortActivities(listFilteredActivities.value.filter(a => visualStatusFor(a) === status)).map(activityToListRow)
 
   return [
     { key: 'overdue', label: 'Vencidas', dotClass: 'bg-red-500', rows: byStatus('overdue') },

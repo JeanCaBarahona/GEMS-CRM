@@ -30,6 +30,38 @@ export interface ActivityData {
   }
   createdAt?: string
   updatedAt?: string
+  type?: ActivityType
+  // Feature (otra actividad de type 'feature' del mismo proyecto) a la que pertenece
+  featureId?: string | null
+  acceptanceCriteria?: string
+  environment?: ActivityEnvironment | null
+  attachments?: ActivityAttachment[]
+}
+
+export type ActivityType = 'task' | 'bug' | 'feature' | 'user-story'
+export type ActivityEnvironment = 'development' | 'testing' | 'production'
+
+export interface ActivityAttachment {
+  _id: string
+  name: string
+  url: string
+  mimetype?: string
+  size?: number
+  uploadedBy?: { _id: string; name: string } | string
+  uploadedAt?: string
+}
+
+export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
+  task: 'Tarea',
+  bug: 'Bug / Error',
+  feature: 'Feature',
+  'user-story': 'Historia de Usuario'
+}
+
+export const ENVIRONMENT_LABELS: Record<ActivityEnvironment, string> = {
+  development: 'En Desarrollo',
+  testing: 'Prueba',
+  production: 'Producción'
 }
 
 export interface ActivityWithClient extends ActivityData {
@@ -164,11 +196,13 @@ class ActivityService {
     }
   }
 
-  async getWithFilters(filters: { assignedTo?: string, status?: string }): Promise<ActivityData[]> {
+  async getWithFilters(filters: { assignedTo?: string, status?: string, projectId?: string, type?: ActivityType }): Promise<ActivityData[]> {
     try {
       const params = new URLSearchParams()
       if (filters.assignedTo) params.append('assignedTo', filters.assignedTo)
       if (filters.status) params.append('status', filters.status)
+      if (filters.projectId) params.append('projectId', filters.projectId)
+      if (filters.type) params.append('type', filters.type)
 
       const response = await fetch(`${this.baseUrl}${this.endpoint}?${params.toString()}`, {
         method: 'GET',
@@ -278,6 +312,39 @@ class ActivityService {
     if (!response.ok) {
       const errText = await response.text().catch(() => '')
       throw new Error(`HTTP ${response.status}: ${errText}`)
+    }
+    return response.json()
+  }
+
+  // Features de un proyecto (para el selector "Feature" del modal y el Backlog)
+  async getFeatures(projectId: string): Promise<ActivityData[]> {
+    return this.getWithFilters({ projectId, type: 'feature' })
+  }
+
+  async uploadAttachments(id: string, files: File[]): Promise<ActivityData> {
+    const token = localStorage.getItem('token')
+    const formData = new FormData()
+    files.forEach(file => formData.append('files', file))
+    const response = await fetch(`${this.baseUrl}${this.endpoint}/${id}/attachments`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    })
+    if (!response.ok) {
+      const body = await response.json().catch(() => null)
+      throw new Error(body?.error || `No se pudo subir el archivo (HTTP ${response.status})`)
+    }
+    return response.json()
+  }
+
+  async deleteAttachment(id: string, attachmentId: string): Promise<ActivityData> {
+    const response = await fetch(`${this.baseUrl}${this.endpoint}/${id}/attachments/${attachmentId}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+    })
+    if (!response.ok) {
+      const body = await response.json().catch(() => null)
+      throw new Error(body?.error || `No se pudo eliminar el adjunto (HTTP ${response.status})`)
     }
     return response.json()
   }

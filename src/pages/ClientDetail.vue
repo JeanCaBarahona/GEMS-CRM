@@ -4,22 +4,29 @@
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
       <div class="flex items-center gap-4">
         <div class="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 text-2xl font-black border border-primary-200">
-          {{ (client?.name || 'C').charAt(0).toUpperCase() }}
+          {{ (client?.company || client?.name || 'C').charAt(0).toUpperCase() }}
         </div>
         <div>
-          <h1 class="text-2xl font-black text-slate-800">{{ client?.name }}</h1>
-          <p class="text-slate-500 font-medium text-sm mt-0.5">{{ client?.company || 'Sin Empresa' }}</p>
+          <!-- Mismo criterio que la lista: la empresa identifica al cliente -->
+          <h1 class="text-2xl font-black text-slate-800">{{ client?.company || client?.name }}</h1>
+          <p class="text-slate-500 font-medium text-sm mt-0.5">
+            <template v-if="client?.nit">NIT {{ client.nit }} · </template>Contacto: {{ client?.name || '—' }}
+          </p>
         </div>
       </div>
       <div class="flex items-center gap-3">
-        <router-link to="/clients" class="px-5 py-2.5 text-sm font-bold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shadow-sm">
+        <router-link to="/clients" class="px-5 py-2.5 text-sm font-bold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shadow-sm" title="Volver a la lista de clientes">
           <i class="fas fa-arrow-left mr-2"></i> Volver
         </router-link>
-        <button @click="editOverview = !editOverview" class="px-5 py-2.5 text-sm font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors shadow-sm">
+        <button
+          @click="editOverview = !editOverview"
+          :title="editOverview ? 'Descartar los cambios sin guardar' : 'Editar los datos del cliente (empresa, NIT, contacto, correo, WhatsApp y perfil)'"
+          class="px-5 py-2.5 text-sm font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors shadow-sm"
+        >
           <i :class="editOverview ? 'fas fa-times' : 'fas fa-edit'" class="mr-2"></i>
           {{ editOverview ? 'Cancelar Edición' : 'Editar Cliente' }}
         </button>
-        <button v-if="editOverview" @click="saveOverview" class="px-5 py-2.5 text-sm font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
+        <button v-if="editOverview" @click="saveOverview" title="Guardar los cambios del cliente" class="px-5 py-2.5 text-sm font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
           <i class="fas fa-save mr-2"></i> Guardar Cambios
         </button>
       </div>
@@ -145,7 +152,6 @@
               :key="pr._id"
               class="bg-white border border-slate-200 rounded-xl p-5 hover:border-primary-300 hover:shadow-md transition-all shadow-sm"
               :class="editingProjectId !== pr._id ? 'cursor-pointer' : ''"
-              :title="editingProjectId !== pr._id ? 'Doble click para ver detalle' : ''"
               @dblclick="editingProjectId !== pr._id && openProjectDetail(pr)"
             >
               <div v-if="editingProjectId !== pr._id" class="flex flex-col h-full justify-between gap-3">
@@ -167,9 +173,9 @@
                     </div>
                   </div>
                   <div class="flex gap-1">
-                    <button @click.stop="openProjectDetail(pr)" title="Ver detalle" class="p-2 text-slate-400 hover:bg-slate-100 rounded-lg transition-colors"><i class="fas fa-up-right-and-down-left-from-center"></i></button>
-                    <button @click.stop="startEditProject(pr)" class="p-2 text-primary-500 hover:bg-primary-50 rounded-lg transition-colors"><i class="fas fa-edit"></i></button>
-                    <button v-if="!pr.isDefault" @click.stop="deleteProject(pr._id)" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"><i class="fas fa-trash"></i></button>
+                    <button @click.stop="openProjectDetail(pr)" title="Abrir el proyecto (documentación, backlog, adjuntos y tareas) — también con doble clic en la tarjeta" class="p-2 text-slate-400 hover:bg-slate-100 rounded-lg transition-colors"><i class="fas fa-up-right-and-down-left-from-center"></i></button>
+                    <button @click.stop="startEditProject(pr)" title="Editar nombre, estado y descripción del proyecto" class="p-2 text-primary-500 hover:bg-primary-50 rounded-lg transition-colors"><i class="fas fa-edit"></i></button>
+                    <button v-if="!pr.isDefault" @click.stop="deleteProject(pr._id)" title="Eliminar este proyecto" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"><i class="fas fa-trash"></i></button>
                   </div>
                 </div>
                 <p v-if="pr.description" class="text-slate-600 text-sm p-3 bg-slate-50 rounded-lg border border-slate-100 mt-2">{{ pr.description }}</p>
@@ -245,8 +251,8 @@
                     </div>
                   </div>
                   <div class="flex gap-1">
-                    <button @click="startEditService(s)" class="p-2 text-primary-500 hover:bg-primary-50 rounded-lg transition-colors"><i class="fas fa-edit"></i></button>
-                    <button @click="deleteService(s._id)" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"><i class="fas fa-trash"></i></button>
+                    <button @click="startEditService(s)" title="Editar este servicio" class="p-2 text-primary-500 hover:bg-primary-50 rounded-lg transition-colors"><i class="fas fa-edit"></i></button>
+                    <button @click="deleteService(s._id)" title="Eliminar este servicio" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"><i class="fas fa-trash"></i></button>
                   </div>
                 </div>
                 <p v-if="s.notes" class="text-slate-600 text-sm p-3 bg-slate-50 rounded-lg border border-slate-100 mt-2">{{ s.notes }}</p>
@@ -378,7 +384,7 @@
                 <p class="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-1">{{ p.key }}</p>
                 <p class="text-slate-800 font-medium">{{ p.value }}</p>
               </div>
-              <button @click="removePreference(p)" class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+              <button @click="removePreference(p)" title="Quitar esta preferencia" class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                 <i class="fas fa-times"></i>
               </button>
             </div>
@@ -411,10 +417,10 @@
                   <i class="fas fa-clock mr-1.5 opacity-70"></i> {{ formatDate(n.createdAt) }}
                 </span>
                 <div class="flex gap-2">
-                  <button @click="togglePin(n)" :class="n.pinned ? 'text-amber-500 bg-amber-50 border border-amber-200' : 'text-slate-400 bg-slate-50 border border-slate-200 hover:text-amber-500'" class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors">
+                  <button @click="togglePin(n)" :title="n.pinned ? 'Desfijar la nota' : 'Fijar la nota arriba'" :class="n.pinned ? 'text-amber-500 bg-amber-50 border border-amber-200' : 'text-slate-400 bg-slate-50 border border-slate-200 hover:text-amber-500'" class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors">
                     <i class="fas fa-thumbtack" :class="{ 'rotate-45': !n.pinned }"></i>
                   </button>
-                  <button @click="deleteNote(n._id)" class="w-8 h-8 rounded-lg flex items-center justify-center text-red-400 bg-red-50 border border-red-100 hover:text-red-600 transition-colors">
+                  <button @click="deleteNote(n._id)" title="Eliminar esta nota" class="w-8 h-8 rounded-lg flex items-center justify-center text-red-400 bg-red-50 border border-red-100 hover:text-red-600 transition-colors">
                     <i class="fas fa-trash"></i>
                   </button>
                 </div>
@@ -451,7 +457,7 @@
                 <p class="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-1">{{ f.key }}</p>
                 <p class="text-slate-800 font-medium">{{ f.value }}</p>
               </div>
-              <button @click="removeCustomField(f)" class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+              <button @click="removeCustomField(f)" title="Eliminar este campo personalizado" class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                 <i class="fas fa-times"></i>
               </button>
             </div>

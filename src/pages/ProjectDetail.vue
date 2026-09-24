@@ -20,7 +20,7 @@
           :to="`/clients/${clientId}`"
           class="absolute top-4 left-4 px-3 py-1.5 bg-white/90 hover:bg-white text-slate-900 rounded-lg text-[10px] font-bold shadow-sm backdrop-blur-md transition-all"
         >
-          <i class="fas fa-arrow-left mr-1.5"></i>{{ client?.name || 'Cliente' }}
+          <i class="fas fa-arrow-left mr-1.5"></i>{{ client?.company || client?.name || 'Cliente' }}
         </router-link>
         <span :class="statusChipClass(project.status)" class="absolute top-4 right-4 text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-md backdrop-blur-md">
           {{ statusLabel(project.status) }}
@@ -118,6 +118,130 @@
           </div>
         </div>
 
+        <!-- Backlog: Proyecto → Feature → Tarea en cascada -->
+        <div v-else-if="activeTab === 'backlog'" class="space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <p class="text-xs text-slate-400 font-medium">
+              Organiza el proyecto en features y agrupa las tareas dentro de cada una.
+            </p>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                @click="openCreate"
+                title="Crear una tarea suelta, sin feature"
+                class="px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center gap-2"
+              >
+                <i class="fas fa-plus"></i>Tarea
+              </button>
+              <button
+                type="button"
+                @click="openCreateFeature"
+                title="Crear una feature para agrupar tareas"
+                class="px-4 py-2.5 bg-violet-500 hover:bg-violet-600 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center gap-2"
+              >
+                <i class="fas fa-layer-group"></i>Nueva feature
+              </button>
+            </div>
+          </div>
+
+          <div v-if="loadingLinked" class="text-center py-10 text-slate-400 text-xs font-bold">
+            <i class="fas fa-spinner fa-spin mr-1.5"></i>Cargando...
+          </div>
+
+          <div v-else-if="backlogFeatures.length === 0 && backlogLooseTasks.length === 0" class="text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+            <i class="fas fa-sitemap text-slate-300 text-2xl mb-2"></i>
+            <p class="text-sm font-bold text-slate-500">Aún no hay features en este proyecto</p>
+            <p class="text-xs text-slate-400 mt-1">Crea la primera feature y agrega sus tareas dentro.</p>
+          </div>
+
+          <template v-else>
+            <!-- Features con sus tareas -->
+            <div
+              v-for="feature in backlogFeatures"
+              :key="feature.item.id"
+              class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden"
+            >
+              <div class="flex items-center gap-3 px-4 py-3 bg-violet-50/40 border-b border-slate-100">
+                <button
+                  type="button"
+                  @click="toggleFeature(feature.item.id)"
+                  :title="collapsedFeatures.has(feature.item.id) ? 'Mostrar las tareas de esta feature' : 'Ocultar las tareas de esta feature'"
+                  class="w-6 h-6 flex items-center justify-center rounded-md text-slate-400 hover:bg-white transition-colors"
+                >
+                  <i class="fas fa-chevron-right text-[10px] transition-transform duration-200" :class="{ 'rotate-90': !collapsedFeatures.has(feature.item.id) }"></i>
+                </button>
+                <span class="w-7 h-7 rounded-lg bg-violet-100 text-violet-600 flex items-center justify-center shrink-0">
+                  <i class="fas fa-layer-group text-xs"></i>
+                </span>
+                <button type="button" @click="openEdit(feature.item)" class="min-w-0 flex-1 text-left" title="Abrir la feature para ver o editar sus datos">
+                  <span class="block text-sm font-black text-slate-800 truncate hover:text-violet-600">{{ feature.item.title }}</span>
+                  <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Feature · {{ feature.item.statusLabel }} · {{ feature.done }}/{{ feature.tasks.length }} tareas completadas
+                  </span>
+                </button>
+                <div class="hidden sm:block w-28 h-1.5 bg-slate-100 rounded-full overflow-hidden shrink-0" :title="`${feature.progress}% de las tareas completadas`">
+                  <div class="h-full bg-violet-500 rounded-full transition-all" :style="{ width: `${feature.progress}%` }"></div>
+                </div>
+                <button
+                  type="button"
+                  @click="openCreateInFeature(feature.item.id)"
+                  title="Agregar una tarea dentro de esta feature"
+                  class="shrink-0 px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider text-violet-600 bg-white border border-violet-200 rounded-lg hover:bg-violet-50 transition-colors"
+                >
+                  <i class="fas fa-plus mr-1"></i>Tarea
+                </button>
+              </div>
+
+              <template v-if="!collapsedFeatures.has(feature.item.id)">
+                <button
+                  v-for="task in feature.tasks"
+                  :key="task.id"
+                  type="button"
+                  @click="openEdit(task)"
+                  class="w-full flex items-center gap-3 pl-14 pr-4 py-2.5 border-t border-slate-50 hover:bg-slate-50/70 transition-colors text-left"
+                  title="Abrir la tarea para ver o editar sus datos"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="statusDot(task)"></span>
+                  <span class="text-sm font-bold truncate flex-1" :class="isDone(task) ? 'text-slate-400 line-through' : 'text-slate-700'">{{ task.title }}</span>
+                  <span v-if="typeBadge(task)" class="shrink-0 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500">{{ typeBadge(task) }}</span>
+                  <span class="shrink-0 text-[10px] font-bold text-slate-400 w-24 text-right">{{ task.statusLabel }}</span>
+                </button>
+                <p v-if="feature.tasks.length === 0" class="pl-14 pr-4 py-3 text-[11px] text-slate-300 font-medium border-t border-slate-50">
+                  Sin tareas todavía
+                </p>
+              </template>
+            </div>
+
+            <!-- Tareas sin feature -->
+            <div v-if="backlogLooseTasks.length" class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+              <div class="flex items-center gap-3 px-4 py-3 bg-slate-50/60 border-b border-slate-100">
+                <span class="w-7 h-7 rounded-lg bg-slate-100 text-slate-400 flex items-center justify-center shrink-0">
+                  <i class="fas fa-inbox text-xs"></i>
+                </span>
+                <span class="text-sm font-black text-slate-600 flex-1">Sin feature</span>
+                <span class="text-[10px] font-bold text-slate-400">{{ backlogLooseTasks.length }}</span>
+              </div>
+              <button
+                v-for="task in backlogLooseTasks"
+                :key="task.id"
+                type="button"
+                @click="openEdit(task)"
+                class="w-full flex items-center gap-3 px-4 py-2.5 border-t border-slate-50 hover:bg-slate-50/70 transition-colors text-left"
+                title="Abrir la tarea para ver o editar sus datos (y asignarle una feature)"
+              >
+                <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="statusDot(task)"></span>
+                <span class="text-sm font-bold truncate flex-1" :class="isDone(task) ? 'text-slate-400 line-through' : 'text-slate-700'">{{ task.title }}</span>
+                <span v-if="typeBadge(task)" class="shrink-0 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500">{{ typeBadge(task) }}</span>
+                <span class="shrink-0 text-[10px] font-bold text-slate-400 w-24 text-right">{{ task.statusLabel }}</span>
+              </button>
+            </div>
+
+            <p v-if="hasBoardTasks" class="text-[11px] text-slate-400 font-medium">
+              <i class="fas fa-circle-info mr-1"></i>Las tareas creadas desde un tablero Kanban no forman parte del Backlog; se ven en la pestaña Actividad.
+            </p>
+          </template>
+        </div>
+
         <!-- Actividad: tareas y actividades vinculadas — mismo modelo visual, -->
         <!-- crear/editar reutiliza el modal estándar de toda la app. -->
         <div v-else-if="activeTab === 'activity'">
@@ -207,6 +331,8 @@
       :team-members="teamMembers"
       :initial-client-id="clientId"
       :initial-project-id="projectId"
+      :initial-type="createType"
+      :initial-feature-id="createFeatureId"
       @close="showActivityModal = false"
       @saved="onActivitySaved"
     />
@@ -239,9 +365,10 @@ const project = ref<ProjectData | null>(null)
 const tabs = [
   { key: 'docs', label: 'Documentación', icon: 'fas fa-file-lines' },
   { key: 'files', label: 'Enlaces y Adjuntos', icon: 'fas fa-paperclip' },
+  { key: 'backlog', label: 'Backlog', icon: 'fas fa-sitemap' },
   { key: 'activity', label: 'Actividad', icon: 'fas fa-list-check' }
 ] as const
-const activeTab = ref<'docs' | 'files' | 'activity'>('docs')
+const activeTab = ref<'docs' | 'files' | 'backlog' | 'activity'>('docs')
 const linkedView = ref<'list' | 'board'>('list')
 
 const statusLabel = (st?: string) =>
@@ -342,6 +469,8 @@ const removeLink = async (linkId: string) => {
 interface LinkedItem {
   id: string; title: string; description?: string; status: string; statusLabel: string
   kind: 'task' | 'activity'; assignedTo?: any; dueDate?: string | null; priority?: string | null
+  // Solo actividades: tipo (feature/task/bug/...) y feature a la que pertenecen
+  type?: string; featureId?: string | null
   raw: any
 }
 const linkedItems = ref<LinkedItem[]>([])
@@ -402,8 +531,10 @@ const linkedListGroups = computed<TaskListGroup[]>(() => {
       priorityLabel: priority?.label,
       priorityClass: priority?.class,
       priorityIcon: priority?.icon,
-      kindLabel: item.kind === 'task' ? 'Tarea' : 'Actividad',
-      kindClass: item.kind === 'task' ? 'bg-indigo-50 text-indigo-500' : 'bg-amber-50 text-amber-600',
+      kindLabel: item.type === 'feature' ? 'Feature' : item.kind === 'task' ? 'Tarea' : 'Actividad',
+      kindClass: item.type === 'feature'
+        ? 'bg-violet-50 text-violet-600'
+        : item.kind === 'task' ? 'bg-indigo-50 text-indigo-500' : 'bg-amber-50 text-amber-600',
       raw: item
     }
   }
@@ -429,7 +560,10 @@ const loadLinkedItems = async () => {
   loadingLinked.value = true
   try {
     const [tasksRes, activities] = await Promise.all([
-      fetch(`${API_CONFIG.BASE_URL}/tasks`).then(r => r.ok ? r.json() : []),
+      // Sin el token la API responde 401 y las tareas del tablero nunca aparecían aquí
+      fetch(`${API_CONFIG.BASE_URL}/tasks`, {
+        headers: localStorage.getItem('token') ? { Authorization: `Bearer ${localStorage.getItem('token')}` } : {}
+      }).then(r => r.ok ? r.json() : []),
       activityService.getAll()
     ])
     const tasks = Array.isArray(tasksRes) ? tasksRes : []
@@ -445,7 +579,8 @@ const loadLinkedItems = async () => {
       items.push({
         id: a._id!, title: a.title, description: a.description, status: a.status,
         statusLabel: ACTIVITY_STATUS_LABELS[a.status] || a.status, kind: 'activity',
-        assignedTo: a.assignedTo, dueDate: a.dueDate as any, priority: a.priority, raw: a
+        assignedTo: a.assignedTo, dueDate: a.dueDate as any, priority: a.priority,
+        type: a.type || 'task', featureId: a.featureId || null, raw: a
       })
     })
     linkedItems.value = items
@@ -456,15 +591,71 @@ const loadLinkedItems = async () => {
   }
 }
 
+// ── Backlog: Feature → Tareas ──
+// Solo actividades: las tareas de un tablero Kanban tienen su propia jerarquía
+// (épicas/features del tablero) y siguen apareciendo en la pestaña Actividad.
+const backlogActivities = computed(() => linkedItems.value.filter(i => i.kind === 'activity'))
+const hasBoardTasks = computed(() => linkedItems.value.some(i => i.kind === 'task'))
+
+const backlogFeatures = computed(() =>
+  backlogActivities.value
+    .filter(i => i.type === 'feature')
+    .map(item => {
+      const tasks = backlogActivities.value.filter(t => t.type !== 'feature' && t.featureId === item.id)
+      const done = tasks.filter(isDone).length
+      return { item, tasks, done, progress: tasks.length ? Math.round((done / tasks.length) * 100) : 0 }
+    })
+)
+
+// Tareas sin feature (o cuya feature ya no existe)
+const backlogLooseTasks = computed(() => {
+  const featureIds = new Set(backlogFeatures.value.map(f => f.item.id))
+  return backlogActivities.value.filter(t => t.type !== 'feature' && (!t.featureId || !featureIds.has(t.featureId)))
+})
+
+const collapsedFeatures = ref(new Set<string>())
+function toggleFeature(id: string) {
+  const next = new Set(collapsedFeatures.value)
+  next.has(id) ? next.delete(id) : next.add(id)
+  collapsedFeatures.value = next
+}
+
+function statusDot(item: LinkedItem) {
+  if (isDone(item)) return 'bg-emerald-500'
+  if (isInProgress(item)) return 'bg-blue-500'
+  if (item.status === 'overdue') return 'bg-red-500'
+  return 'bg-slate-300'
+}
+
+const TYPE_BADGES: Record<string, string> = { bug: 'Bug', 'user-story': 'Historia' }
+const typeBadge = (item: LinkedItem) => (item.type ? TYPE_BADGES[item.type] : undefined)
+
 // ── Crear/editar (modal estándar) ──
 const clients = ref<ClientData[]>([])
 const teamMembers = ref<TeamMember[]>([])
 const clientsForModal = computed(() => clients.value as any)
 const showActivityModal = ref(false)
 const editingItem = ref<any | null>(null)
+// Solo al crear: tipo inicial y feature padre (desde el Backlog)
+const createType = ref('task')
+const createFeatureId = ref<string | null>(null)
 
 const openCreate = () => {
   editingItem.value = null
+  createType.value = 'task'
+  createFeatureId.value = null
+  showActivityModal.value = true
+}
+const openCreateFeature = () => {
+  editingItem.value = null
+  createType.value = 'feature'
+  createFeatureId.value = null
+  showActivityModal.value = true
+}
+const openCreateInFeature = (featureId: string) => {
+  editingItem.value = null
+  createType.value = 'task'
+  createFeatureId.value = featureId
   showActivityModal.value = true
 }
 const openEdit = (item: LinkedItem) => {

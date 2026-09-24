@@ -34,6 +34,7 @@
         <button
           type="button"
           @click="$emit('close')"
+          title="Cerrar sin guardar los cambios"
           class="w-9 h-9 shrink-0 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all border border-transparent hover:border-rose-100"
         >
           <i class="fas fa-times text-lg"></i>
@@ -61,8 +62,8 @@
               />
             </div>
 
-            <!-- Fila 1: Tipo, Prioridad, Fechas -->
-            <div class="form-section grid grid-cols-1 md:grid-cols-[1fr_1fr_1.2fr_1.2fr] gap-4">
+            <!-- Fila 1: Tipo, Prioridad, Estado -->
+            <div class="form-section grid grid-cols-1 md:grid-cols-3 gap-4">
               <div class="group/field space-y-1.5">
                 <label :class="labelClass">Tipo</label>
                 <CustomSelect
@@ -86,6 +87,30 @@
                     { value: 'medium', label: 'Media (Normal)' },
                     { value: 'high', label: 'Alta (Importante)' },
                     { value: 'urgent', label: 'Crítica (Urgente)' }
+                  ]"
+                />
+              </div>
+              <!-- Estado: mueve la actividad de columna en el Kanban de Actividades
+                   (y al arrastrarla allá, cambia aquí) -->
+              <div v-if="!isBoardTask" class="group/field space-y-1.5">
+                <label :class="labelClass">Estado</label>
+                <CustomSelect v-model="form.status" size="dense" :options="statusOptions" />
+              </div>
+            </div>
+
+            <!-- Fila 1b: Ambiente y fechas -->
+            <div class="form-section grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div v-if="!isBoardTask" class="group/field space-y-1.5">
+                <label :class="labelClass">Ambiente</label>
+                <CustomSelect
+                  v-model="form.environment"
+                  size="dense"
+                  placeholder="Sin definir"
+                  :options="[
+                    { value: '', label: 'Sin definir' },
+                    { value: 'development', label: 'En Desarrollo' },
+                    { value: 'testing', label: 'Prueba' },
+                    { value: 'production', label: 'Producción' }
                   ]"
                 />
               </div>
@@ -116,14 +141,14 @@
               <!-- Columna Izquierda -->
               <div class="flex flex-col gap-4 min-h-0">
                 <div class="group/field space-y-1.5">
-                  <label :class="labelClass">Cliente / Proyecto</label>
+                  <label :class="labelClass">Cliente</label>
                   <CustomSelect
                     v-model="form.clientId"
                     size="dense"
                     searchable
                     :options="[
                       { value: '', label: 'Interno' },
-                      ...(clients || []).map(client => ({ value: client._id, label: client.name }))
+                      ...(clients || []).map(client => ({ value: client._id, label: client.company || client.name }))
                     ]"
                   />
                 </div>
@@ -133,6 +158,22 @@
                   size="dense"
                   auto-select-default
                 />
+                <!-- Feature a la que pertenece la tarea (no aplica si se está creando una feature) -->
+                <div v-if="!isBoardTask && form.type !== 'feature'" class="group/field space-y-1.5">
+                  <label :class="labelClass">Feature</label>
+                  <CustomSelect
+                    v-model="form.featureId"
+                    size="dense"
+                    searchable
+                    :loading="loadingFeatures"
+                    :disabled="!form.projectId"
+                    :placeholder="form.projectId ? 'Sin feature' : 'Primero selecciona un proyecto'"
+                    :options="[
+                      { value: '', label: 'Sin feature' },
+                      ...projectFeatures.map(f => ({ value: f._id!, label: f.title }))
+                    ]"
+                  />
+                </div>
                 <!-- Se estira para llenar el alto de la fila; tope para que la lista no crezca sin fin -->
                 <div class="group/field flex-1 flex flex-col gap-1.5 min-h-0 max-h-[280px]">
                   <label :class="labelClass">Equipo Responsable</label>
@@ -156,8 +197,23 @@
                   <textarea
                     v-model="form.description"
                     rows="4"
-                    class="flex-1 min-h-[8rem] w-full px-5 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 placeholder-slate-300 hover:border-slate-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all resize-none text-sm font-medium leading-relaxed shadow-sm custom-scrollbar"
-                    placeholder="Describe los pasos, criterios de aceptación o contexto..."
+                    class="flex-1 min-h-[6rem] w-full px-5 py-3 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 placeholder-slate-300 hover:border-slate-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all resize-none text-sm font-medium leading-relaxed shadow-sm custom-scrollbar"
+                    placeholder="Describe el contexto, los pasos o notas de la tarea..."
+                  ></textarea>
+                </div>
+
+                <!-- Criterios de aceptación: aparte de la descripción para que quien
+                     desarrolla vea de un vistazo el alcance esperado -->
+                <div v-if="!isBoardTask" class="group/field shrink-0 space-y-1.5">
+                  <div class="flex items-center justify-between">
+                    <label :class="labelClass">Criterios de Aceptación</label>
+                    <VoiceDictateButton v-model="form.acceptanceCriteria" size="xs" />
+                  </div>
+                  <textarea
+                    v-model="form.acceptanceCriteria"
+                    rows="4"
+                    class="w-full px-5 py-3 bg-emerald-50/30 border border-slate-200 rounded-2xl text-slate-700 placeholder-slate-300 hover:border-slate-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-400 transition-all resize-none text-sm font-medium leading-relaxed shadow-sm custom-scrollbar"
+                    placeholder="Un criterio por línea. Ej:&#10;- El usuario recibe el correo de confirmación&#10;- El reporte se exporta en Excel"
                   ></textarea>
                 </div>
 
@@ -237,6 +293,7 @@
             <button
               type="button"
               @click="$emit('close')"
+              title="Cerrar sin guardar los cambios"
               class="px-5 py-2.5 bg-white text-slate-500 hover:text-slate-800 border border-slate-200 rounded-xl transition-all font-black text-[11px] uppercase tracking-widest hover:bg-slate-50 active:scale-95"
             >
               Descartar
@@ -260,37 +317,37 @@
         v-if="isEditingTask"
         class="w-[22rem] shrink-0 border-l border-slate-100 flex flex-col bg-slate-50/60"
       >
-        <!-- Pestañas tipo segmento: Comentarios / Historial -->
+        <!-- Pestañas tipo segmento: Comentarios / Adjuntos / Historial -->
         <div class="px-4 pt-4 pb-3 shrink-0">
-          <div class="relative grid grid-cols-2 p-1 bg-slate-100/80 rounded-xl">
+          <div
+            class="relative grid p-1 bg-slate-100/80 rounded-xl"
+            :style="{ gridTemplateColumns: `repeat(${sideTabs.length}, minmax(0, 1fr))` }"
+          >
             <!-- Indicador deslizante de la pestaña activa -->
             <span
-              class="absolute top-1 bottom-1 left-1 w-[calc(50%-0.25rem)] bg-white rounded-lg shadow-sm transition-transform duration-300 ease-out"
-              :class="sideTab === 'history' ? 'translate-x-full' : 'translate-x-0'"
+              class="absolute top-1 bottom-1 left-1 bg-white rounded-lg shadow-sm transition-transform duration-300 ease-out"
+              :style="{
+                width: `calc((100% - 0.5rem) / ${sideTabs.length})`,
+                transform: `translateX(${Math.max(0, sideTabs.findIndex(t => t.key === sideTab)) * 100}%)`
+              }"
               aria-hidden="true"
             ></span>
             <button
+              v-for="t in sideTabs"
+              :key="t.key"
               type="button"
-              @click="sideTab = 'comments'"
-              class="relative z-10 flex items-center justify-center gap-1.5 py-1.5 text-[11px] font-black uppercase tracking-wider transition-colors"
-              :class="sideTab === 'comments' ? 'text-primary-600' : 'text-slate-400 hover:text-slate-600'"
+              @click="sideTab = t.key"
+              :title="t.tooltip"
+              class="relative z-10 flex items-center justify-center gap-1.5 py-1.5 text-[10px] font-black uppercase tracking-wider transition-colors"
+              :class="sideTab === t.key ? 'text-primary-600' : 'text-slate-400 hover:text-slate-600'"
             >
-              <i class="fas fa-comments text-[11px]"></i>
-              Comentarios
+              <i :class="t.icon" class="text-[11px]"></i>
+              {{ t.label }}
               <span
-                v-if="localComments.length > 0"
-                class="min-w-[1.25rem] px-1.5 py-px rounded-full text-[10px] transition-colors"
-                :class="sideTab === 'comments' ? 'bg-primary-100 text-primary-600' : 'bg-slate-200 text-slate-500'"
-              >{{ localComments.length }}</span>
-            </button>
-            <button
-              type="button"
-              @click="sideTab = 'history'"
-              class="relative z-10 flex items-center justify-center gap-1.5 py-1.5 text-[11px] font-black uppercase tracking-wider transition-colors"
-              :class="sideTab === 'history' ? 'text-primary-600' : 'text-slate-400 hover:text-slate-600'"
-            >
-              <i class="fas fa-clock-rotate-left text-[11px]"></i>
-              Historial
+                v-if="t.count"
+                class="min-w-[1.1rem] px-1 py-px rounded-full text-[9px] transition-colors"
+                :class="sideTab === t.key ? 'bg-primary-100 text-primary-600' : 'bg-slate-200 text-slate-500'"
+              >{{ t.count }}</span>
             </button>
           </div>
         </div>
@@ -299,6 +356,51 @@
         <!-- Historial de la tarea (scrollable) -->
         <div v-if="showHistory" key="history" class="flex-1 overflow-y-auto px-4 pb-4 custom-scrollbar">
           <TaskHistory :task="localTask" variant="light" :show-creator="false" />
+        </div>
+
+        <!-- Adjuntos (solo actividades) -->
+        <div v-else-if="sideTab === 'attachments'" key="attachments" class="flex-1 overflow-y-auto px-4 pb-4 space-y-3 custom-scrollbar">
+          <label
+            class="flex flex-col items-center justify-center gap-1.5 py-5 border-2 border-dashed rounded-2xl cursor-pointer transition-all"
+            :class="draggingAttachment ? 'border-primary-400 bg-primary-50/60' : 'border-slate-200 bg-white hover:border-primary-300 hover:bg-primary-50/30'"
+            title="Subir archivos a esta tarea (máx. 10 MB c/u)"
+            @dragover.prevent="draggingAttachment = true"
+            @dragleave.prevent="draggingAttachment = false"
+            @drop.prevent="onAttachmentDrop"
+          >
+            <i v-if="!uploadingAttachment" class="fas fa-cloud-arrow-up text-xl text-slate-300"></i>
+            <div v-else class="w-5 h-5 border-2 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
+            <span class="text-[11px] font-bold text-slate-500">{{ uploadingAttachment ? 'Subiendo...' : 'Arrastra archivos o haz clic' }}</span>
+            <span class="text-[10px] text-slate-300">Documentos, imágenes, ZIP · máx. 10 MB</span>
+            <input type="file" multiple class="hidden" @change="onAttachmentSelect" :disabled="uploadingAttachment" />
+          </label>
+
+          <p v-if="localAttachments.length === 0" class="text-center text-[11px] text-slate-300 font-medium py-4">Sin adjuntos todavía</p>
+
+          <div
+            v-for="att in localAttachments"
+            :key="att._id"
+            class="group flex items-center gap-2.5 px-3 py-2.5 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all"
+          >
+            <div class="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center shrink-0 overflow-hidden">
+              <img v-if="isImageAttachment(att)" :src="att.url" class="w-full h-full object-cover" />
+              <i v-else :class="attachmentIcon(att)" class="text-slate-400 text-sm"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+              <a :href="att.url" target="_blank" rel="noopener noreferrer" class="block text-[12px] font-bold text-slate-700 truncate hover:text-primary-600" :title="`Abrir ${att.name} en una pestaña nueva`">{{ att.name }}</a>
+              <p class="text-[10px] text-slate-400 truncate">
+                {{ formatFileSize(att.size) }}<template v-if="attachmentUploader(att)"> · {{ attachmentUploader(att) }}</template>
+              </p>
+            </div>
+            <button
+              type="button"
+              @click="removeAttachment(att)"
+              class="w-6 h-6 rounded-md text-slate-300 hover:text-rose-500 hover:bg-rose-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shrink-0"
+              title="Eliminar este adjunto"
+            >
+              <i class="fas fa-trash text-[10px]"></i>
+            </button>
+          </div>
         </div>
 
         <!-- Lista de comentarios (scrollable) -->
@@ -331,7 +433,7 @@
                   type="button"
                   @click="startEditComment(comment)"
                   class="w-5 h-5 rounded-md text-slate-400 hover:text-primary-500 hover:bg-primary-50 flex items-center justify-center transition-all"
-                  title="Editar"
+                  title="Editar tu comentario"
                 >
                   <i class="fas fa-pen text-[9px]"></i>
                 </button>
@@ -339,7 +441,7 @@
                   type="button"
                   @click="deleteComment(comment)"
                   class="w-5 h-5 rounded-md text-slate-400 hover:text-rose-500 hover:bg-rose-50 flex items-center justify-center transition-all"
-                  title="Eliminar"
+                  title="Eliminar tu comentario"
                 >
                   <i class="fas fa-trash text-[9px]"></i>
                 </button>
@@ -390,7 +492,7 @@
         </Transition>
 
         <!-- Input nuevo comentario (fijo al fondo) -->
-        <div v-if="!showHistory" class="px-4 py-3 border-t border-slate-100 bg-white shrink-0 relative">
+        <div v-if="sideTab === 'comments'" class="px-4 py-3 border-t border-slate-100 bg-white shrink-0 relative">
           <!-- Dropdown de menciones @ -->
           <div
             v-if="mentionOpen && mentionMatches.length > 0"
@@ -436,7 +538,7 @@
             class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-slate-700 placeholder-slate-300 text-[12px] focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 resize-none transition-all"
           />
           <div class="flex items-center justify-between mt-2">
-            <label class="cursor-pointer flex items-center gap-1.5 text-slate-400 hover:text-primary-500 transition-colors">
+            <label class="cursor-pointer flex items-center gap-1.5 text-slate-400 hover:text-primary-500 transition-colors" title="Adjuntar imágenes al comentario">
               <i class="fas fa-image text-sm"></i>
               <span class="text-[10px] font-black uppercase tracking-wider">Imagen</span>
               <input
@@ -451,6 +553,7 @@
             <button
               type="button"
               @click="submitComment"
+              title="Publicar el comentario"
               :disabled="(!newCommentText.trim() && commentImages.length === 0) || submittingComment"
               class="px-4 py-1.5 bg-primary-500 hover:bg-primary-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 active:scale-95 shadow-sm shadow-primary-200"
             >
@@ -491,7 +594,7 @@ import CustomSelect from '../ui/CustomSelect.vue'
 import ProjectSelect from './ProjectSelect.vue'
 import VoiceDictateButton from '@/components/ui/VoiceDictateButton.vue'
 import TaskHistory from '../tasks/TaskHistory.vue'
-import { activityService } from '../../services/activityService'
+import { activityService, type ActivityData, type ActivityAttachment } from '../../services/activityService'
 import { useBoardsStore } from '../../stores/boards'
 import { useTasksStore } from '../../stores/tasks'
 import { useAuthStore } from '../../stores/auth'
@@ -516,6 +619,10 @@ interface Props {
   // para abrir el modal ya "anclado" a un proyecto, ej. desde su página de detalle.
   initialClientId?: string
   initialProjectId?: string | null
+  // Solo al crear: abre el modal como "Nueva feature" o como tarea de una feature
+  // (desde el Backlog del proyecto).
+  initialType?: string
+  initialFeatureId?: string | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -524,7 +631,9 @@ const props = withDefaults(defineProps<Props>(), {
   teamMembers: () => [],
   initialBoardStatus: 'backlog',
   initialClientId: '',
-  initialProjectId: null
+  initialProjectId: null,
+  initialType: 'task',
+  initialFeatureId: null
 })
 
 const emit = defineEmits<{
@@ -548,7 +657,26 @@ const form = reactive({
   date: '',
   dueDate: '',
   estimatedTime: '',
-  completionPercentage: 0
+  completionPercentage: 0,
+  featureId: '' as string,
+  acceptanceCriteria: '',
+  environment: '' as string
+})
+
+// Estado de la actividad: los tres que usa el Kanban de Actividades. Si la
+// actividad ya está en otro estado (vencida/cancelada) se muestra también, para
+// no cambiarlo sin querer al guardar.
+const STATUS_LABELS: Record<string, string> = {
+  pending: 'Pendiente',
+  'in-progress': 'En progreso',
+  completed: 'Completado',
+  overdue: 'Vencida',
+  cancelled: 'Cancelada'
+}
+const statusOptions = computed(() => {
+  const base = ['pending', 'in-progress', 'completed']
+  if (form.status && !base.includes(form.status)) base.push(form.status)
+  return base.map(value => ({ value, label: STATUS_LABELS[value] || value }))
 })
 
 // Etiqueta de campo: se resalta mientras su campo (group/field) tiene el foco
@@ -597,6 +725,10 @@ const populateForm = () => {
       const defaultDate = new Date().toISOString().slice(0, 16)
       form.date = props.activity.date ? formatDateTimeLocal(props.activity.date) : (props.activity.createdAt ? formatDateTimeLocal(props.activity.createdAt) : defaultDate)
       form.dueDate = props.activity.dueDate ? formatDateTimeLocal(props.activity.dueDate) : ''
+      form.featureId = props.activity.featureId?._id || props.activity.featureId || ''
+      // En tareas del tablero acceptanceCriteria es una lista; solo aplica el texto de actividades
+      form.acceptanceCriteria = typeof props.activity.acceptanceCriteria === 'string' ? props.activity.acceptanceCriteria : ''
+      form.environment = props.activity.environment || ''
     } else {
       // Valores por defecto para nueva tarea
       form.title = ''
@@ -606,11 +738,14 @@ const populateForm = () => {
       form.assignedTo = []
       form.priority = 'medium'
       form.status = 'pending'
-      form.type = 'task'
+      form.type = props.initialType || 'task'
       form.estimatedTime = ''
       form.completionPercentage = 0
       form.date = new Date().toISOString().slice(0, 16)
       form.dueDate = ''
+      form.featureId = props.initialFeatureId || ''
+      form.acceptanceCriteria = ''
+      form.environment = ''
     }
     savedSnapshot.value = JSON.stringify(form)
   } catch (err) {
@@ -661,6 +796,14 @@ const handleSubmit = async () => {
       taskData.assignedTo = form.assignedTo
       taskData.estimatedTime = form.estimatedTime
       taskData.date = form.date
+      // Campos propios de actividades (el modelo Task del tablero no los tiene
+      // o, como acceptanceCriteria, los guarda con otra forma).
+      taskData.featureId = form.type === 'feature' || !form.projectId ? null : (form.featureId || null)
+      taskData.acceptanceCriteria = form.acceptanceCriteria
+      taskData.environment = form.environment || null
+      // Marcarla como completada desde el formulario deja el avance al 100%,
+      // igual que al completarla desde el Kanban.
+      if (form.status === 'completed') taskData.completionPercentage = 100
     }
 
     let savedData: any
@@ -718,8 +861,117 @@ const isEditingTask = computed(() => isEditing.value && !!commentEntityId.value)
 
 const localTask = ref<any>(props.activity)
 const loadingComments = ref(false)
-const sideTab = ref<'comments' | 'history'>('comments')
+type SideTab = 'comments' | 'attachments' | 'history'
+const sideTab = ref<SideTab>('comments')
 const showHistory = computed(() => sideTab.value === 'history')
+
+// ── Features del proyecto (selector "Feature") ──────────────────────────────
+const projectFeatures = ref<ActivityData[]>([])
+const loadingFeatures = ref(false)
+
+// Devuelve false si no se pudieron cargar (para no borrar la feature elegida por un error de red)
+async function loadProjectFeatures(): Promise<boolean> {
+  if (isBoardTask.value || !form.projectId) {
+    projectFeatures.value = []
+    return true
+  }
+  loadingFeatures.value = true
+  try {
+    const selfId = props.activity?._id
+    projectFeatures.value = (await activityService.getFeatures(form.projectId)).filter(f => f._id !== selfId)
+    return true
+  } catch {
+    projectFeatures.value = []
+    return false
+  } finally {
+    loadingFeatures.value = false
+  }
+}
+
+// Al cambiar de proyecto, una feature de otro proyecto deja de aplicar
+watch(() => form.projectId, async () => {
+  const loaded = await loadProjectFeatures()
+  if (loaded && form.featureId && !projectFeatures.value.some(f => f._id === form.featureId)) {
+    form.featureId = ''
+  }
+})
+
+// ── Adjuntos (solo actividades) ─────────────────────────────────────────────
+const localAttachments = computed<ActivityAttachment[]>(() => localTask.value?.attachments || [])
+const uploadingAttachment = ref(false)
+const draggingAttachment = ref(false)
+
+const sideTabs = computed(() => {
+  const tabs: Array<{ key: SideTab; label: string; icon: string; tooltip: string; count?: number }> = [
+    { key: 'comments', label: 'Comentarios', icon: 'fas fa-comments', tooltip: 'Ver y escribir comentarios de la tarea', count: localComments.value.length },
+  ]
+  if (!isBoardTask.value) {
+    tabs.push({ key: 'attachments', label: 'Adjuntos', icon: 'fas fa-paperclip', tooltip: 'Ver y subir archivos de la tarea', count: localAttachments.value.length })
+  }
+  tabs.push({ key: 'history', label: 'Historial', icon: 'fas fa-clock-rotate-left', tooltip: 'Ver quién cambió qué y cuándo' })
+  return tabs
+})
+
+async function uploadAttachmentFiles(files: File[]) {
+  if (!commentEntityId.value || files.length === 0) return
+  uploadingAttachment.value = true
+  try {
+    localTask.value = await activityService.uploadAttachments(commentEntityId.value, files)
+    showSuccess(files.length === 1 ? 'Archivo adjuntado' : `${files.length} archivos adjuntados`)
+  } catch (e: any) {
+    showError(e?.message || 'No se pudo subir el archivo')
+  } finally {
+    uploadingAttachment.value = false
+  }
+}
+
+function onAttachmentSelect(e: Event) {
+  const input = e.target as HTMLInputElement
+  const files = Array.from(input.files || [])
+  input.value = ''
+  uploadAttachmentFiles(files)
+}
+
+function onAttachmentDrop(e: DragEvent) {
+  draggingAttachment.value = false
+  uploadAttachmentFiles(Array.from(e.dataTransfer?.files || []))
+}
+
+async function removeAttachment(att: ActivityAttachment) {
+  if (!commentEntityId.value) return
+  const result = await confirmDelete(att.name)
+  if (!result.isConfirmed) return
+  try {
+    localTask.value = await activityService.deleteAttachment(commentEntityId.value, att._id)
+    showSuccess('Adjunto eliminado')
+  } catch (e: any) {
+    showError(e?.message || 'No se pudo eliminar el adjunto')
+  }
+}
+
+function isImageAttachment(att: ActivityAttachment) {
+  return (att.mimetype || '').startsWith('image/') || /\.(png|jpe?g|gif|webp|svg)$/i.test(att.name || '')
+}
+
+function attachmentIcon(att: ActivityAttachment) {
+  const type = `${att.mimetype || ''} ${att.name || ''}`.toLowerCase()
+  if (type.includes('pdf')) return 'fas fa-file-pdf'
+  if (type.includes('word') || /\.docx?\b/.test(type)) return 'fas fa-file-word'
+  if (type.includes('sheet') || type.includes('excel') || /\.(xlsx?|csv)\b/.test(type)) return 'fas fa-file-excel'
+  if (type.includes('zip') || type.includes('compressed')) return 'fas fa-file-zipper'
+  return 'fas fa-file'
+}
+
+function formatFileSize(bytes?: number) {
+  if (!bytes) return ''
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function attachmentUploader(att: ActivityAttachment) {
+  return typeof att.uploadedBy === 'object' ? att.uploadedBy?.name : ''
+}
 
 // ── Autor y responsables (header) ────────────────────────────────────────────
 // Actividades creadas antes de esta función no tienen autor registrado en la BD;

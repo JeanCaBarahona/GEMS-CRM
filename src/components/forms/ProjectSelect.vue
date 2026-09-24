@@ -133,8 +133,11 @@ const loadProjects = async () => {
   try {
     projects.value = await clientService.getProjects(props.clientId)
     if (props.autoSelectDefault && !props.modelValue) {
-      const def = projects.value.find(p => p.isDefault && p.status === 'active')
-      if (def?._id) emit('update:modelValue', def._id)
+      // Todo cliente tiene dos proyectos por defecto (Interno y Soporte): con más
+      // de uno no hay cuál elegir por la persona, así que solo se preselecciona
+      // si hay exactamente uno.
+      const defaults = projects.value.filter(p => p.isDefault && p.status === 'active')
+      if (defaults.length === 1 && defaults[0]._id) emit('update:modelValue', defaults[0]._id)
     }
   } catch (err: any) {
     error.value = err?.message || 'No se pudieron cargar los proyectos'

@@ -367,7 +367,8 @@
             :options="[
               { value: '', label: 'Features y tareas' },
               { value: 'feature', label: 'Solo features' },
-              { value: 'task', label: 'Solo tareas' }
+              { value: 'task', label: 'Solo tareas' },
+              { value: 'recurring', label: 'Solo recurrentes' }
             ]"
           />
         </div>
@@ -391,6 +392,7 @@
         @toggle-complete="toggleActivityDone"
         @delete="(activity: ActivityData) => deleteActivity(activity._id!)"
         @add-task="showCreateModal = true"
+        @daily-check="dailyCheckActivity"
       />
     </div>
 
@@ -1518,6 +1520,7 @@
       :team-members="teamMembers"
       @close="closeModals"
       @saved="onActivitySaved"
+      @updated="replaceActivityInList"
     />
 
     <!-- Modal de asignación -->
@@ -2567,6 +2570,7 @@ import { wikiService } from '../../services/wikiService'
 import VoiceDictateButton from '@/components/ui/VoiceDictateButton.vue'
 import ActivityFormModal from '../forms/ActivityFormModal.vue'
 import TaskListView, { type TaskListRow, type TaskListGroup } from '../tasks/TaskListView.vue'
+import { recurringStats } from '../../utils/recurring'
 import AssignActivityModal from '../modals/AssignActivityModal.vue'
 import CustomSelect from '../ui/CustomSelect.vue'
 import MonthlyCalendar from '../calendar/MonthlyCalendar.vue'
@@ -2996,7 +3000,7 @@ function activityAssignees(activity: any): TaskListRow['assignees'] {
 // Filtros de la Lista (sin cliente): proyecto → feature → tipo
 const listProjectFilter = ref('')
 const listFeatureFilter = ref('') // '' = todas, NO_FEATURE = sin feature, o el id de una feature
-const listTypeFilter = ref<'' | 'feature' | 'task'>('')
+const listTypeFilter = ref<'' | 'feature' | 'task' | 'recurring'>('')
 const NO_FEATURE = '__none__'
 
 const listProjectOptions = computed(() => [
@@ -3024,7 +3028,8 @@ const featureTitles = computed(() => new Map(
 const listFilteredActivities = computed(() => filteredActivities.value.filter(a => {
   if (listProjectFilter.value && a.projectId !== listProjectFilter.value) return false
   if (listTypeFilter.value === 'feature' && a.type !== 'feature') return false
-  if (listTypeFilter.value === 'task' && a.type === 'feature') return false
+  if (listTypeFilter.value === 'task' && (a.type === 'feature' || a.type === 'recurring')) return false
+  if (listTypeFilter.value === 'recurring' && a.type !== 'recurring') return false
   if (listFeatureFilter.value === NO_FEATURE) {
     if (a.type === 'feature' || a.featureId) return false
   } else if (listFeatureFilter.value) {
@@ -3043,6 +3048,7 @@ function activityToListRow(activity: ActivityData): TaskListRow {
     description: featureTitle ? `Feature: ${featureTitle}` : activity.description,
     kindLabel: activity.type === 'feature' ? 'Feature' : undefined,
     kindClass: 'bg-violet-50 text-violet-600',
+    recurring: activity.type === 'recurring' ? recurringStats(activity.dailyLog as any, authStore.user?._id) : undefined,
     done: visualStatusFor(activity) === 'completed',
     assignees: activityAssignees(activity),
     dueDateLabel: activity.dueDate ? formatDate(activity.dueDate) : undefined,
@@ -3055,16 +3061,34 @@ function activityToListRow(activity: ActivityData): TaskListRow {
 }
 
 const activityListGroups = computed<TaskListGroup[]>(() => {
+  // Las recurrentes van en su propio grupo arriba: no vencen ni se completan
   const byStatus = (status: ReturnType<typeof visualStatusFor>) =>
-    sortActivities(listFilteredActivities.value.filter(a => visualStatusFor(a) === status)).map(activityToListRow)
+    sortActivities(listFilteredActivities.value.filter(a => a.type !== 'recurring' && visualStatusFor(a) === status)).map(activityToListRow)
+  const recurringRows = listFilteredActivities.value.filter(a => a.type === 'recurring').map(activityToListRow)
 
   return [
+    ...(recurringRows.length ? [{ key: 'recurring', label: 'Recurrentes (diarias)', dotClass: 'bg-teal-500', rows: recurringRows }] : []),
     { key: 'overdue', label: 'Vencidas', dotClass: 'bg-red-500', rows: byStatus('overdue') },
     { key: 'pending', label: 'Pendientes', dotClass: 'bg-amber-400', rows: byStatus('pending') },
     { key: 'in-progress', label: 'En progreso', dotClass: 'bg-primary-400', rows: byStatus('in-progress') },
     { key: 'completed', label: 'Completadas', dotClass: 'bg-emerald-500', rows: byStatus('completed') }
   ]
 })
+
+// "+" del día de una recurrente (desde la lista o desde el modal)
+function replaceActivityInList(updated: ActivityData) {
+  const index = activities.value.findIndex(a => a._id === updated._id)
+  if (index !== -1) activities.value[index] = { ...activities.value[index], ...updated }
+}
+
+async function dailyCheckActivity(activity: ActivityData) {
+  try {
+    const updated = await activityService.dailyCheck(activity._id!)
+    replaceActivityInList(updated)
+  } catch (err: any) {
+    showError(err?.message || 'No se pudo registrar el día')
+  }
+}
 
 // El check de la fila alterna completada/pendiente (no hay un tercer estado
 // intermedio útil para un toggle simple de un clic).

@@ -627,7 +627,7 @@ function statusDot(item: LinkedItem) {
   return 'bg-slate-300'
 }
 
-const TYPE_BADGES: Record<string, string> = { bug: 'Bug', 'user-story': 'Historia' }
+const TYPE_BADGES: Record<string, string> = { bug: 'Bug', 'user-story': 'Historia', recurring: 'Recurrente' }
 const typeBadge = (item: LinkedItem) => (item.type ? TYPE_BADGES[item.type] : undefined)
 
 // ── Crear/editar (modal estándar) ──

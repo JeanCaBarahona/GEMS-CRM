@@ -36,13 +36,18 @@ export interface ActivityData {
   acceptanceCriteria?: string
   environment?: ActivityEnvironment | null
   attachments?: ActivityAttachment[]
+  // Tareas recurrentes: un registro por persona y por día ("+" diario)
+  dailyLog?: Array<{ _id?: string; date: string; userId: string; at?: string }>
 }
 
-export type ActivityType = 'task' | 'bug' | 'feature' | 'user-story'
+export type ActivityType = 'task' | 'bug' | 'feature' | 'user-story' | 'recurring'
 export type ActivityEnvironment = 'development' | 'testing' | 'production'
 
 export interface ActivityAttachment {
   _id: string
+  // link: enlace externo; image: captura guardada en la base (url = data URL);
+  // file: archivos subidos al disco antes de pasar a solo enlaces/capturas
+  kind?: 'link' | 'image' | 'file'
   name: string
   url: string
   mimetype?: string
@@ -55,7 +60,13 @@ export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
   task: 'Tarea',
   bug: 'Bug / Error',
   feature: 'Feature',
-  'user-story': 'Historia de Usuario'
+  'user-story': 'Historia de Usuario',
+  recurring: 'Recurrente (diaria)'
+}
+
+// Fecha de hoy en Costa Rica (misma clave que usa el backend para el registro diario)
+export function todayKeyCR(): string {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Costa_Rica' })
 }
 
 export const ENVIRONMENT_LABELS: Record<ActivityEnvironment, string> = {
@@ -321,18 +332,32 @@ class ActivityService {
     return this.getWithFilters({ projectId, type: 'feature' })
   }
 
-  async uploadAttachments(id: string, files: File[]): Promise<ActivityData> {
-    const token = localStorage.getItem('token')
-    const formData = new FormData()
-    files.forEach(file => formData.append('files', file))
+  // Adjuntos: enlace externo o captura (data URL ya comprimida en el navegador)
+  async addAttachment(
+    id: string,
+    attachment: { kind: 'link'; url: string; name?: string } | { kind: 'image'; dataUrl: string; name?: string }
+  ): Promise<ActivityData> {
     const response = await fetch(`${this.baseUrl}${this.endpoint}/${id}/attachments`, {
       method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      body: formData,
+      headers: this.getHeaders(),
+      body: JSON.stringify(attachment),
     })
     if (!response.ok) {
       const body = await response.json().catch(() => null)
-      throw new Error(body?.error || `No se pudo subir el archivo (HTTP ${response.status})`)
+      throw new Error(body?.error || `No se pudo agregar el adjunto (HTTP ${response.status})`)
+    }
+    return response.json()
+  }
+
+  // "+" del día en una tarea recurrente (pulsarlo otra vez el mismo día lo deshace)
+  async dailyCheck(id: string): Promise<ActivityData> {
+    const response = await fetch(`${this.baseUrl}${this.endpoint}/${id}/daily-check`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+    })
+    if (!response.ok) {
+      const body = await response.json().catch(() => null)
+      throw new Error(body?.error || `No se pudo registrar el día (HTTP ${response.status})`)
     }
     return response.json()
   }

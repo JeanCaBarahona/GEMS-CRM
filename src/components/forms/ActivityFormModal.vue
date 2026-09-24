@@ -73,7 +73,8 @@
                     { value: 'task', label: 'Tarea Estándar' },
                     { value: 'bug', label: 'Bug / Error' },
                     { value: 'feature', label: 'Mejora / Feature' },
-                    { value: 'user-story', label: 'Historia de Usuario' }
+                    { value: 'user-story', label: 'Historia de Usuario' },
+                    ...(isBoardTask ? [] : [{ value: 'recurring', label: 'Recurrente (diaria)' }])
                   ]"
                 />
               </div>
@@ -124,7 +125,8 @@
                   />
                 </div>
               </div>
-              <div class="group/field space-y-1.5">
+              <!-- Una recurrente no tiene fecha de entrega: no vence -->
+              <div v-if="form.type !== 'recurring'" class="group/field space-y-1.5">
                 <label :class="labelClass">Entrega</label>
                 <div class="relative group">
                   <input
@@ -134,6 +136,38 @@
                   />
                 </div>
               </div>
+            </div>
+
+            <!-- Tarea recurrente: registro diario con "+" -->
+            <div
+              v-if="!isBoardTask && form.type === 'recurring'"
+              class="form-section flex items-center gap-4 px-4 py-3 bg-teal-50/60 border border-teal-100 rounded-2xl"
+            >
+              <div class="w-10 h-10 rounded-xl bg-teal-100 text-teal-600 flex items-center justify-center shrink-0">
+                <i class="fas fa-repeat"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-black text-slate-700">Tarea recurrente diaria</p>
+                <p v-if="isEditing" class="text-[11px] text-slate-500 mt-0.5">
+                  <b class="text-slate-700">{{ recurring.totalDays }}</b> días registrados ·
+                  racha de <b class="text-slate-700">{{ recurring.streak }}</b> día(s) hábiles ·
+                  hoy: <b :class="recurring.doneToday ? 'text-teal-600' : 'text-amber-600'">{{ recurring.doneToday ? 'hecha' : 'pendiente' }}</b>
+                </p>
+                <p v-else class="text-[11px] text-slate-500 mt-0.5">No vence ni se completa: cada día, quien la hace le da <b>+</b> para registrarla.</p>
+              </div>
+              <button
+                v-if="isEditing"
+                type="button"
+                @click="toggleDailyCheck"
+                :disabled="checkingDaily"
+                class="shrink-0 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all active:scale-95 disabled:opacity-50"
+                :class="recurring.doneToday
+                  ? 'bg-teal-500 text-white shadow-sm shadow-teal-200 hover:bg-teal-600'
+                  : 'bg-white text-teal-600 border border-teal-200 hover:bg-teal-50'"
+                :title="recurring.doneToday ? 'Ya la registraste hoy — clic para deshacer' : 'Registrar que hiciste esta tarea hoy'"
+              >
+                <i :class="recurring.doneToday ? 'fas fa-check' : 'fas fa-plus'" class="mr-1.5"></i>{{ recurring.doneToday ? 'Hecha hoy' : 'Hoy' }}
+              </button>
             </div>
 
             <!-- Fila 2: Cliente/Equipo y Detalles -->
@@ -358,45 +392,99 @@
           <TaskHistory :task="localTask" variant="light" :show-creator="false" />
         </div>
 
-        <!-- Adjuntos (solo actividades) -->
-        <div v-else-if="sideTab === 'attachments'" key="attachments" class="flex-1 overflow-y-auto px-4 pb-4 space-y-3 custom-scrollbar">
+        <!-- Adjuntos (solo actividades): enlaces externos o capturas guardadas en la base -->
+        <div
+          v-else-if="sideTab === 'attachments'"
+          key="attachments"
+          class="flex-1 overflow-y-auto px-4 pb-4 space-y-3 custom-scrollbar focus:outline-none"
+          tabindex="0"
+          @paste="onAttachmentPaste"
+        >
+          <!-- Enlace -->
+          <form class="bg-white rounded-2xl border border-slate-100 shadow-sm p-3 space-y-2" @submit.prevent="addLinkAttachment">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Agregar enlace</p>
+            <input
+              v-model="newLinkUrl"
+              type="url"
+              placeholder="https://drive.google.com/..."
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[12px] text-slate-700 placeholder-slate-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 transition-all"
+            />
+            <div class="flex gap-2">
+              <input
+                v-model="newLinkName"
+                type="text"
+                placeholder="Nombre (opcional)"
+                class="flex-1 min-w-0 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[12px] text-slate-700 placeholder-slate-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 transition-all"
+              />
+              <button
+                type="submit"
+                :disabled="!newLinkUrl.trim() || savingAttachment"
+                class="px-3 py-2 bg-primary-500 hover:bg-primary-600 text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition-all disabled:opacity-40"
+                title="Guardar el enlace en esta tarea"
+              >Agregar</button>
+            </div>
+          </form>
+
+          <!-- Captura de pantalla -->
           <label
-            class="flex flex-col items-center justify-center gap-1.5 py-5 border-2 border-dashed rounded-2xl cursor-pointer transition-all"
+            class="flex flex-col items-center justify-center gap-1 py-4 border-2 border-dashed rounded-2xl cursor-pointer transition-all"
             :class="draggingAttachment ? 'border-primary-400 bg-primary-50/60' : 'border-slate-200 bg-white hover:border-primary-300 hover:bg-primary-50/30'"
-            title="Subir archivos a esta tarea (máx. 10 MB c/u)"
+            title="Adjuntar una captura de pantalla a esta tarea"
             @dragover.prevent="draggingAttachment = true"
             @dragleave.prevent="draggingAttachment = false"
             @drop.prevent="onAttachmentDrop"
           >
-            <i v-if="!uploadingAttachment" class="fas fa-cloud-arrow-up text-xl text-slate-300"></i>
+            <i v-if="!savingAttachment" class="fas fa-image text-lg text-slate-300"></i>
             <div v-else class="w-5 h-5 border-2 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
-            <span class="text-[11px] font-bold text-slate-500">{{ uploadingAttachment ? 'Subiendo...' : 'Arrastra archivos o haz clic' }}</span>
-            <span class="text-[10px] text-slate-300">Documentos, imágenes, ZIP · máx. 10 MB</span>
-            <input type="file" multiple class="hidden" @change="onAttachmentSelect" :disabled="uploadingAttachment" />
+            <span class="text-[11px] font-bold text-slate-500">{{ savingAttachment ? 'Guardando...' : 'Captura de pantalla' }}</span>
+            <span class="text-[10px] text-slate-300">Arrastra, haz clic o pega con Ctrl+V</span>
+            <input type="file" accept="image/*" multiple class="hidden" @change="onAttachmentSelect" :disabled="savingAttachment" />
           </label>
 
-          <p v-if="localAttachments.length === 0" class="text-center text-[11px] text-slate-300 font-medium py-4">Sin adjuntos todavía</p>
+          <p v-if="localAttachments.length === 0" class="text-center text-[11px] text-slate-300 font-medium py-3">Sin adjuntos todavía</p>
 
           <div
             v-for="att in localAttachments"
             :key="att._id"
             class="group flex items-center gap-2.5 px-3 py-2.5 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all"
           >
-            <div class="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center shrink-0 overflow-hidden">
-              <img v-if="isImageAttachment(att)" :src="att.url" class="w-full h-full object-cover" />
-              <i v-else :class="attachmentIcon(att)" class="text-slate-400 text-sm"></i>
+            <button
+              v-if="isImageAttachment(att)"
+              type="button"
+              class="w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-slate-100"
+              @click="previewUrl = att.url"
+              title="Ver la captura en grande"
+            >
+              <img :src="att.url" class="w-full h-full object-cover" />
+            </button>
+            <div v-else class="w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center shrink-0">
+              <i :class="attachmentIcon(att)" class="text-slate-400 text-sm"></i>
             </div>
             <div class="min-w-0 flex-1">
-              <a :href="att.url" target="_blank" rel="noopener noreferrer" class="block text-[12px] font-bold text-slate-700 truncate hover:text-primary-600" :title="`Abrir ${att.name} en una pestaña nueva`">{{ att.name }}</a>
+              <button
+                v-if="isImageAttachment(att)"
+                type="button"
+                @click="previewUrl = att.url"
+                class="block text-left text-[12px] font-bold text-slate-700 truncate hover:text-primary-600 w-full"
+                title="Ver la captura en grande"
+              >{{ att.name }}</button>
+              <a
+                v-else
+                :href="att.url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="block text-[12px] font-bold text-slate-700 truncate hover:text-primary-600"
+                :title="`Abrir ${att.url} en una pestaña nueva`"
+              >{{ att.name }}</a>
               <p class="text-[10px] text-slate-400 truncate">
-                {{ formatFileSize(att.size) }}<template v-if="attachmentUploader(att)"> · {{ attachmentUploader(att) }}</template>
+                {{ attachmentSubtitle(att) }}<template v-if="attachmentUploader(att)"> · {{ attachmentUploader(att) }}</template>
               </p>
             </div>
             <button
               type="button"
               @click="removeAttachment(att)"
               class="w-6 h-6 rounded-md text-slate-300 hover:text-rose-500 hover:bg-rose-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shrink-0"
-              title="Eliminar este adjunto"
+              title="Quitar este adjunto de la tarea"
             >
               <i class="fas fa-trash text-[10px]"></i>
             </button>
@@ -595,6 +683,8 @@ import ProjectSelect from './ProjectSelect.vue'
 import VoiceDictateButton from '@/components/ui/VoiceDictateButton.vue'
 import TaskHistory from '../tasks/TaskHistory.vue'
 import { activityService, type ActivityData, type ActivityAttachment } from '../../services/activityService'
+import { compressImageToDataUrl } from '../../utils/compressImage'
+import { recurringStats } from '../../utils/recurring'
 import { useBoardsStore } from '../../stores/boards'
 import { useTasksStore } from '../../stores/tasks'
 import { useAuthStore } from '../../stores/auth'
@@ -639,6 +729,8 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   close: []
   saved: [activity: any]
+  // Cambios que no cierran el modal (ej. el "+" diario de una recurrente)
+  updated: [activity: any]
 }>()
 
 const loading = ref(false)
@@ -776,7 +868,8 @@ const handleSubmit = async () => {
       status: form.status,
       type: form.type,
       completionPercentage: form.completionPercentage,
-      dueDate: form.dueDate || undefined
+      // Una recurrente no vence (el backend también lo fuerza)
+      dueDate: form.type === 'recurring' ? null : (form.dueDate || undefined)
     }
 
     // Campos específicos según el modelo
@@ -898,8 +991,10 @@ watch(() => form.projectId, async () => {
 
 // ── Adjuntos (solo actividades) ─────────────────────────────────────────────
 const localAttachments = computed<ActivityAttachment[]>(() => localTask.value?.attachments || [])
-const uploadingAttachment = ref(false)
+const savingAttachment = ref(false)
 const draggingAttachment = ref(false)
+const newLinkUrl = ref('')
+const newLinkName = ref('')
 
 const sideTabs = computed(() => {
   const tabs: Array<{ key: SideTab; label: string; icon: string; tooltip: string; count?: number }> = [
@@ -912,16 +1007,43 @@ const sideTabs = computed(() => {
   return tabs
 })
 
-async function uploadAttachmentFiles(files: File[]) {
-  if (!commentEntityId.value || files.length === 0) return
-  uploadingAttachment.value = true
+async function addLinkAttachment() {
+  if (!commentEntityId.value) return
+  let url = newLinkUrl.value.trim()
+  if (!url) return
+  if (!/^https?:\/\//i.test(url)) url = `https://${url}`
+  savingAttachment.value = true
   try {
-    localTask.value = await activityService.uploadAttachments(commentEntityId.value, files)
-    showSuccess(files.length === 1 ? 'Archivo adjuntado' : `${files.length} archivos adjuntados`)
+    localTask.value = await activityService.addAttachment(commentEntityId.value, { kind: 'link', url, name: newLinkName.value.trim() })
+    newLinkUrl.value = ''
+    newLinkName.value = ''
+    showSuccess('Enlace agregado')
   } catch (e: any) {
-    showError(e?.message || 'No se pudo subir el archivo')
+    showError(e?.message || 'No se pudo agregar el enlace')
   } finally {
-    uploadingAttachment.value = false
+    savingAttachment.value = false
+  }
+}
+
+// Capturas: se comprimen en el navegador y se guardan en la base (sin archivos en el servidor)
+async function addScreenshots(files: File[]) {
+  const images = files.filter(f => f.type.startsWith('image/'))
+  if (!commentEntityId.value || images.length === 0) {
+    if (files.length) showError('Solo se pueden adjuntar imágenes; para documentos agrega un enlace')
+    return
+  }
+  savingAttachment.value = true
+  try {
+    for (const file of images) {
+      const dataUrl = await compressImageToDataUrl(file)
+      const name = file.name && file.name !== 'image.png' ? file.name.replace(/\.[^.]+$/, '') : 'Captura de pantalla'
+      localTask.value = await activityService.addAttachment(commentEntityId.value, { kind: 'image', dataUrl, name })
+    }
+    showSuccess(images.length === 1 ? 'Captura adjuntada' : `${images.length} capturas adjuntadas`)
+  } catch (e: any) {
+    showError(e?.message || 'No se pudo guardar la captura')
+  } finally {
+    savingAttachment.value = false
   }
 }
 
@@ -929,12 +1051,47 @@ function onAttachmentSelect(e: Event) {
   const input = e.target as HTMLInputElement
   const files = Array.from(input.files || [])
   input.value = ''
-  uploadAttachmentFiles(files)
+  addScreenshots(files)
 }
 
 function onAttachmentDrop(e: DragEvent) {
   draggingAttachment.value = false
-  uploadAttachmentFiles(Array.from(e.dataTransfer?.files || []))
+  addScreenshots(Array.from(e.dataTransfer?.files || []))
+}
+
+// Ctrl+V en la pestaña Adjuntos: pega una captura del portapapeles
+function onAttachmentPaste(e: ClipboardEvent) {
+  const files = Array.from(e.clipboardData?.files || [])
+  if (files.some(f => f.type.startsWith('image/'))) {
+    e.preventDefault()
+    addScreenshots(files)
+  }
+}
+
+// ── Tarea recurrente: "+" del día ───────────────────────────────────────────
+const recurring = computed(() => recurringStats(localTask.value?.dailyLog, authStore.user?._id))
+const checkingDaily = ref(false)
+
+async function toggleDailyCheck() {
+  if (!commentEntityId.value) return
+  checkingDaily.value = true
+  try {
+    localTask.value = await activityService.dailyCheck(commentEntityId.value)
+    emit('updated', localTask.value)
+  } catch (e: any) {
+    showError(e?.message || 'No se pudo registrar el día')
+  } finally {
+    checkingDaily.value = false
+  }
+}
+
+function attachmentSubtitle(att: ActivityAttachment) {
+  if (isImageAttachment(att)) return `Captura${att.size ? ` · ${formatFileSize(att.size)}` : ''}`
+  try {
+    return new URL(att.url).hostname.replace(/^www\./, '')
+  } catch {
+    return 'Enlace'
+  }
 }
 
 async function removeAttachment(att: ActivityAttachment) {
@@ -950,10 +1107,18 @@ async function removeAttachment(att: ActivityAttachment) {
 }
 
 function isImageAttachment(att: ActivityAttachment) {
-  return (att.mimetype || '').startsWith('image/') || /\.(png|jpe?g|gif|webp|svg)$/i.test(att.name || '')
+  return att.kind === 'image' || (att.url || '').startsWith('data:image/') || (att.mimetype || '').startsWith('image/')
 }
 
 function attachmentIcon(att: ActivityAttachment) {
+  if (att.kind === 'link' || !att.kind) {
+    const host = (att.url || '').toLowerCase()
+    if (host.includes('docs.google') || host.includes('drive.google')) return 'fab fa-google-drive'
+    if (host.includes('sharepoint') || host.includes('onedrive')) return 'fab fa-microsoft'
+    if (host.includes('github')) return 'fab fa-github'
+    if (host.includes('figma')) return 'fab fa-figma'
+    return 'fas fa-link'
+  }
   const type = `${att.mimetype || ''} ${att.name || ''}`.toLowerCase()
   if (type.includes('pdf')) return 'fas fa-file-pdf'
   if (type.includes('word') || /\.docx?\b/.test(type)) return 'fas fa-file-word'

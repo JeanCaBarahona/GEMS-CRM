@@ -198,7 +198,7 @@ const ENUM_LABELS: Record<string, Record<string, string>> = {
   priority: { low: 'Baja', medium: 'Media', high: 'Alta', critical: 'Crítica', urgent: 'Urgente' },
   type: {
     epic: 'Épica', feature: 'Feature', 'user-story': 'Historia',
-    task: 'Tarea', bug: 'Bug', subtask: 'Subtarea'
+    task: 'Tarea', bug: 'Bug', subtask: 'Subtarea', recurring: 'Recurrente'
   },
   environment: { development: 'En Desarrollo', testing: 'Prueba', production: 'Producción' }
 }
@@ -343,6 +343,10 @@ function describe(entry: TaskHistoryEntry, index: number): TimelineItem | null {
         icon: PaperClipIcon,
         verb: entry.newValue ? `adjuntó «${entry.newValue}»` : 'adjuntó un archivo'
       }
+    case 'daily_checked':
+      return { ...base, icon: PlusCircleIcon, verb: 'registró la tarea del día' }
+    case 'daily_unchecked':
+      return { ...base, icon: TrashIcon, verb: 'deshizo el registro del día' }
     case 'attachment_deleted':
       return {
         ...base,

@@ -42,8 +42,17 @@
             :key="row.id"
             class="group flex items-center gap-3 px-4 py-3 border-t border-slate-50 hover:bg-slate-50/70 transition-colors"
           >
+            <!-- Recurrente: no se completa, se registra cada día con "+" -->
+            <span
+              v-if="row.recurring"
+              class="w-5 h-5 shrink-0 rounded-full bg-teal-50 text-teal-500 flex items-center justify-center"
+              title="Tarea recurrente diaria"
+            >
+              <i class="fas fa-repeat text-[9px]"></i>
+            </span>
             <!-- Completar -->
             <button
+              v-else
               type="button"
               @click.stop="emit('toggle-complete', row.raw)"
               class="w-5 h-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-all"
@@ -91,10 +100,24 @@
               <span v-else class="text-[11px] text-slate-300 font-medium">Sin asignar</span>
             </div>
 
-            <!-- Vence -->
+            <!-- Vence (o el "+" del día si es recurrente) -->
             <div class="w-28 shrink-0 hidden md:block">
+              <div v-if="row.recurring" class="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  @click.stop="emit('daily-check', row.raw)"
+                  class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider transition-all active:scale-95"
+                  :class="row.recurring.doneToday
+                    ? 'bg-teal-500 text-white hover:bg-teal-600'
+                    : 'bg-white text-teal-600 border border-teal-200 hover:bg-teal-50'"
+                  :title="row.recurring.doneToday ? 'Ya la registraste hoy — clic para deshacer' : 'Registrar que hiciste esta tarea hoy'"
+                >
+                  <i :class="row.recurring.doneToday ? 'fas fa-check' : 'fas fa-plus'" class="mr-0.5"></i>Hoy
+                </button>
+                <span class="text-[10px] font-bold text-slate-400" :title="`${row.recurring.totalDays} días registrados · racha de ${row.recurring.streak}`">{{ row.recurring.totalDays }}d</span>
+              </div>
               <span
-                v-if="row.dueDateLabel"
+                v-else-if="row.dueDateLabel"
                 class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md"
                 :class="row.overdue ? 'bg-red-50 text-red-600' : 'bg-slate-50 text-slate-500'"
               >
@@ -160,6 +183,8 @@ export interface TaskListRow {
   priorityIcon?: string
   kindLabel?: string
   kindClass?: string
+  // Solo tareas recurrentes: estado del "+" diario
+  recurring?: { doneToday: boolean; totalDays: number; streak: number }
   raw: any
 }
 
@@ -190,6 +215,7 @@ const emit = defineEmits<{
   'toggle-complete': [raw: any]
   delete: [raw: any]
   'add-task': [groupKey: string]
+  'daily-check': [raw: any]
 }>()
 
 const totalRows = computed(() => props.groups.reduce((sum, g) => sum + g.rows.length, 0))

@@ -844,6 +844,73 @@
       v-else-if="currentView === 'kanban'"
       class="grid grid-cols-1 gap-2 sm:gap-3 md:grid-cols-2 lg:grid-cols-4"
     >
+      <!-- Recurrentes diarias: no tienen estado ni prioridad, se marcan con "+ Hoy" -->
+      <section
+        v-if="recurringBoardItems.length"
+        class="md:col-span-2 lg:col-span-4 bg-gradient-to-r from-teal-50/80 via-white to-white border border-teal-100 rounded-xl p-3 sm:p-4 shadow-sm"
+      >
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center border border-teal-200 shadow-sm">
+            <i class="fas fa-repeat text-teal-600 text-sm"></i>
+          </div>
+          <h2 class="text-xs font-black text-slate-800 uppercase tracking-wide">Recurrentes de hoy</h2>
+          <span class="px-2 h-5 flex items-center justify-center bg-teal-100 border border-teal-200 text-teal-700 rounded-full text-[10px] font-black shadow-sm">
+            {{ recurringBoardItems.filter(r => r.stats.doneToday).length }}/{{ recurringBoardItems.length }}
+          </span>
+          <span class="hidden sm:inline text-[11px] text-slate-400 font-medium">Marca con <b class="text-teal-600">+ Hoy</b> cuando la hagas</span>
+        </div>
+        <div class="flex gap-2.5 overflow-x-auto pb-1 custom-scrollbar-slim">
+          <div
+            v-for="{ activity, stats } in recurringBoardItems"
+            :key="activity._id"
+            @click="editActivity(activity)"
+            class="group shrink-0 w-64 bg-white rounded-xl border p-3 cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5"
+            :class="stats.doneToday ? 'border-teal-200' : 'border-slate-200 hover:border-teal-300'"
+          >
+            <div class="flex items-start gap-2.5">
+              <div
+                class="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center transition-colors"
+                :class="stats.doneToday ? 'bg-teal-500 text-white' : 'bg-teal-50 text-teal-500'"
+              >
+                <i :class="stats.doneToday ? 'fas fa-check' : 'fas fa-repeat'" class="text-xs"></i>
+              </div>
+              <div class="min-w-0 flex-1">
+                <h3 class="text-[13px] font-bold leading-snug truncate" :class="stats.doneToday ? 'text-slate-400' : 'text-slate-800 group-hover:text-teal-700'">{{ activity.title }}</h3>
+                <p class="text-slate-400 font-bold text-[10px] uppercase tracking-wider mt-0.5 truncate">{{ getClientName(activity.clientId) }}</p>
+              </div>
+            </div>
+            <div class="flex items-center justify-between gap-2 mt-3">
+              <div class="flex items-center gap-2 min-w-0">
+                <div class="flex -space-x-1.5">
+                  <PersonAvatar
+                    v-for="user in (Array.isArray(activity.assignedTo) ? activity.assignedTo : []).slice(0, 3)"
+                    :key="(user as any)._id || user"
+                    :name="getUserInfo(user).name"
+                    :photo="getUserInfo(user).photo"
+                    :letters="1"
+                    class="w-5 h-5 rounded-full bg-slate-200 border border-white text-[9px] font-bold text-slate-500 shadow-sm"
+                  />
+                </div>
+                <span class="text-[10px] font-bold text-slate-400 whitespace-nowrap" :title="`${stats.totalDays} días registrados · racha de ${stats.streak} día(s) hábiles`">
+                  <i class="fas fa-fire text-orange-400 mr-0.5" v-if="stats.streak > 1"></i>{{ stats.streak > 1 ? stats.streak : stats.totalDays + 'd' }}
+                </span>
+              </div>
+              <button
+                type="button"
+                @click.stop="dailyCheckActivity(activity)"
+                class="shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all active:scale-95"
+                :class="stats.doneToday
+                  ? 'bg-teal-500 text-white hover:bg-teal-600'
+                  : 'bg-white text-teal-600 border border-teal-200 hover:bg-teal-50'"
+                :title="stats.doneToday ? 'Ya la registraste hoy — clic para deshacer' : 'Registrar que hiciste esta tarea hoy'"
+              >
+                <i :class="stats.doneToday ? 'fas fa-check' : 'fas fa-plus'" class="mr-1"></i>Hoy
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Columna Pendiente -->
       <div class="bg-gradient-to-b from-slate-50/50 to-white border border-slate-200/60 rounded-xl p-3 sm:p-4 w-full snap-start flex flex-col h-full shadow-sm">
         <div class="flex items-center gap-3 mb-4">
@@ -2925,31 +2992,42 @@ const visualStatusFor = (a: any): 'pending' | 'in-progress' | 'completed' | 'ove
   return a.status
 }
 
+// Las recurrentes no avanzan por estados: van en su apartado arriba del tablero.
+const boardActivities = computed(() => filteredActivities.value.filter(a => a.type !== 'recurring'))
+
+const recurringBoardItems = computed(() =>
+  filteredActivities.value
+    .filter(a => a.type === 'recurring')
+    .map(activity => ({ activity, stats: recurringStats(activity.dailyLog as any, authStore.user?._id) }))
+    // Primero las que faltan hoy
+    .sort((x, y) => Number(x.stats.doneToday) - Number(y.stats.doneToday) || x.activity.title.localeCompare(y.activity.title))
+)
+
 const pendingActivities = computed(() => {
-  const sorted = sortActivities(filteredActivities.value.filter(a => visualStatusFor(a) === 'pending'))
+  const sorted = sortActivities(boardActivities.value.filter(a => visualStatusFor(a) === 'pending'))
   return sorted.slice(0, columnLimits.value.pending)
 })
 
 const hasMorePending = computed(() =>
-  filteredActivities.value.filter(a => visualStatusFor(a) === 'pending').length > columnLimits.value.pending
+  boardActivities.value.filter(a => visualStatusFor(a) === 'pending').length > columnLimits.value.pending
 )
 
 const inProgressActivities = computed(() => {
-  const sorted = sortActivities(filteredActivities.value.filter(a => visualStatusFor(a) === 'in-progress'))
+  const sorted = sortActivities(boardActivities.value.filter(a => visualStatusFor(a) === 'in-progress'))
   return sorted.slice(0, columnLimits.value.inProgress)
 })
 
 const hasMoreInProgress = computed(() =>
-  filteredActivities.value.filter(a => visualStatusFor(a) === 'in-progress').length > columnLimits.value.inProgress
+  boardActivities.value.filter(a => visualStatusFor(a) === 'in-progress').length > columnLimits.value.inProgress
 )
 
 const completedActivities = computed(() => {
-  const sorted = sortActivities(filteredActivities.value.filter(a => visualStatusFor(a) === 'completed'))
+  const sorted = sortActivities(boardActivities.value.filter(a => visualStatusFor(a) === 'completed'))
   return sorted.slice(0, columnLimits.value.completed)
 })
 
 const hasMoreCompleted = computed(() =>
-  filteredActivities.value.filter(a => visualStatusFor(a) === 'completed').length > columnLimits.value.completed
+  boardActivities.value.filter(a => visualStatusFor(a) === 'completed').length > columnLimits.value.completed
 )
 
 // Filtro defensivo del Kanban: solo muestra en "Vencidas" lo que REALMENTE
@@ -2958,7 +3036,7 @@ const hasMoreCompleted = computed(() =>
 // versiones anteriores con bugs, hasta que reconcileCompletedActivities los
 // limpie en el backend.
 const trulyOverdueActivities = computed(() =>
-  filteredActivities.value.filter((a) => a.status === 'overdue' && shouldBeOverdue(a))
+  boardActivities.value.filter((a) => a.status === 'overdue' && shouldBeOverdue(a))
 )
 
 const overdueActivities = computed(() => {
@@ -3038,9 +3116,10 @@ function activityToListRow(activity: ActivityData): TaskListRow {
     assignees: activityAssignees(activity),
     dueDateLabel: activity.dueDate ? formatDate(activity.dueDate) : undefined,
     overdue: visualStatusFor(activity) === 'overdue',
-    priorityLabel: activity.priority ? getPriorityLabel(activity.priority) : undefined,
-    priorityClass: activity.priority ? getPriorityClass(activity.priority) : undefined,
-    priorityIcon: activity.priority ? getPriorityIcon(activity.priority) : undefined,
+    // Las recurrentes no se priorizan: se hacen todos los días
+    priorityLabel: activity.priority && activity.type !== 'recurring' ? getPriorityLabel(activity.priority) : undefined,
+    priorityClass: activity.priority && activity.type !== 'recurring' ? getPriorityClass(activity.priority) : undefined,
+    priorityIcon: activity.priority && activity.type !== 'recurring' ? getPriorityIcon(activity.priority) : undefined,
     raw: activity
   }
 }

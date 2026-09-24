@@ -121,84 +121,120 @@
         </div>
 
         <!-- Services -->
-        <div v-else-if="activeTab === 'projects'" class="space-y-6">
-          <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-            <h3 class="text-lg font-black text-slate-800">Proyectos</h3>
-            <span class="text-xs font-bold text-slate-400">{{ (client.projects || []).length }} en total</span>
+        <div v-else-if="activeTab === 'projects'" class="space-y-5">
+          <!-- Encabezado -->
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-primary-50 text-primary-500 flex items-center justify-center">
+                <i class="fas fa-diagram-project"></i>
+              </div>
+              <div>
+                <h3 class="text-base font-black text-slate-800 leading-tight">Proyectos</h3>
+                <p class="text-xs text-slate-400 font-medium">Organiza el trabajo del cliente por proyecto</p>
+              </div>
+            </div>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-500 text-[11px] font-bold">
+              <span class="text-slate-700">{{ (client.projects || []).length }}</span> en total
+            </span>
           </div>
 
-          <div class="flex flex-wrap gap-3 items-center bg-slate-50 border border-slate-200 rounded-xl p-4 shadow-sm">
-            <div class="flex-1 min-w-[200px]">
+          <!-- Crear proyecto -->
+          <div class="flex flex-col sm:flex-row gap-2 p-2 bg-white border border-slate-200 rounded-2xl shadow-sm focus-within:border-primary-300 focus-within:ring-4 focus-within:ring-primary-50 transition-all">
+            <div class="relative flex-1 min-w-0">
+              <i class="fas fa-folder-plus absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 text-sm pointer-events-none"></i>
               <label class="sr-only">Nombre del proyecto</label>
-              <input v-model="projectName" @keyup.enter="createProject" placeholder="Ej: Migración Hubspot" class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-800 font-medium text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none shadow-sm" />
+              <input
+                v-model="projectName"
+                @keyup.enter="createProject"
+                placeholder="Nombre del nuevo proyecto, ej: Migración Hubspot"
+                class="w-full h-10 pl-10 pr-3 bg-transparent border-0 rounded-xl text-sm font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-medium focus:outline-none focus:ring-0"
+              />
             </div>
-            <div class="w-full sm:w-auto">
-              <label class="sr-only">Estado</label>
-              <select v-model="projectStatus" class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-800 font-medium text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none shadow-sm">
-                <option value="active">Activo</option>
-                <option value="paused">Pausado</option>
-                <option value="completed">Completado</option>
-                <option value="archived">Archivado</option>
-              </select>
+            <div class="sm:w-40 shrink-0">
+              <CustomSelect :model-value="projectStatus" @update:model-value="(v: any) => (projectStatus = v)" :options="projectStatusOptions" size="md" />
             </div>
-            <button @click="createProject" :disabled="!projectName.trim()" class="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-primary-600 text-white font-bold hover:bg-primary-700 shadow-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
-              <i class="fas fa-plus mr-1"></i> Crear proyecto
+            <button
+              @click="createProject"
+              :disabled="!projectName.trim()"
+              class="h-10 shrink-0 px-5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm font-bold shadow-sm shadow-primary-200 transition-all active:scale-[0.98] disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none disabled:cursor-not-allowed"
+            >
+              <i class="fas fa-plus mr-1.5 text-xs"></i>Crear proyecto
             </button>
           </div>
 
-          <div v-if="client.projects?.length" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <!-- Tarjetas -->
+          <div v-if="client.projects?.length" class="grid grid-cols-1 lg:grid-cols-2 gap-3">
             <div
               v-for="pr in client.projects"
               :key="pr._id"
-              class="bg-white border border-slate-200 rounded-xl p-5 hover:border-primary-300 hover:shadow-md transition-all shadow-sm"
-              :class="editingProjectId !== pr._id ? 'cursor-pointer' : ''"
+              class="group relative bg-white border border-slate-200/80 rounded-2xl transition-all"
+              :class="editingProjectId !== pr._id
+                ? 'cursor-pointer hover:border-slate-300 hover:shadow-lg hover:shadow-slate-200/60 hover:-translate-y-px'
+                : 'border-primary-300 ring-4 ring-primary-50'"
               @dblclick="editingProjectId !== pr._id && openProjectDetail(pr)"
             >
-              <div v-if="editingProjectId !== pr._id" class="flex flex-col h-full justify-between gap-3">
-                <div class="flex justify-between items-start">
-                  <div>
-                    <div class="flex items-center gap-2">
-                      <h4 class="text-slate-800 font-black">{{ pr.name }}</h4>
-                      <span v-if="pr.isDefault" class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md border bg-slate-100 text-slate-600 border-slate-200">Por defecto</span>
-                    </div>
-                    <div class="flex items-center gap-2 mt-1">
-                      <span :class="{
-                        'bg-emerald-100 text-emerald-700 border-emerald-200': pr.status === 'active',
-                        'bg-amber-100 text-amber-700 border-amber-200': pr.status === 'paused',
-                        'bg-blue-100 text-blue-700 border-blue-200': pr.status === 'completed',
-                        'bg-slate-100 text-slate-600 border-slate-200': pr.status === 'archived',
-                      }" class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md border">
-                        {{ projectStatusLabel(pr.status) }}
-                      </span>
-                    </div>
+              <div v-if="editingProjectId !== pr._id" class="flex items-start gap-3.5 p-4">
+                <!-- Ícono con el color del estado -->
+                <div
+                  class="w-11 h-11 shrink-0 rounded-xl flex items-center justify-center text-base font-black"
+                  :class="projectStatusStyle(pr.status).tile"
+                >
+                  <i v-if="pr.isDefault" :class="pr.name.toLowerCase() === 'soporte' ? 'fas fa-headset' : 'fas fa-building'" class="text-sm"></i>
+                  <template v-else>{{ pr.name.charAt(0).toUpperCase() }}</template>
+                </div>
+
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <h4 class="text-[15px] font-bold text-slate-800 truncate group-hover:text-primary-600 transition-colors">{{ pr.name }}</h4>
+                    <span
+                      v-if="pr.isDefault"
+                      class="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-500 text-[10px] font-bold"
+                      title="Proyecto por defecto: todos los clientes lo tienen y no se puede eliminar"
+                    >
+                      <i class="fas fa-lock text-[8px]"></i>Por defecto
+                    </span>
                   </div>
-                  <div class="flex gap-1">
-                    <button @click.stop="openProjectDetail(pr)" title="Abrir el proyecto (documentación, backlog, adjuntos y tareas) — también con doble clic en la tarjeta" class="p-2 text-slate-400 hover:bg-slate-100 rounded-lg transition-colors"><i class="fas fa-up-right-and-down-left-from-center"></i></button>
-                    <button @click.stop="startEditProject(pr)" title="Editar nombre, estado y descripción del proyecto" class="p-2 text-primary-500 hover:bg-primary-50 rounded-lg transition-colors"><i class="fas fa-edit"></i></button>
-                    <button v-if="!pr.isDefault" @click.stop="deleteProject(pr._id)" title="Eliminar este proyecto" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"><i class="fas fa-trash"></i></button>
+                  <div class="flex items-center gap-1.5 mt-1.5">
+                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold" :class="projectStatusStyle(pr.status).badge">
+                      <span class="w-1.5 h-1.5 rounded-full" :class="projectStatusStyle(pr.status).dot"></span>
+                      {{ projectStatusLabel(pr.status) }}
+                    </span>
+                  </div>
+                  <p v-if="pr.description" class="mt-2.5 text-[13px] text-slate-500 leading-relaxed line-clamp-2">{{ pr.description }}</p>
+                </div>
+
+                <!-- Acciones -->
+                <div class="flex items-center gap-0.5 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
+                  <button @click.stop="startEditProject(pr)" title="Editar nombre, estado y descripción del proyecto" class="w-8 h-8 rounded-lg text-slate-400 hover:text-primary-600 hover:bg-primary-50 flex items-center justify-center transition-colors"><i class="fas fa-pen text-xs"></i></button>
+                  <button v-if="!pr.isDefault" @click.stop="deleteProject(pr._id)" title="Eliminar este proyecto" class="w-8 h-8 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-colors"><i class="fas fa-trash text-xs"></i></button>
+                  <button @click.stop="openProjectDetail(pr)" title="Abrir el proyecto (documentación, backlog, adjuntos y tareas) — también con doble clic en la tarjeta" class="h-8 pl-2.5 pr-2 ml-1 rounded-lg bg-slate-50 text-slate-500 hover:bg-primary-500 hover:text-white text-[11px] font-bold flex items-center gap-1.5 transition-colors">
+                    Abrir<i class="fas fa-arrow-right text-[9px]"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Edición en línea -->
+              <div v-else class="p-4 space-y-3">
+                <div class="flex flex-col sm:flex-row gap-2">
+                  <input v-model="editProjectName" placeholder="Nombre del proyecto" class="flex-1 min-w-0 h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:border-primary-400 focus:ring-4 focus:ring-primary-50 focus:outline-none transition-all" />
+                  <div class="sm:w-40 shrink-0">
+                    <CustomSelect :model-value="editProjectStatus" @update:model-value="(v: any) => (editProjectStatus = v)" :options="projectStatusOptions" size="md" />
                   </div>
                 </div>
-                <p v-if="pr.description" class="text-slate-600 text-sm p-3 bg-slate-50 rounded-lg border border-slate-100 mt-2">{{ pr.description }}</p>
-              </div>
-              <div v-else class="flex flex-col gap-3">
-                <input v-model="editProjectName" placeholder="Nombre del proyecto" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-800 text-sm focus:ring-2 focus:ring-primary-500" />
-                <select v-model="editProjectStatus" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-800 text-sm focus:ring-2 focus:ring-primary-500">
-                  <option value="active">Activo</option>
-                  <option value="paused">Pausado</option>
-                  <option value="completed">Completado</option>
-                  <option value="archived">Archivado</option>
-                </select>
-                <input v-model="editProjectDescription" placeholder="Descripción del proyecto..." class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-800 text-sm focus:ring-2 focus:ring-primary-500" />
-                <div class="flex gap-2 justify-end mt-2">
-                  <button @click="cancelEditProject" class="px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-600 text-sm font-bold hover:bg-slate-50">Cancelar</button>
-                  <button @click="confirmEditProject" class="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700">Guardar</button>
+                <textarea v-model="editProjectDescription" rows="2" placeholder="Descripción del proyecto (opcional)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 resize-none focus:bg-white focus:border-primary-400 focus:ring-4 focus:ring-primary-50 focus:outline-none transition-all"></textarea>
+                <div class="flex gap-2 justify-end">
+                  <button @click="cancelEditProject" class="h-9 px-4 rounded-xl text-slate-500 text-sm font-bold hover:bg-slate-100 transition-colors">Cancelar</button>
+                  <button @click="confirmEditProject" class="h-9 px-4 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm font-bold shadow-sm transition-colors"><i class="fas fa-check mr-1.5 text-xs"></i>Guardar</button>
                 </div>
               </div>
             </div>
           </div>
-          <div v-else class="text-center py-10 bg-slate-50 border border-dashed border-slate-200 rounded-xl">
-            <i class="fas fa-diagram-project text-3xl text-slate-300 mb-3"></i>
-            <p class="text-slate-500 font-medium">Este cliente todavía no tiene proyectos.</p>
+          <div v-else class="flex flex-col items-center justify-center text-center py-12 bg-slate-50/60 border border-dashed border-slate-200 rounded-2xl">
+            <div class="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-3">
+              <i class="fas fa-diagram-project text-2xl text-slate-300"></i>
+            </div>
+            <p class="text-sm font-bold text-slate-600">Este cliente todavía no tiene proyectos</p>
+            <p class="text-xs text-slate-400 mt-1">Crea el primero con la barra de arriba</p>
           </div>
         </div>
 
@@ -478,6 +514,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { clientService, type ProjectData } from '@/services/clientService'
 import { API_CONFIG } from '@/config/api'
 import { useNotifications } from '@/composables/useNotifications'
+import CustomSelect from '@/components/ui/CustomSelect.vue'
 
 const { showError } = useNotifications()
 
@@ -661,6 +698,22 @@ const openProjectDetail = (pr: ProjectData) => {
 
 const projectStatusLabel = (st?: string) =>
   st === 'active' ? 'Activo' : st === 'paused' ? 'Pausado' : st === 'completed' ? 'Completado' : 'Archivado'
+
+const projectStatusOptions = [
+  { value: 'active', label: 'Activo' },
+  { value: 'paused', label: 'Pausado' },
+  { value: 'completed', label: 'Completado' },
+  { value: 'archived', label: 'Archivado' }
+]
+
+// Colores por estado: ícono de la tarjeta, badge y punto
+const PROJECT_STATUS_STYLES: Record<string, { tile: string; badge: string; dot: string }> = {
+  active: { tile: 'bg-emerald-50 text-emerald-600', badge: 'bg-emerald-50 text-emerald-700', dot: 'bg-emerald-500' },
+  paused: { tile: 'bg-amber-50 text-amber-600', badge: 'bg-amber-50 text-amber-700', dot: 'bg-amber-500' },
+  completed: { tile: 'bg-sky-50 text-sky-600', badge: 'bg-sky-50 text-sky-700', dot: 'bg-sky-500' },
+  archived: { tile: 'bg-slate-100 text-slate-500', badge: 'bg-slate-100 text-slate-600', dot: 'bg-slate-400' }
+}
+const projectStatusStyle = (st?: string) => PROJECT_STATUS_STYLES[st || ''] || PROJECT_STATUS_STYLES.archived
 
 const createProject = async () => {
   const name = projectName.value.trim()

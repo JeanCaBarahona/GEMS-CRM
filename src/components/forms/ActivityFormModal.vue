@@ -354,15 +354,15 @@
         <!-- Pestañas tipo segmento: Comentarios / Adjuntos / Historial -->
         <div class="px-4 pt-4 pb-3 shrink-0">
           <div
-            class="relative grid p-1 bg-slate-100/80 rounded-xl"
+            class="relative grid gap-1 p-1 bg-slate-100/80 rounded-xl"
             :style="{ gridTemplateColumns: `repeat(${sideTabs.length}, minmax(0, 1fr))` }"
           >
             <!-- Indicador deslizante de la pestaña activa -->
             <span
               class="absolute top-1 bottom-1 left-1 bg-white rounded-lg shadow-sm transition-transform duration-300 ease-out"
               :style="{
-                width: `calc((100% - 0.5rem) / ${sideTabs.length})`,
-                transform: `translateX(${Math.max(0, sideTabs.findIndex(t => t.key === sideTab)) * 100}%)`
+                width: `calc((100% - 0.5rem - ${sideTabs.length - 1} * 0.25rem) / ${sideTabs.length})`,
+                transform: `translateX(calc(${Math.max(0, sideTabs.findIndex(t => t.key === sideTab))} * (100% + 0.25rem)))`
               }"
               aria-hidden="true"
             ></span>
@@ -372,16 +372,18 @@
               type="button"
               @click="sideTab = t.key"
               :title="t.tooltip"
-              class="relative z-10 flex items-center justify-center gap-1.5 py-1.5 text-[10px] font-black uppercase tracking-wider transition-colors"
+              class="relative z-10 flex flex-col items-center justify-center gap-1 py-2 px-1 transition-colors"
               :class="sideTab === t.key ? 'text-primary-600' : 'text-slate-400 hover:text-slate-600'"
             >
-              <i :class="t.icon" class="text-[11px]"></i>
-              {{ t.label }}
-              <span
-                v-if="t.count"
-                class="min-w-[1.1rem] px-1 py-px rounded-full text-[9px] transition-colors"
-                :class="sideTab === t.key ? 'bg-primary-100 text-primary-600' : 'bg-slate-200 text-slate-500'"
-              >{{ t.count }}</span>
+              <span class="relative">
+                <i :class="t.icon" class="text-sm"></i>
+                <span
+                  v-if="t.count"
+                  class="absolute -top-1.5 -right-3 min-w-[1rem] h-4 px-1 rounded-full text-[9px] font-black leading-4 text-center ring-2 transition-colors"
+                  :class="sideTab === t.key ? 'bg-primary-500 text-white ring-white' : 'bg-slate-300 text-white ring-slate-100'"
+                >{{ t.count }}</span>
+              </span>
+              <span class="text-[11px] font-bold leading-none">{{ t.label }}</span>
             </button>
           </div>
         </div>

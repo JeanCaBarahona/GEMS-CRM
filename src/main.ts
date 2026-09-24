@@ -5,6 +5,7 @@ import router from './router'
 import './style.css'
 import { injectSwalStyles } from './composables/useNotifications'
 import { installHttpAuth } from './utils/httpAuth'
+import { installTooltips } from './utils/tooltips'
 
 // Debe instalarse antes de montar: el backend exige Authorization en todo /api/*
 installHttpAuth()
@@ -18,3 +19,6 @@ injectSwalStyles()
 app.use(pinia)
 app.use(router)
 app.mount('#app')
+
+// Todos los `title` de la app se muestran como tooltips con estilo
+installTooltips()

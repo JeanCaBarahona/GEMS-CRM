@@ -29,12 +29,14 @@ export interface BoardMember {
     _id: string
     name: string
     email: string
+    photo?: string
   }
   // Soporte para formato alternativo
   user?: {
     _id: string
     name: string
     email: string
+    photo?: string
   }
   role: 'owner' | 'admin' | 'member' | 'viewer'
   addedAt: Date

@@ -229,10 +229,7 @@
                 <div class="flex items-center justify-between mt-4 pt-4 border-t border-slate-50">
                   <div class="flex -space-x-2">
                     <div v-if="task.assignedTo" class="group/avatar relative">
-                      <div class="w-8 h-8 rounded-full border-2 border-white bg-primary-100 text-primary-700 flex items-center justify-center text-[10px] font-black shadow-sm overflow-hidden">
-                        <img v-if="task.assignedTo.photo" :src="task.assignedTo.photo" class="w-full h-full object-cover" />
-                        <span v-else>{{ getInitials(task.assignedTo.name) }}</span>
-                      </div>
+                      <PersonAvatar :name="task.assignedTo.name" :photo="task.assignedTo.photo" class="w-8 h-8 rounded-full border-2 border-white bg-primary-100 text-primary-700 text-[10px] font-black shadow-sm" />
                     </div>
                     <div v-else class="w-8 h-8 rounded-full border-2 border-white bg-slate-100 text-slate-400 flex items-center justify-center text-[10px] shadow-sm">
                       <i class="fas fa-user-plus text-[8px]"></i>
@@ -316,9 +313,7 @@
               </td>
               <td class="px-6 py-4">
                 <div v-if="task.assignedTo" class="flex items-center gap-2">
-                  <div class="w-7 h-7 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-[10px] font-black border border-white shadow-sm">
-                    {{ getInitials(task.assignedTo.name) }}
-                  </div>
+                  <PersonAvatar :name="task.assignedTo.name" :photo="task.assignedTo.photo" class="w-7 h-7 rounded-full bg-primary-100 text-primary-700 text-[10px] font-black border border-white shadow-sm" />
                   <span class="text-slate-600 text-xs font-bold">{{ task.assignedTo.name }}</span>
                 </div>
                 <span v-else class="text-slate-300 text-xs italic">Sin asignar</span>
@@ -369,6 +364,7 @@
 </template>
 
 <script setup lang="ts">
+import PersonAvatar from '../components/ui/PersonAvatar.vue'
 import { ref, computed, onMounted, watch } from 'vue'
 import { useBoardsStore } from '@/stores/boards'
 import { useTasksStore, type Task } from '@/stores/tasks'

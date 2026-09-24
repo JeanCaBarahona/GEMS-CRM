@@ -390,6 +390,7 @@ export interface UserKPI {
     role: string
     department: string
     avatar?: string
+    photo?: string
   }
   totalItems: number
   totalCompleted: number

@@ -57,9 +57,7 @@
     <div class="flex items-center justify-between">
       <!-- Assignee -->
       <div v-if="task.assignedTo" class="flex items-center space-x-2">
-        <div class="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-medium">
-          {{ getInitials(task.assignedTo.name) }}
-        </div>
+        <PersonAvatar :name="task.assignedTo.name" :photo="task.assignedTo.photo" class="w-6 h-6 rounded-full bg-blue-500 text-white text-xs font-medium" />
         <span class="text-xs text-gray-600 truncate max-w-[100px]">
           {{ task.assignedTo.name }}
         </span>
@@ -105,6 +103,7 @@
 </template>
 
 <script setup lang="ts">
+import PersonAvatar from '../ui/PersonAvatar.vue'
 import { computed } from 'vue'
 import type { Task } from '@/stores/tasks'
 
@@ -175,14 +174,6 @@ const prStatusClass = computed(() => {
   return classes[status || 'open']
 })
 
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .substring(0, 2)
-}
 </script>
 
 <style scoped>

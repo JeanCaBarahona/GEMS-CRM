@@ -11,12 +11,7 @@
         :key="user?._id"
         class="inline-flex items-center gap-1 pl-1 pr-1.5 py-1 bg-white border border-slate-200 rounded-md shadow-sm shrink-0"
       >
-        <div v-if="user?.photo || user?.avatar" class="w-4 h-4 rounded-full overflow-hidden flex-shrink-0">
-          <img :src="user.photo || user.avatar" class="w-full h-full object-cover" />
-        </div>
-        <div v-else class="w-4 h-4 rounded-full bg-primary-100 flex items-center justify-center text-[8px] font-black text-primary-600 flex-shrink-0">
-          {{ user?.name?.charAt(0) || '?' }}
-        </div>
+        <PersonAvatar :name="user?.name" :photo="user?.photo" :letters="1" class="w-4 h-4 rounded-full bg-primary-100 text-[8px] font-black text-primary-600" />
         <span class="text-[11px] font-bold text-slate-700 whitespace-nowrap">{{ user?.name || 'Usuario' }}</span>
         <button
           type="button"
@@ -63,12 +58,7 @@
         @click="typeof member._id === 'string' && addAssigned(member._id)"
         class="flex items-center w-full px-2 py-1.5 rounded-lg transition-all border border-transparent bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-200 hover:text-slate-900 group"
       >
-        <div class="w-6 h-6 rounded-full overflow-hidden mr-2 border border-slate-100 shadow-sm flex-shrink-0">
-          <img v-if="member.photo || member.avatar" :src="member.photo || member.avatar" class="w-full h-full object-cover" />
-          <div v-else class="w-full h-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-400">
-            {{ member.name.charAt(0) }}
-          </div>
-        </div>
+        <PersonAvatar :name="member.name" :photo="member.photo" :letters="1" class="w-6 h-6 rounded-full mr-2 border border-slate-100 shadow-sm bg-slate-100 text-[10px] font-bold text-slate-400" />
         <div class="flex flex-col items-start min-w-0">
           <span class="text-[12px] font-bold truncate">{{ member.name }}</span>
           <span class="text-[9px] text-slate-400 font-medium truncate uppercase tracking-wider">{{ member.department || member.role || 'Miembro' }}</span>
@@ -85,6 +75,7 @@
 </template>
 
 <script setup lang="ts">
+import PersonAvatar from "./ui/PersonAvatar.vue"
 // Exponer selectedUsers al template
 import { ref, computed } from 'vue'
 import type { TeamMember } from '../types'

@@ -192,12 +192,7 @@
                <div>
                  <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Asignado a</p>
                  <div v-if="selectedTicket.assignedTo" class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-slate-100 overflow-hidden">
-                       <img v-if="selectedTicket.assignedTo.avatar" src="" class="w-full h-full object-cover">
-                       <div v-else class="w-full h-full flex items-center justify-center text-slate-400 text-[10px] font-black">
-                         {{ selectedTicket.assignedTo.name.charAt(0) }}
-                       </div>
-                    </div>
+                    <PersonAvatar :name="selectedTicket.assignedTo.name" :photo="selectedTicket.assignedTo.photo" :letters="1" class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 text-[10px] font-black" />
                     <span class="text-sm font-bold text-slate-700">{{ selectedTicket.assignedTo.name }}</span>
                  </div>
                  <span v-else class="text-xs text-slate-400 italic font-medium">Buscando el mejor experto...</span>
@@ -241,9 +236,7 @@
                    v-show="!comment.isInternal"
                  >
                    <div class="flex gap-4">
-                     <div class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400">
-                       {{ comment.author?.name?.charAt(0) || '?' }}
-                     </div>
+                     <PersonAvatar :name="comment.author?.name" :photo="comment.author?.photo" :letters="1" class="w-8 h-8 rounded-full bg-slate-100 text-[10px] font-black text-slate-400" />
                      <div class="flex-1 space-y-1">
                        <div class="flex items-center justify-between">
                          <span class="text-[11px] font-black text-slate-800">{{ comment.author?.name || 'Soporte Técnico' }}</span>
@@ -316,6 +309,7 @@
 </template>
 
 <script setup lang="ts">
+import PersonAvatar from '../../components/ui/PersonAvatar.vue'
 import { ref, onMounted, nextTick } from 'vue'
 
 import { useAuthStore } from '../../stores/auth'

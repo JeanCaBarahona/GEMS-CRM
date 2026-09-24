@@ -24,10 +24,7 @@
                   :key="session.userId + idx"
                   class="relative group/avatar"
                 >
-                  <div class="w-12 h-12 rounded-2xl bg-slate-900 border-2 border-white shadow-xl flex items-center justify-center text-xs font-black text-white overflow-hidden transition-transform group-hover/avatar:-translate-y-1">
-                    <img v-if="session.userPhoto || session.userAvatar" :src="session.userPhoto || session.userAvatar" class="w-full h-full object-cover" />
-                    <span v-else>{{ session.userName?.charAt(0) || '?' }}</span>
-                  </div>
+                  <PersonAvatar :name="session.userName" :photo="session.userPhoto" :letters="1" class="w-12 h-12 rounded-2xl bg-slate-900 border-2 border-white shadow-xl text-xs font-black text-white transition-transform group-hover/avatar:-translate-y-1" />
                   <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white shadow-sm"></div>
                   
                   <!-- Tooltip -->
@@ -87,10 +84,7 @@
                 <div class="lg:w-[240px] flex lg:flex-col justify-between lg:justify-start gap-4">
                   <div class="flex items-center lg:items-start gap-4">
                     <div class="relative shrink-0">
-                      <div class="w-14 h-14 rounded-2xl bg-slate-900 border-4 border-white shadow-xl flex items-center justify-center text-white font-black text-lg overflow-hidden">
-                        <img v-if="item.user.photo || item.user.avatar" :src="item.user.photo || item.user.avatar" class="w-full h-full object-cover" />
-                        <span v-else>{{ item.user.name.charAt(0) }}</span>
-                      </div>
+                      <PersonAvatar :name="item.user.name" :photo="item.user.photo" :letters="1" class="w-14 h-14 rounded-2xl bg-slate-900 border-4 border-white shadow-xl text-white font-black text-lg" />
                       <div v-if="isUserActive(item.user._id)" class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white shadow-sm animate-pulse"></div>
                     </div>
                     <div class="space-y-0.5 min-w-0">
@@ -227,6 +221,7 @@
 </template>
 
 <script setup lang="ts">
+import PersonAvatar from '../components/ui/PersonAvatar.vue'
 import { ref, computed } from 'vue'
 import axios from 'axios'
 import { API_CONFIG } from '@/config/api'

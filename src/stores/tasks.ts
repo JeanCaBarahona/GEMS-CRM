@@ -42,6 +42,7 @@ export interface Task {
     _id: string
     name: string
     email: string
+    photo?: string
   }
   // Quién creó la tarea (distinto de a quién está asignada)
   createdBy?: {

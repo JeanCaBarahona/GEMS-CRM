@@ -476,9 +476,7 @@
           <div>
             <label class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 block">Persona asignada</label>
             <div v-if="getFirstAssigned(selectedTask.assignedTo)" class="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
-              <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-black">
-                {{ getFirstAssigned(selectedTask.assignedTo)?.name?.charAt(0) || '?' }}
-              </div>
+              <PersonAvatar :name="getFirstAssigned(selectedTask.assignedTo)?.name" :photo="getFirstAssigned(selectedTask.assignedTo)?.photo" :letters="1" class="w-10 h-10 bg-primary-100 rounded-full text-primary-600 font-black" />
               <div>
                 <div class="text-sm font-bold text-slate-800">{{ getFirstAssigned(selectedTask.assignedTo)?.name || 'Sin nombre' }}</div>
                 <div class="text-xs text-slate-500">{{ getFirstAssigned(selectedTask.assignedTo)?.email || '' }}</div>
@@ -677,9 +675,7 @@
                 class="p-4 bg-slate-50 border border-slate-100 rounded-lg shadow-sm"
               >
                 <div class="flex items-center gap-2 mb-2">
-                  <div class="w-6 h-6 bg-primary-100 rounded-full flex items-center justify-center text-xs font-bold text-primary-600">
-                    {{ comment.user?.name?.charAt(0) }}
-                  </div>
+                  <PersonAvatar :name="comment.user?.name" :photo="comment.user?.photo" :letters="1" class="w-6 h-6 bg-primary-100 rounded-full text-xs font-bold text-primary-600" />
                   <span class="text-xs font-bold text-slate-800">{{ comment.user?.name }}</span>
                   <span class="text-xs font-medium text-slate-400">{{ formatDate(comment.createdAt) }}</span>
                 </div>
@@ -979,10 +975,7 @@
                   <div class="flex -space-x-1.5" @click.stop>
                     <template v-if="Array.isArray(activity.assignedTo) && activity.assignedTo.length">
                       <div v-for="user in activity.assignedTo.slice(0, 3)" :key="user._id || user" class="relative">
-                        <img v-if="getUserInfo(user).photo" :src="getUserInfo(user).photo" class="w-5 h-5 rounded-full border border-white shadow-sm object-cover" :title="getUserInfo(user).name">
-                        <div v-else class="w-5 h-5 rounded-full bg-slate-200 border border-white flex items-center justify-center text-[9px] font-bold text-slate-500 shadow-sm" :title="getUserInfo(user).name">
-                          {{ getUserInfo(user).name.charAt(0).toUpperCase() }}
-                        </div>
+                        <PersonAvatar :name="getUserInfo(user).name" :photo="getUserInfo(user).photo" :letters="1" class="w-5 h-5 rounded-full bg-slate-200 border border-white text-[9px] font-bold text-slate-500 shadow-sm" />
                       </div>
                     </template>
                   </div>
@@ -1159,10 +1152,7 @@
                   <div class="flex -space-x-1.5" @click.stop>
                     <template v-if="Array.isArray(activity.assignedTo) && activity.assignedTo.length">
                       <div v-for="user in activity.assignedTo.slice(0, 3)" :key="user._id || user" class="relative">
-                        <img v-if="getUserInfo(user).photo" :src="getUserInfo(user).photo" class="w-5 h-5 rounded-full border border-white shadow-sm object-cover" :title="getUserInfo(user).name">
-                        <div v-else class="w-5 h-5 rounded-full bg-slate-200 border border-white flex items-center justify-center text-[9px] font-bold text-slate-500 shadow-sm" :title="getUserInfo(user).name">
-                          {{ getUserInfo(user).name.charAt(0).toUpperCase() }}
-                        </div>
+                        <PersonAvatar :name="getUserInfo(user).name" :photo="getUserInfo(user).photo" :letters="1" class="w-5 h-5 rounded-full bg-slate-200 border border-white text-[9px] font-bold text-slate-500 shadow-sm" />
                       </div>
                     </template>
                   </div>
@@ -1307,10 +1297,7 @@
                   <div class="flex -space-x-1.5" @click.stop>
                     <template v-if="Array.isArray(activity.assignedTo) && activity.assignedTo.length">
                       <div v-for="user in activity.assignedTo.slice(0, 3)" :key="user._id || user" class="relative">
-                        <img v-if="getUserInfo(user).photo" :src="getUserInfo(user).photo" class="w-5 h-5 rounded-full border border-white shadow-sm object-cover" :title="getUserInfo(user).name">
-                        <div v-else class="w-5 h-5 rounded-full bg-slate-200 border border-white flex items-center justify-center text-[9px] font-bold text-slate-500 shadow-sm" :title="getUserInfo(user).name">
-                          {{ getUserInfo(user).name.charAt(0).toUpperCase() }}
-                        </div>
+                        <PersonAvatar :name="getUserInfo(user).name" :photo="getUserInfo(user).photo" :letters="1" class="w-5 h-5 rounded-full bg-slate-200 border border-white text-[9px] font-bold text-slate-500 shadow-sm" />
                       </div>
                     </template>
                   </div>
@@ -1472,10 +1459,7 @@
                   <div class="flex -space-x-1.5" @click.stop>
                     <template v-if="Array.isArray(activity.assignedTo) && activity.assignedTo.length">
                       <div v-for="user in activity.assignedTo.slice(0, 3)" :key="user._id || user" class="relative">
-                        <img v-if="getUserInfo(user).photo" :src="getUserInfo(user).photo" class="w-5 h-5 rounded-full border border-white shadow-sm object-cover" :title="getUserInfo(user).name">
-                        <div v-else class="w-5 h-5 rounded-full bg-slate-200 border border-white flex items-center justify-center text-[9px] font-bold text-slate-500 shadow-sm" :title="getUserInfo(user).name">
-                          {{ getUserInfo(user).name.charAt(0).toUpperCase() }}
-                        </div>
+                        <PersonAvatar :name="getUserInfo(user).name" :photo="getUserInfo(user).photo" :letters="1" class="w-5 h-5 rounded-full bg-slate-200 border border-white text-[9px] font-bold text-slate-500 shadow-sm" />
                       </div>
                     </template>
                   </div>
@@ -2615,6 +2599,7 @@ const isDragging = ref(false)
 // Vista y UI
 import DailyScrum from '../../pages/DailyScrum.vue'
 import TeamActivities from '../../pages/TeamActivities.vue'
+import PersonAvatar from '../ui/PersonAvatar.vue'
 
 const currentView = ref<'kanban' | 'tasks' | 'calendar' | 'daily' | 'team'>('kanban')
 

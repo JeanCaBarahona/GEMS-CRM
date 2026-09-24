@@ -521,9 +521,7 @@
             class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 hover:shadow-md hover:border-slate-200 transition-all duration-200 group"
           >
             <div class="flex items-center gap-2 mb-1.5">
-              <div class="w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center text-white text-[9px] font-black shrink-0">
-                {{ getInitials(commentAuthorName(comment)) }}
-              </div>
+              <PersonAvatar :name="commentAuthorName(comment)" :photo="comment?.userId?.photo || comment?.author?.photo" class="w-6 h-6 rounded-full bg-primary-500 text-white text-[9px] font-black" />
               <span class="text-[11px] font-black text-slate-700 truncate">{{ commentAuthorName(comment) }}</span>
               <span class="text-[10px] text-slate-300 ml-auto shrink-0">{{ formatCommentDate(comment.createdAt) }}</span>
 
@@ -606,9 +604,7 @@
               class="w-full flex items-center gap-2 px-3 py-2 hover:bg-primary-50 transition-colors text-left"
               :class="idx === mentionActiveIdx ? 'bg-primary-50' : ''"
             >
-              <div class="w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center text-white text-[9px] font-black shrink-0">
-                {{ getInitials(member.name) }}
-              </div>
+              <PersonAvatar :name="member.name" :photo="member.photo" class="w-6 h-6 rounded-full bg-primary-500 text-white text-[9px] font-black" />
               <div class="flex-1 min-w-0">
                 <p class="text-[11px] font-bold text-slate-700 truncate">{{ member.name }}</p>
                 <p v-if="member.email" class="text-[9px] text-slate-400 truncate">{{ member.email }}</p>
@@ -702,6 +698,7 @@ import { useTasksStore } from '../../stores/tasks'
 import { useAuthStore } from '../../stores/auth'
 import { useNotifications } from '../../composables/useNotifications'
 import type { TeamMember, Client } from '../../types'
+import PersonAvatar from '../ui/PersonAvatar.vue'
 
 console.log('ActivityFormModal script setup initialized')
 
@@ -1428,10 +1425,6 @@ async function submitComment() {
   } finally {
     submittingComment.value = false
   }
-}
-
-function getInitials(name: string): string {
-  return (name || '?').split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
 }
 
 function commentAuthorName(comment: any): string {

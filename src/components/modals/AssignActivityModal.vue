@@ -86,12 +86,7 @@
 
         <!-- Preview del miembro seleccionado -->
         <div v-if="selectedMember" class="mt-6 p-5 bg-white border border-slate-100 rounded-3xl shadow-xl shadow-slate-200/50 flex items-center gap-4 animate-in fade-in zoom-in-95 duration-300">
-          <div class="w-14 h-14 bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 flex-shrink-0 shadow-sm">
-            <img v-if="selectedMember.photo || selectedMember.avatar" :src="selectedMember.photo || selectedMember.avatar" class="w-full h-full object-cover">
-            <div v-else class="w-full h-full flex items-center justify-center text-primary-500 text-xl font-black">
-              {{ selectedMember.name.charAt(0) }}
-            </div>
-          </div>
+          <PersonAvatar :name="selectedMember.name" :photo="selectedMember.photo" :letters="1" class="w-14 h-14 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm text-primary-500 text-xl font-black" />
           <div class="flex-1 min-w-0">
             <h4 class="text-slate-900 font-black text-base truncate">{{ selectedMember.name }}</h4>
             <p class="text-slate-400 font-bold text-xs uppercase tracking-widest">{{ selectedMember.role }}</p>
@@ -125,6 +120,7 @@
 </template>
 
 <script setup lang="ts">
+import PersonAvatar from "../ui/PersonAvatar.vue"
 import { ref, computed, onMounted } from 'vue'
 import type { ActivityData } from '../../services/activityService'
 import type { TeamMember } from '../../types'

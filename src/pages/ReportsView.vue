@@ -145,9 +145,7 @@
           </div>
           <div class="space-y-4">
             <div v-for="member in teamMembers" :key="member.name" class="flex items-center gap-4 p-2 -mx-2 hover:bg-slate-50/50 rounded-xl transition-colors">
-              <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-50 to-indigo-50 flex items-center justify-center flex-shrink-0 border border-primary-100/50 shadow-inner">
-                <span class="text-xs font-black bg-clip-text text-transparent bg-gradient-to-br from-primary-600 to-indigo-600">{{ member.initials }}</span>
-              </div>
+              <PersonAvatar :name="member.name" :photo="member.photo" class="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-50 to-indigo-50 border border-primary-100/50 shadow-inner text-xs font-black text-primary-600" />
               <div class="flex-1 min-w-0">
                 <div class="flex items-center justify-between mb-1.5">
                   <span class="text-xs font-extrabold text-slate-700 truncate">{{ member.name }}</span>
@@ -458,9 +456,7 @@
                 class="border border-slate-100/80 rounded-xl p-4 hover:border-slate-200 hover:shadow-md transition-all bg-white/50">
                 <!-- Header -->
                 <div class="flex items-center gap-3 mb-3">
-                  <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-400 to-indigo-500 flex items-center justify-center text-white text-[10px] font-black shrink-0 shadow-sm">
-                    {{ kpi.user.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() }}
-                  </div>
+                  <PersonAvatar :name="kpi.user.name" :photo="kpi.user.photo" class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-400 to-indigo-500 text-white text-[10px] font-black shadow-sm" />
                   <div class="min-w-0 flex-1">
                     <div class="text-xs font-black text-slate-800 truncate">{{ kpi.user.name }}</div>
                     <div class="text-[10px] text-slate-400 font-bold truncate">{{ kpi.user.department || kpi.user.role }}</div>
@@ -573,6 +569,7 @@
 </template>
 
 <script setup lang="ts">
+import PersonAvatar from '../components/ui/PersonAvatar.vue'
 import { ref, onMounted, nextTick, computed, watch } from 'vue'
 import VueApexCharts from 'vue3-apexcharts'
 import { reportsService } from '../services/reportsService'
@@ -693,11 +690,12 @@ const teamMembers = computed(() => {
   if (teamPerformance.value?.performance?.length) {
     return teamPerformance.value.performance.map((m: any) => {
       // Improved fallback taking first name from availableMembers array
+      const found = availableMembers.value.find(user => user._id === m._id) as any
       let name = m.teamMember?.name || m.teamMember?.nombre
       if (!name) {
-        const found = availableMembers.value.find(user => user._id === m._id)
         name = found?.name || `Miembro ${String(m._id).slice(-4)}`
       }
+      const photo: string = m.teamMember?.photo || found?.photo || ""
       const parts = name.split(' ').filter(Boolean)
       const initials = parts.length >= 2 
         ? (parts[0][0] + parts[1][0]).toUpperCase()
@@ -706,6 +704,7 @@ const teamMembers = computed(() => {
       return {
         name,
         initials,
+        photo,
         completed: m.completedActivities,
         total: m.totalActivities,
         rate: Math.round(m.completionRate || 0)

@@ -95,9 +95,7 @@
         >
           <!-- Header del miembro -->
           <div class="flex items-center gap-3 mb-4">
-            <div class="w-11 h-11 bg-primary-50 ring-2 ring-primary-100 rounded-full flex items-center justify-center">
-              <span class="text-primary-600 font-black text-base">{{ member.name?.charAt(0)?.toUpperCase() }}</span>
-            </div>
+            <PersonAvatar :name="member.name" :photo="member.photo" :letters="1" class="w-11 h-11 bg-primary-50 ring-2 ring-primary-100 rounded-full text-primary-600 font-black text-base" />
             <div class="flex-1 min-w-0">
               <h3 class="text-slate-800 font-bold text-sm truncate">{{ member.name }}</h3>
               <p class="text-slate-500 text-xs font-medium">{{ member.role }}</p>
@@ -189,9 +187,7 @@
                 </td>
                 <td class="px-6 py-3">
                   <div class="flex items-center gap-2">
-                    <div class="w-7 h-7 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-black text-xs">
-                      {{ getAssignedToName(activity.assignedToUser).charAt(0) }}
-                    </div>
+                    <PersonAvatar :name="getAssignedToName(activity.assignedToUser)" :photo="activity.assignedToUser?.photo" :letters="1" class="w-7 h-7 bg-primary-100 rounded-full text-primary-600 font-black text-xs" />
                     <div>
                       <div class="text-slate-700 text-sm font-medium">{{ getAssignedToName(activity.assignedToUser) }}</div>
                       <div v-if="activity.assignedToUser?.role" class="text-slate-400 text-xs">{{ activity.assignedToUser.role }}</div>
@@ -249,6 +245,7 @@
 </template>
 
 <script setup lang="ts">
+import PersonAvatar from '../components/ui/PersonAvatar.vue'
 import { ref, computed, onMounted } from 'vue'
 import { activityService, type ActivityData } from '../services/activityService'
 import { teamService } from '../services/teamService'

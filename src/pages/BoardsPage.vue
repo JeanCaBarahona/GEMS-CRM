@@ -75,14 +75,8 @@
           <!-- Members Avatars -->
           <div class="flex items-center space-x-2">
             <div class="flex -space-x-2">
-              <div
-                v-for="member in board.members.slice(0, 5)"
-                :key="member.user._id"
-                class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-medium border-2 border-white"
-                :title="member.user.name"
-              >
-                {{ getInitials(member.user.name) }}
-              </div>
+              <PersonAvatar v-for="member in board.members.slice(0, 5)"
+                :key="member.user._id" :name="member.user.name" :photo="member.user.photo" class="w-8 h-8 rounded-full bg-blue-500 text-white text-xs font-medium border-2 border-white" />
               <div
                 v-if="board.members.length > 5"
                 class="w-8 h-8 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center text-xs font-medium border-2 border-white"
@@ -205,6 +199,7 @@
 </template>
 
 <script setup lang="ts">
+import PersonAvatar from '../components/ui/PersonAvatar.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBoardsStore } from '@/stores/boards'
@@ -247,15 +242,6 @@ function getBoardTypeLabel(type: string): string {
     'custom': 'Personalizado'
   }
   return labels[type] || type
-}
-
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .substring(0, 2)
 }
 
 function getTaskCount(_boardId: string): number {

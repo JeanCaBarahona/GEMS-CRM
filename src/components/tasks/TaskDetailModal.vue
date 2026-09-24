@@ -125,9 +125,7 @@
                       class="bg-gray-800/60 rounded-lg p-4"
                     >
                       <div class="flex items-center gap-2 mb-2">
-                        <div class="w-7 h-7 bg-purple-700 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                          {{ getInitials(commentAuthorName(comment)) }}
-                        </div>
+                        <PersonAvatar :name="commentAuthorName(comment)" :photo="(comment as any)?.userId?.photo || (comment as any)?.author?.photo || (comment as any)?.user?.photo" class="w-7 h-7 bg-purple-700 rounded-full text-white text-xs font-bold" />
                         <span class="text-sm font-semibold text-white">{{ commentAuthorName(comment) }}</span>
                         <span class="text-xs text-gray-500">{{ formatDate(comment.createdAt) }}</span>
                       </div>
@@ -258,9 +256,7 @@
                     <p class="text-xs text-gray-500 mb-1">Asignado a</p>
                     <div v-if="assignees.length > 0" class="space-y-1.5">
                       <div v-for="user in assignees" :key="user._id" class="flex items-center gap-2">
-                        <div class="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                          {{ getInitials(user.name) }}
-                        </div>
+                        <PersonAvatar :name="user.name" :photo="user.photo" class="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold" />
                         <span class="text-sm text-white">{{ user.name }}</span>
                       </div>
                     </div>
@@ -270,9 +266,7 @@
                   <div>
                     <p class="text-xs text-gray-500 mb-1">Creado por</p>
                     <div v-if="task.createdBy?.name" class="flex items-center gap-2">
-                      <div class="w-6 h-6 rounded-full bg-gray-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                        {{ getInitials(task.createdBy.name) }}
-                      </div>
+                      <PersonAvatar :name="task.createdBy.name" :photo="task.createdBy?.photo" class="w-6 h-6 rounded-full bg-gray-600 text-white text-xs font-bold" />
                       <span class="text-sm text-white">{{ task.createdBy.name }}</span>
                     </div>
                     <span v-else class="text-sm text-gray-500">No registrado (tarea anterior)</span>
@@ -367,6 +361,7 @@
 </template>
 
 <script setup lang="ts">
+import PersonAvatar from '../ui/PersonAvatar.vue'
 import { ref, computed, watch } from 'vue'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -394,7 +389,7 @@ const tabs = computed(() => [
   { id: 'history', label: 'Historial' },
 ])
 
-type UserSummary = { _id: string; name: string }
+type UserSummary = { _id: string; name: string; photo?: string }
 
 // El backend guarda assignedTo como array de usuarios; el tipo Task lo declara
 // como un solo objeto, así que se aceptan ambas formas.
@@ -515,10 +510,6 @@ async function handleAttachmentDrop(e: DragEvent) {
 
 function openImagePreview(url: string) {
   previewImageUrl.value = url
-}
-
-function getInitials(name: string | undefined): string {
-  return (name || '?').split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
 }
 
 function renderCommentText(text: string): string {

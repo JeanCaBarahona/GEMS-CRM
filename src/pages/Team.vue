@@ -32,14 +32,8 @@
               </span>
               <!-- Mini Leaders Avatars -->
               <div class="flex -space-x-2 ml-1">
-                <div
-                  v-for="leader in teamStore.members.filter(m => m.department?.toLowerCase() === dept.toLowerCase() && m.departmentRole === 'leader').slice(0, 3)"
-                  :key="leader._id"
-                  class="w-4 h-4 rounded-full bg-amber-400 border-2 border-white flex items-center justify-center text-[6px] font-black text-white shadow-sm"
-                  :title="leader.name"
-                >
-                  {{ leader.name?.charAt(0) }}
-                </div>
+                <PersonAvatar v-for="leader in teamStore.members.filter(m => m.department?.toLowerCase() === dept.toLowerCase() && m.departmentRole === 'leader').slice(0, 3)"
+                  :key="leader._id" :name="leader.name" :photo="leader.photo" :letters="1" class="w-4 h-4 rounded-full bg-amber-400 border-2 border-white text-[6px] font-black text-white shadow-sm" />
               </div>
             </div>
           </div>
@@ -301,6 +295,7 @@
 </template>
 
 <script setup lang="ts">
+import PersonAvatar from '../components/ui/PersonAvatar.vue'
 import { ref, computed, onMounted, reactive } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useTeamStore } from '../stores'

@@ -192,9 +192,7 @@
               </h4>
 
               <div class="flex items-center gap-2 mt-1">
-                <div class="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[8px] font-black text-slate-500 overflow-hidden shadow-inner">
-                  {{ getInitials(ticket.submittedBy?.name || 'G') }}
-                </div>
+                <PersonAvatar :name="ticket.submittedBy?.name || 'G'" :photo="ticket.submittedBy?.userId?.photo" class="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 text-[8px] font-black text-slate-500 shadow-inner" />
                 <p class="text-[10px] text-slate-500 font-bold truncate">{{ ticket.submittedBy?.name || 'Usuario' }}</p>
               </div>
 
@@ -204,10 +202,7 @@
                   <span class="text-[9px] text-slate-400 font-bold">hace {{ formatDateRelative(ticket.createdAt) }}</span>
                 </div>
                 
-                <div v-if="ticket.assignedTo" class="w-7 h-7 rounded-xl bg-indigo-50 flex items-center justify-center border border-indigo-100 shadow-sm overflow-hidden group-hover:scale-110 transition-transform">
-                  <img v-if="ticket.assignedTo.avatar || ticket.assignedTo.photo" :src="resolveImageUrl(ticket.assignedTo.avatar || ticket.assignedTo.photo)" class="w-full h-full object-cover">
-                  <span v-else class="text-[9px] font-black text-primary-700">{{ getInitials(ticket.assignedTo.name) }}</span>
-                </div>
+                <PersonAvatar v-if="ticket.assignedTo" :name="ticket.assignedTo.name" :photo="ticket.assignedTo.photo" class="w-7 h-7 rounded-xl bg-indigo-50 border border-indigo-100 shadow-sm group-hover:scale-110 transition-transform text-[9px] font-black text-primary-700" />
                 <div v-else class="w-7 h-7 rounded-xl bg-slate-50 border border-slate-200 border-dashed flex items-center justify-center" title="Sin asignar">
                    <i class="fas fa-user-slash text-[9px] text-slate-300"></i>
                 </div>
@@ -308,9 +303,7 @@
                 </td>
                 <td class="px-4 py-5">
                   <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-[10px] font-black text-slate-500 shadow-inner">
-                      {{ getInitials(ticket.submittedBy?.name || 'G') }}
-                    </div>
+                    <PersonAvatar :name="ticket.submittedBy?.name || 'G'" :photo="ticket.submittedBy?.userId?.photo" class="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200 text-[10px] font-black text-slate-500 shadow-inner" />
                     <div class="flex flex-col">
                        <span class="text-xs font-black text-slate-700">{{ ticket.submittedBy?.name || 'Usuario' }}</span>
                        <span class="text-[9px] font-bold text-slate-400 truncate max-w-[120px]">{{ ticket.submittedBy?.email || 'N/A' }}</span>
@@ -413,10 +406,7 @@
                 <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Asignado a:</span>
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center overflow-hidden">
-                      <img v-if="selectedTicket.assignedTo?.avatar" :src="selectedTicket.assignedTo.avatar" class="w-full h-full object-cover">
-                      <span v-else class="text-xs font-black text-indigo-600">{{ getInitials(selectedTicket.assignedTo?.name || '?') }}</span>
-                    </div>
+                    <PersonAvatar :name="selectedTicket.assignedTo?.name || '?'" :photo="selectedTicket.assignedTo?.photo" class="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 text-xs font-black text-indigo-600" />
                     <span class="text-sm font-bold text-slate-700">{{ selectedTicket.assignedTo?.name || 'Sin asignar' }}</span>
                   </div>
                   <div class="relative">
@@ -440,9 +430,7 @@
                           @click.stop="reassignTicket(agent._id)"
                           class="w-full px-3 py-2.5 text-left hover:bg-primary-50 rounded-xl flex items-center gap-3 transition-all group/agent"
                          >
-                           <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-500 group-hover/agent:bg-primary-100 group-hover/agent:text-primary-600 transition-colors">
-                             {{ getInitials(agent.name) }}
-                           </div>
+                           <PersonAvatar :name="agent.name" :photo="agent.photo" class="w-8 h-8 rounded-lg bg-slate-100 text-[10px] font-black text-slate-500 group-hover/agent:bg-primary-100 group-hover/agent:text-primary-600 transition-colors" />
                            <div class="flex flex-col">
                              <span class="text-xs font-bold text-slate-700 group-hover/agent:text-primary-700">{{ agent.name }}</span>
                              <span class="text-[9px] font-bold text-slate-400 uppercase">{{ agent.role }}</span>
@@ -556,12 +544,7 @@
                   class="flex gap-3"
                   :class="{ 'flex-row-reverse': comment.author._id === authStore.user?._id }"
                 >
-                  <div class="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex-shrink-0 overflow-hidden">
-                    <img v-if="comment.author.avatar" :src="comment.author.avatar" class="w-full h-full object-cover">
-                    <span v-else class="w-full h-full flex items-center justify-center text-[10px] font-black text-slate-400">
-                      {{ getInitials(comment.author.name) }}
-                    </span>
-                  </div>
+                  <PersonAvatar :name="comment.author.name" :photo="comment.author.photo" class="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 text-[10px] font-black text-slate-400" />
                   <div class="flex flex-col max-w-[80%]" :class="{ 'items-end': comment.author._id === authStore.user?._id }">
                     <div class="flex items-center gap-2 mb-1">
                       <span class="text-[10px] font-black text-slate-700">{{ comment.author.name }}</span>
@@ -757,6 +740,7 @@
 </template>
 
 <script setup lang="ts">
+import PersonAvatar from '../../components/ui/PersonAvatar.vue'
 import { ref, computed, onMounted, watch, reactive } from 'vue'
 import { ticketService } from '../../services/ticketService'
 import { teamService } from '../../services/teamService'

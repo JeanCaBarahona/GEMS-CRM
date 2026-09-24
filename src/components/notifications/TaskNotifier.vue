@@ -17,7 +17,7 @@
       <div class="bg-gray-800 rounded-xl w-full max-w-3xl p-5 relative shadow-lg border border-blue-500/30">
         <h3 class="text-xl font-bold text-white mb-4">Notificar tareas por WhatsApp</h3>
         
-        <button 
+        <button title="Cerrar" 
           @click="showModal = false" 
           class="absolute top-4 right-4 text-gray-400 hover:text-white"
         >

@@ -8,7 +8,7 @@
           <div class="w-6 h-6 bg-slate-900 rounded flex items-center justify-center text-white text-[10px] font-black">W</div>
           <span class="text-sm font-semibold text-slate-700">Workspace</span>
         </div>
-        <button @click="openCreateModal" class="p-1.5 hover:bg-slate-200 rounded-md text-slate-500 transition-colors">
+        <button title="Nuevo caso" @click="openCreateModal" class="p-1.5 hover:bg-slate-200 rounded-md text-slate-500 transition-colors">
           <i class="fas fa-plus text-xs"></i>
         </button>
       </div>
@@ -293,7 +293,7 @@
                   <i class="fas fa-feather-alt text-3xl mb-4"></i>
                   <p class="text-sm font-bold uppercase tracking-widest">Documentar este caso</p>
                 </div>
-                <button 
+                <button title="Editar wiki" 
                   v-if="selectedCase.wikiContent"
                   @click="isEditingWiki = true" 
                   class="absolute top-0 right-0 opacity-0 group-hover:opacity-100 p-2 text-slate-400 hover:text-primary-600 transition-all"
@@ -350,7 +350,7 @@
                  <div v-if="selectedCase.enlacesExternos?.length" class="space-y-2">
                    <div v-for="link in selectedCase.enlacesExternos" :key="link._id" class="flex items-center justify-between bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-100">
                      <a :href="link.url" target="_blank" class="text-xs font-bold text-primary-600 hover:underline truncate mr-2"><i class="fas fa-external-link-alt mr-1.5 text-[10px]"></i>{{ link.nombre }}</a>
-                     <button @click="removeLinkFromCase(link._id!)" class="text-slate-300 hover:text-rose-500 transition-colors flex-shrink-0"><i class="fas fa-times-circle text-xs"></i></button>
+                     <button title="Quitar enlace del caso" @click="removeLinkFromCase(link._id!)" class="text-slate-300 hover:text-rose-500 transition-colors flex-shrink-0"><i class="fas fa-times-circle text-xs"></i></button>
                    </div>
                  </div>
                </div>
@@ -528,7 +528,7 @@
                 <div v-if="selectedWiki.enlacesExternos?.length" class="space-y-2">
                   <div v-for="link in selectedWiki.enlacesExternos" :key="link._id" class="flex items-center justify-between bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-100">
                     <a :href="link.url" target="_blank" class="text-xs font-bold text-primary-600 hover:underline truncate mr-2"><i class="fas fa-external-link-alt mr-1.5 text-[10px]"></i>{{ link.nombre }}</a>
-                    <button @click="removeLinkFromWiki(link._id!)" class="text-slate-300 hover:text-rose-500 transition-colors flex-shrink-0"><i class="fas fa-times-circle text-xs"></i></button>
+                    <button title="Quitar enlace de la wiki" @click="removeLinkFromWiki(link._id!)" class="text-slate-300 hover:text-rose-500 transition-colors flex-shrink-0"><i class="fas fa-times-circle text-xs"></i></button>
                   </div>
                 </div>
               </div>
@@ -615,7 +615,7 @@
                 {{ modalMode === 'create' ? 'Crear nueva página en' : 'Actualizar página en' }} {{ viewMode }}
               </p>
             </div>
-            <button @click="showCreateModal = false" class="w-8 h-8 hover:bg-slate-200 rounded-lg flex items-center justify-center text-slate-400 transition-colors"><i class="fas fa-times"></i></button>
+            <button title="Cerrar" @click="showCreateModal = false" class="w-8 h-8 hover:bg-slate-200 rounded-lg flex items-center justify-center text-slate-400 transition-colors"><i class="fas fa-times"></i></button>
           </div>
           
           <div class="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">

@@ -12,7 +12,7 @@
             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Creación instantánea</p>
           </div>
         </div>
-        <button
+        <button title="Cerrar"
           @click="$emit('close')"
           class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
         >

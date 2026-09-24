@@ -23,15 +23,10 @@
                   v-for="(session, idx) in activeSessions" 
                   :key="session.userId + idx"
                   class="relative group/avatar"
+                  :title="`${session.userName} - ${session.taskTitle}`"
                 >
-                  <PersonAvatar :name="session.userName" :photo="session.userPhoto" :letters="1" class="w-12 h-12 rounded-2xl bg-slate-900 border-2 border-white shadow-xl text-xs font-black text-white transition-transform group-hover/avatar:-translate-y-1" />
+                  <PersonAvatar :name="session.userName" :photo="session.userPhoto" :letters="1" title="" class="w-12 h-12 rounded-2xl bg-slate-900 border-2 border-white shadow-xl text-xs font-black text-white transition-transform group-hover/avatar:-translate-y-1" />
                   <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white shadow-sm"></div>
-                  
-                  <!-- Tooltip -->
-                  <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-1.5 bg-slate-900 text-white text-[10px] font-bold rounded-lg opacity-0 invisible group-hover/avatar:opacity-100 group-hover/avatar:visible transition-all whitespace-nowrap z-10 shadow-xl">
-                    {{ session.userName }} - {{ session.taskTitle }}
-                    <div class="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900"></div>
-                  </div>
                 </div>
               </div>
               

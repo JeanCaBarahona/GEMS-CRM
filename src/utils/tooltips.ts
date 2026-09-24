@@ -7,7 +7,7 @@
  * `delegate` de tippy lo muestra con el tema "crm". No hay que tocar los
  * componentes: basta con seguir usando `title`.
  */
-import { delegate } from 'tippy.js'
+import { delegate, type Placement } from 'tippy.js'
 import 'tippy.js/dist/tippy.css'
 import 'tippy.js/animations/shift-away-subtle.css'
 
@@ -59,10 +59,14 @@ export function installTooltips() {
     touch: ['hold', 450],
     allowHTML: false,
     // El texto puede cambiar entre hovers (`:title` reactivo): se lee al mostrar.
+    // `data-tooltip-placement="right"` (etc.) cambia la posición por elemento.
     onShow(instance) {
-      const text = instance.reference.getAttribute(ATTR)
+      const ref = instance.reference
+      const text = ref.getAttribute(ATTR)
       if (!text) return false
       instance.setContent(text)
+      const placement = ref.getAttribute('data-tooltip-placement') as Placement | null
+      instance.setProps({ placement: placement || 'top' })
     }
   })
 }

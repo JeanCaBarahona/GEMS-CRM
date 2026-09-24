@@ -90,7 +90,7 @@
                 <i v-else class="fas fa-check"></i>
                 Marcar Pagado
               </button>
-              <button
+              <button title="Editar pago"
                 @click="$emit('edit', payment)"
                 class="p-2 bg-blue-600/20 text-blue-400 rounded-lg hover:bg-blue-600/30 transition-colors border border-blue-500/30"
               >

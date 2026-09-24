@@ -134,13 +134,13 @@
             {{ formatDate(client.createdAt) }}
           </span>
           <div class="flex items-center gap-2">
-            <button
+            <button title="Editar cliente"
               @click="$emit('edit', client)"
               class="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-200"
             >
               <i class="fas fa-edit"></i>
             </button>
-            <button
+            <button title="Eliminar cliente"
               @click="deleteClient(client._id!)"
               class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all duration-200"
             >
@@ -203,13 +203,13 @@
               </td>
               <td class="py-4 px-6">
                 <div class="flex items-center gap-2">
-                  <button
+                  <button title="Editar cliente"
                     @click="$emit('edit', client)"
                     class="p-2 text-gray-400 hover:text-purple-400 hover:bg-purple-500/20 rounded-lg transition-all duration-200"
                   >
                     <i class="fas fa-edit"></i>
                   </button>
-                  <button
+                  <button title="Eliminar cliente"
                     @click="deleteClient(client._id!)"
                     class="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-200"
                   >

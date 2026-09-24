@@ -213,7 +213,7 @@
                 ></textarea>
               </div>
 
-              <button
+              <button title="Enviar mensaje"
                 @click="sendDemoMessage"
                 :disabled="!demoMessage.trim()"
                 class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-600 disabled:to-gray-700 text-white p-2 rounded-xl transition-all duration-200 disabled:cursor-not-allowed"

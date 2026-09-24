@@ -203,7 +203,7 @@
 
     <!-- Pagination Controls (Premium Style - Outside) -->
     <div v-if="totalPages > 1" class="mt-12 flex items-center justify-center gap-3">
-       <button 
+       <button title="Página anterior" 
          @click="currentPage--" 
          :disabled="currentPage === 1"
          class="w-12 h-12 bg-white border border-slate-100 rounded-2xl flex items-center justify-center text-slate-400 hover:text-primary-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm shadow-slate-200/50"
@@ -223,7 +223,7 @@
           </button>
        </div>
 
-       <button 
+       <button title="Página siguiente" 
          @click="currentPage++" 
          :disabled="currentPage === totalPages"
          class="w-12 h-12 bg-white border border-slate-100 rounded-2xl flex items-center justify-center text-slate-400 hover:text-primary-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm shadow-slate-200/50"
@@ -241,7 +241,7 @@
             <h3 class="text-xl font-black text-slate-900 leading-tight">Nuevo Cliente</h3>
             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Completa los datos de contacto</p>
           </div>
-          <button @click="showModal = false" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all">
+          <button title="Cerrar" @click="showModal = false" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all">
             <i class="fas fa-times"></i>
           </button>
         </div>

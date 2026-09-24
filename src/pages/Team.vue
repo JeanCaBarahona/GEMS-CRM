@@ -46,7 +46,7 @@
              <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">{{ activeMembers }} Activos</span>
            </div>
            <PermissionGuard :permissions="['create-team']" :fallback="false">
-            <button 
+            <button title="Nuevo miembro" 
               @click="showCreateModal = true"
               class="w-9 h-9 bg-violet-600 hover:bg-violet-700 text-white rounded-xl shadow-lg shadow-violet-200 transition-all active:scale-95 flex items-center justify-center"
             >
@@ -141,20 +141,20 @@
 
         <!-- Right: Actions -->
         <div class="flex items-center justify-end gap-1 w-32">
-           <button 
+           <button title="Editar miembro" 
              @click="editMember(member)" 
              class="w-8 h-8 bg-slate-50 hover:bg-violet-100 text-slate-400 hover:text-violet-600 rounded-lg flex items-center justify-center transition-all"
            >
              <i class="fas fa-edit text-[10px]"></i>
            </button>
-           <button 
+           <button :title="member.isActive ? 'Desactivar miembro' : 'Activar miembro'" 
              @click="toggleMemberStatus(member)" 
              :class="member.isActive ? 'hover:bg-rose-100 text-slate-400 hover:text-rose-600' : 'hover:bg-emerald-100 text-slate-400 hover:text-emerald-600'" 
              class="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center transition-all"
            >
              <i :class="member.isActive ? 'fas fa-user-slash' : 'fas fa-user-check'" class="text-[10px]"></i>
            </button>
-           <button 
+           <button title="Eliminar miembro permanentemente" 
              v-if="authStore.user?.role === 'admin'"
              @click="permanentDeleteMember(member)" 
              class="w-8 h-8 bg-slate-50 hover:bg-red-600 text-slate-400 hover:text-white rounded-lg flex items-center justify-center transition-all"
@@ -172,7 +172,7 @@
     
     <!-- Pagination Controls (Premium) -->
     <div v-if="pagination.pages > 1" class="mt-12 flex items-center justify-center gap-2">
-       <button 
+       <button title="Página anterior" 
          @click="changePage(pagination.page - 1)"
          :disabled="pagination.page === 1"
          class="w-12 h-12 bg-white border border-slate-100 rounded-2xl flex items-center justify-center text-slate-400 hover:text-violet-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
@@ -192,7 +192,7 @@
           </button>
        </div>
 
-       <button 
+       <button title="Página siguiente" 
          @click="changePage(pagination.page + 1)"
          :disabled="pagination.page === pagination.pages"
          class="w-12 h-12 bg-white border border-slate-100 rounded-2xl flex items-center justify-center text-slate-400 hover:text-violet-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"

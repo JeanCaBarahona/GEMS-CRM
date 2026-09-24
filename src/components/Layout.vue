@@ -6,7 +6,7 @@
       :class="isSidebarCollapsed ? 'w-20' : 'w-64'"
     >
       <!-- Collapse Toggle Button -->
-      <button 
+      <button :title="isSidebarCollapsed ? 'Expandir menú' : 'Contraer menú'" 
         @click="isSidebarCollapsed = !isSidebarCollapsed"
         class="absolute -right-4 top-8 w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center shadow-xl z-[100] transition-all hover:bg-primary-700 active:scale-95 border-2 border-white"
         :class="isSidebarCollapsed ? 'rotate-180' : ''"

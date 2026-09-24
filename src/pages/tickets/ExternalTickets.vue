@@ -60,7 +60,7 @@
               <h2 class="text-xs font-black text-slate-800 uppercase tracking-widest">Cola de Incidencias</h2>
               <div class="flex items-center gap-4">
                 <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{{ tickets.length }} Solicitudes</span>
-                <button @click="loadData" class="text-slate-400 hover:text-primary-500 transition-colors">
+                <button title="Actualizar" @click="loadData" class="text-slate-400 hover:text-primary-500 transition-colors">
                   <i class="fas fa-sync-alt text-xs" :class="{ 'fa-spin': loading }"></i>
                 </button>
               </div>
@@ -122,7 +122,7 @@
 
             <!-- Pagination (External) -->
             <div v-if="pagination.pages > 1" class="px-6 py-4 bg-slate-50/20 border-t border-slate-50 flex items-center justify-center gap-2">
-               <button 
+               <button title="Página anterior" 
                  @click="changePage(pagination.page - 1)"
                  :disabled="pagination.page === 1"
                  class="w-9 h-9 bg-white border border-slate-100 rounded-xl flex items-center justify-center text-slate-400 hover:text-primary-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
@@ -142,7 +142,7 @@
                   </button>
                </div>
 
-               <button 
+               <button title="Página siguiente" 
                  @click="changePage(pagination.page + 1)"
                  :disabled="pagination.page === pagination.pages"
                  class="w-9 h-9 bg-white border border-slate-100 rounded-xl flex items-center justify-center text-slate-400 hover:text-primary-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
@@ -170,7 +170,7 @@
                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Detalle de Solicitud</p>
              </div>
            </div>
-           <button @click="selectedTicket = null" class="w-10 h-10 hover:bg-slate-100 rounded-full transition-colors flex items-center justify-center text-slate-400">
+           <button title="Cerrar" @click="selectedTicket = null" class="w-10 h-10 hover:bg-slate-100 rounded-full transition-colors flex items-center justify-center text-slate-400">
               <i class="fas fa-times"></i>
            </button>
          </div>

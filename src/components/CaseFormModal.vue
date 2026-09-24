@@ -6,7 +6,7 @@
         <h2 class="text-2xl font-bold text-white">
           {{ isEditing ? 'Editar Caso' : 'Nuevo Caso' }}
         </h2>
-        <button
+        <button title="Cerrar"
           @click="$emit('close')"
           class="text-gray-400 hover:text-white transition-colors"
         >
@@ -237,7 +237,7 @@
                 class="bg-purple-600 text-white px-2 py-1 rounded-full text-xs flex items-center space-x-1"
               >
                 <span>{{ tag }}</span>
-                <button
+                <button title="Quitar etiqueta"
                   @click="removeTag(index)"
                   type="button"
                   class="text-purple-200 hover:text-white"
@@ -295,7 +295,7 @@
                     <p class="text-gray-400 text-xs">{{ formatFileSize(file.size) }}</p>
                   </div>
                 </div>
-                <button
+                <button title="Quitar archivo"
                   @click="removeSelectedFile(index)"
                   type="button"
                   class="text-red-400 hover:text-red-300 transition-colors"

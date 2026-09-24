@@ -362,7 +362,7 @@
               {{ p.label }}
             </button>
           </div>
-          <button @click="fetchKPIs" :disabled="kpiLoading"
+          <button title="Actualizar KPIs" @click="fetchKPIs" :disabled="kpiLoading"
             class="px-4 py-2 bg-gradient-to-r from-primary-600 to-indigo-500 hover:from-primary-500 hover:to-indigo-400 text-white font-black rounded-xl text-xs shadow-[0_8px_20px_rgb(99,102,241,0.25)] transition-all disabled:opacity-50">
             <i :class="kpiLoading ? 'fas fa-spinner fa-spin' : 'fas fa-sync-alt'" class="text-xs"></i>
           </button>

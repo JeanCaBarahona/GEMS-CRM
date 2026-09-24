@@ -12,7 +12,7 @@
             <p class="text-xs text-slate-500 font-medium">Carga masiva desde CSV o Excel</p>
           </div>
         </div>
-        <button @click="$emit('close')" class="w-8 h-8 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors flex items-center justify-center">
+        <button title="Cerrar" @click="$emit('close')" class="w-8 h-8 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors flex items-center justify-center">
           <i class="fas fa-xmark"></i>
         </button>
       </div>

@@ -102,7 +102,7 @@
                   placeholder="••••••••••"
                   class="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-3.5 sm:py-4 pl-14 pr-14 text-sm font-semibold focus:ring-4 focus:ring-primary-500/5 focus:border-primary-500 focus:bg-white outline-none transition-all duration-300 text-slate-800 placeholder:text-slate-300 placeholder:font-medium"
                 />
-                <button
+                <button :title="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
                   type="button"
                   @click="showPassword = !showPassword"
                   class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-600 transition-all duration-300 p-2"
@@ -152,16 +152,16 @@
             <div class="pt-5 sm:pt-6 flex flex-col items-center gap-3 border-t border-slate-50 mt-1">
               <p class="text-[8px] font-black text-slate-300 uppercase tracking-[0.2em]">Conéctate con nosotros</p>
               <div class="flex items-center gap-4">
-                <a href="https://www.facebook.com/customertcr/?locale=es_LA" target="_blank" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:bg-primary-50 hover:text-primary-600 transition-all duration-300">
+                <a title="Facebook" href="https://www.facebook.com/customertcr/?locale=es_LA" target="_blank" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:bg-primary-50 hover:text-primary-600 transition-all duration-300">
                   <i class="fab fa-facebook-f text-xs"></i>
                 </a>
-                <a href="https://www.instagram.com/customertcr/" target="_blank" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all duration-300">
+                <a title="Instagram" href="https://www.instagram.com/customertcr/" target="_blank" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all duration-300">
                   <i class="fab fa-instagram text-sm"></i>
                 </a>
-                <a href="http://linkedin.com/company/customertcr/" target="_blank" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-all duration-300">
+                <a title="LinkedIn" href="http://linkedin.com/company/customertcr/" target="_blank" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-all duration-300">
                   <i class="fab fa-linkedin-in text-xs"></i>
                 </a>
-                <a href="https://bit.ly/45kNWRK" target="_blank" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:bg-emerald-50 hover:text-emerald-500 transition-all duration-300">
+                <a title="WhatsApp" href="https://bit.ly/45kNWRK" target="_blank" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:bg-emerald-50 hover:text-emerald-500 transition-all duration-300">
                   <i class="fab fa-whatsapp text-sm"></i>
                 </a>
               </div>
@@ -183,7 +183,7 @@
       <div class="bg-white rounded-[2rem] shadow-2xl border border-slate-200 max-w-md w-full mx-4 p-8 animate-fade-in">
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-xl font-bold text-slate-800">Restablecer Contraseña</h3>
-          <button @click="showForgotPassword = false" class="text-slate-400 hover:text-slate-600 transition-colors">
+          <button title="Cerrar" @click="showForgotPassword = false" class="text-slate-400 hover:text-slate-600 transition-colors">
             <i class="fas fa-times text-lg"></i>
           </button>
         </div>

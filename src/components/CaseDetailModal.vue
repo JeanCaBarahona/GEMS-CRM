@@ -27,7 +27,7 @@
             </span>
           </div>
         </div>
-        <button
+        <button title="Cerrar"
           @click="$emit('close')"
           class="text-gray-400 hover:text-white transition-colors"
         >
@@ -99,7 +99,7 @@
                 class="flex items-center justify-between bg-gray-700/50 rounded-lg p-3"
               >
                 <div class="flex items-center space-x-3">
-                  <button
+                  <button title="Marcar hito como completado"
                     @click="toggleMilestone(index)"
                     :class="[
                       'w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors',

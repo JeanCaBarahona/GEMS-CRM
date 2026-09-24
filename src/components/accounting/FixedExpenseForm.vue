@@ -16,7 +16,7 @@
           <h2 class="text-xl font-bold text-white">
             {{ editingExpense ? 'Editar Gasto Fijo' : 'Nuevo Gasto Fijo' }}
           </h2>
-          <button
+          <button title="Cerrar"
             @click="closeModal"
             class="text-gray-400 hover:text-white transition-colors"
           >

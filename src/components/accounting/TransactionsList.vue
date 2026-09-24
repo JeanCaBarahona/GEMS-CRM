@@ -108,13 +108,13 @@
 
             <!-- Actions -->
             <div class="flex gap-2">
-              <button
+              <button title="Editar transacción"
                 @click="$emit('edit', transaction)"
                 class="p-2 bg-blue-600/20 text-blue-400 rounded-lg hover:bg-blue-600/30 transition-colors border border-blue-500/30"
               >
                 <i class="fas fa-edit"></i>
               </button>
-              <button
+              <button title="Eliminar transacción"
                 @click="$emit('delete', transaction._id!)"
                 class="p-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors border border-red-500/30"
               >

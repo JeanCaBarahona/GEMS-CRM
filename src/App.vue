@@ -14,7 +14,7 @@
         ]"
       >
         <!-- Toggle Button (Minimalist) -->
-        <button 
+        <button :title="isSidebarMini ? 'Expandir menú' : 'Contraer menú'" 
           @click="isSidebarMini = !isSidebarMini"
           class="hidden lg:flex absolute -right-3 top-7 w-6 h-6 bg-white text-slate-400 rounded-md items-center justify-center shadow-sm border border-slate-200 z-[60] transition-all hover:text-primary-600 hover:border-primary-300 active:scale-95"
           :class="isSidebarMini ? 'rotate-180' : ''"
@@ -69,6 +69,7 @@
                 isSidebarMini ? 'justify-center px-0' : 'px-4'
               ]"
               :title="isSidebarMini ? module.name : ''"
+              data-tooltip-placement="right"
             >
               <i :class="[module.icon, 'w-5 h-5 flex items-center justify-center opacity-80 transition-transform group-hover:scale-110', !isSidebarMini ? 'mr-3' : '', $route.path === module.path ? 'text-white' : 'text-slate-400 group-hover:text-primary-500']"></i>
               <span v-if="!isSidebarMini" class="transition-opacity duration-300 whitespace-nowrap overflow-hidden">{{ module.name }}</span>
@@ -80,6 +81,8 @@
         <div class="absolute bottom-0 left-0 right-0 px-3 py-4 border-t border-slate-100 bg-white overflow-hidden transition-all" :class="isSidebarMini ? 'flex justify-center' : 'px-6'">
           <button
             @click="handleLogout"
+            :title="isSidebarMini ? 'Cerrar sesión' : ''"
+            data-tooltip-placement="right"
             class="flex items-center text-slate-400 hover:text-rose-500 transition-all duration-200 group"
           >
             <div class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-rose-50 transition-colors" :class="!isSidebarMini ? 'mr-2' : ''">
@@ -92,7 +95,7 @@
 
       <!-- Mobile menu button -->
       <div class="lg:hidden fixed top-3 left-4 z-50">
-        <button
+        <button title="Abrir o cerrar el menú"
           @click="sidebarOpen = !sidebarOpen"
           class="p-2 rounded-xl bg-white shadow-md text-slate-600 border border-slate-200"
         >

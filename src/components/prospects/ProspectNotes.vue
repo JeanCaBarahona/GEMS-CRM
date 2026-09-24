@@ -30,7 +30,7 @@
         <p class="text-xs font-medium text-slate-800 leading-relaxed whitespace-pre-wrap">{{ note.content }}</p>
         <div class="flex items-center justify-between mt-2 pt-2 border-t border-yellow-200/40">
           <span class="text-[10px] font-bold text-slate-500">{{ formatDate(note.createdAt) }}</span>
-          <button
+          <button title="Eliminar nota"
             @click="confirmRemove(note.id)"
             class="text-[10px] font-bold text-rose-500 hover:text-rose-700 opacity-0 group-hover:opacity-100 transition-opacity"
           >

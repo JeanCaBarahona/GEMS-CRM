@@ -186,7 +186,7 @@
                 {{ getColumnTasks(column.id).length }}
               </span>
             </div>
-            <button
+            <button title="Agregar tarea a esta columna"
               @click="openTaskModal(column.id)"
               class="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-primary-500 hover:bg-white rounded-lg transition-all border border-transparent hover:border-slate-100"
             >

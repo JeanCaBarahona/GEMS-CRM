@@ -34,7 +34,7 @@
         </div>
       </div>
       
-      <button
+      <button title="Cerrar chat"
         @click="$emit('close')"
         class="text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-gray-700/50"
       >
@@ -147,7 +147,7 @@
           <p class="text-purple-400 font-medium">Respondiendo a {{ getReplyingToName }}</p>
           <p class="text-gray-400">{{ getReplyContent(replyingTo) }}</p>
         </div>
-        <button
+        <button title="Cancelar respuesta"
           @click="replyingTo = null"
           class="text-gray-400 hover:text-white transition-colors p-1"
         >
@@ -180,7 +180,7 @@
         </div>
 
         <!-- Send button -->
-        <button
+        <button title="Enviar mensaje"
           @click="sendMessage"
           :disabled="!newMessage.trim()"
           class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-600 disabled:to-gray-700 text-white p-2 rounded-xl transition-all duration-200 disabled:cursor-not-allowed"

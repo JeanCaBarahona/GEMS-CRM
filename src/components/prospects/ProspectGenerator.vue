@@ -143,7 +143,7 @@
               class="relative group aspect-square rounded-lg overflow-hidden border border-slate-200 bg-white"
             >
               <img :src="img.dataUrl" class="w-full h-full object-cover" />
-              <button
+              <button title="Quitar imagen"
                 type="button"
                 class="absolute top-1 right-1 w-6 h-6 rounded-full bg-rose-500 text-white text-[10px] flex items-center justify-center pointer-events-auto opacity-0 group-hover:opacity-100 transition-opacity"
                 @click.stop="removeImage(idx)"

@@ -24,7 +24,7 @@
 
         <div class="h-8 w-px bg-slate-200 mx-1"></div>
 
-        <button 
+        <button title="Actualizar" 
           @click="loadTickets"
           :disabled="loading"
           class="p-2 text-slate-400 hover:text-primary-600 transition-colors"
@@ -256,7 +256,7 @@
               </div>
            </div>
            <div class="flex items-center gap-3">
-              <button @click="loadMyTickets" class="p-2 text-slate-400 hover:text-primary-600 transition-colors">
+              <button title="Actualizar" @click="loadMyTickets" class="p-2 text-slate-400 hover:text-primary-600 transition-colors">
                 <i class="fas fa-sync-alt" :class="{ 'fa-spin': loadingMyTickets }"></i>
               </button>
            </div>
@@ -368,7 +368,7 @@
                 </div>
               </div>
             </div>
-            <button @click="closeTicketDetail" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-xl transition-all">
+            <button title="Cerrar" @click="closeTicketDetail" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-xl transition-all">
               <i class="fas fa-times text-lg"></i>
             </button>
           </div>
@@ -421,7 +421,7 @@
                     <div v-if="showAgentSelector" class="absolute right-0 top-full mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-2xl z-[70] py-2 animate-fade-in ring-4 ring-slate-900/5">
                        <div class="px-4 py-2 mb-2 border-b border-slate-100 flex items-center justify-between">
                          <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Reasignar a...</span>
-                         <button @click="showAgentSelector = false" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-[10px]"></i></button>
+                         <button title="Cerrar" @click="showAgentSelector = false" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-[10px]"></i></button>
                        </div>
                        <div class="max-h-64 overflow-y-auto custom-scrollbar-slim px-2">
                          <button 
@@ -637,7 +637,7 @@
                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Nuevo ticket de soporte</p>
              </div>
            </div>
-           <button @click="showNewTicketModal = false" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+           <button title="Cerrar" @click="showNewTicketModal = false" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
         </div>
         <div class="p-6 space-y-4">
           <div>
@@ -700,7 +700,7 @@
             <i :class="showLinkModal === 'case' ? 'fas fa-briefcase text-indigo-500' : 'fas fa-book-open text-emerald-500'"></i>
             Vincular {{ showLinkModal === 'case' ? 'Caso' : 'Wiki' }}
           </h3>
-          <button @click="showLinkModal = null" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+          <button title="Cerrar" @click="showLinkModal = null" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
         </div>
         
         <div class="p-6 flex flex-col gap-4">

@@ -3,7 +3,7 @@
     <!-- Header del calendario -->
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center gap-4">
-        <button
+        <button title="Mes anterior"
           @click="previousMonth"
           class="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
         >
@@ -14,7 +14,7 @@
           {{ currentMonthName }} {{ currentYear }}
         </h2>
         
-        <button
+        <button title="Mes siguiente"
           @click="nextMonth"
           class="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
         >
@@ -127,7 +127,7 @@
         >
           <div class="flex items-center justify-between mb-2 border-b border-slate-100 pb-1">
             <span class="text-[10px] font-black text-slate-800 uppercase tracking-widest">{{ day.date.getDate() }} {{ currentMonthName }}</span>
-            <button @click.stop="expandedDay = null" class="text-slate-400 hover:text-rose-500 transition-colors">
+            <button title="Cerrar" @click.stop="expandedDay = null" class="text-slate-400 hover:text-rose-500 transition-colors">
               <i class="fas fa-times text-[10px]"></i>
             </button>
           </div>

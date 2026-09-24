@@ -265,7 +265,7 @@
                     <p class="text-[10px] font-black text-slate-700 truncate max-w-[120px]">{{ file.name }}</p>
                     <p class="text-[9px] text-slate-400 uppercase font-black">{{ formatSize(file.size) }}</p>
                   </div>
-                  <button
+                  <button title="Quitar archivo"
                     @click.stop="removeFile(index)"
                     class="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white rounded-full flex items-center justify-center text-[10px] shadow-sm opacity-0 group-hover/file:opacity-100 transition-opacity"
                   >

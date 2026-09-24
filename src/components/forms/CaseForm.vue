@@ -145,7 +145,7 @@
               <p class="text-gray-400 text-xs">{{ formatFileSize(file.size) }}</p>
             </div>
           </div>
-          <button 
+          <button title="Quitar archivo" 
             @click="removeFile(index)"
             type="button"
             class="text-red-400 hover:text-red-300 transition-colors"
@@ -171,14 +171,14 @@
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <button 
+            <button title="Descargar archivo" 
               @click="downloadFile(file)"
               type="button"
               class="text-purple-400 hover:text-purple-300 transition-colors"
             >
               <i class="fas fa-download"></i>
             </button>
-            <button 
+            <button title="Quitar archivo" 
               @click="removeExistingFile(index)"
               type="button"
               class="text-red-400 hover:text-red-300 transition-colors"

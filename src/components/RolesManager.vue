@@ -28,10 +28,10 @@
             <span v-else class="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded mt-1 inline-block">Personalizado</span>
           </div>
           <div class="flex gap-2">
-            <button @click="openModal(role)" class="text-blue-400 hover:text-blue-300 transition-colors">
+            <button title="Editar rol" @click="openModal(role)" class="text-blue-400 hover:text-blue-300 transition-colors">
               <i class="fas fa-edit"></i>
             </button>
-            <button v-if="!role.isSystem" @click="confirmDelete(role)" class="text-red-400 hover:text-red-300 transition-colors">
+            <button title="Eliminar rol" v-if="!role.isSystem" @click="confirmDelete(role)" class="text-red-400 hover:text-red-300 transition-colors">
               <i class="fas fa-trash"></i>
             </button>
           </div>
@@ -51,7 +51,7 @@
         
         <div class="p-6 border-b border-gray-700 flex justify-between items-center">
           <h3 class="text-2xl font-bold text-white">{{ editingRole ? 'Editar Rol' : 'Nuevo Rol' }}</h3>
-          <button @click="closeModal" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+          <button title="Cerrar" @click="closeModal" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
         </div>
 
         <div class="p-6 overflow-y-auto flex-1">

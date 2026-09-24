@@ -11,7 +11,7 @@
         </span>
       </div>
       <div class="flex items-center gap-2">
-        <button @click="refreshData" :disabled="isRefreshing"
+        <button title="Actualizar datos" @click="refreshData" :disabled="isRefreshing"
           class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-blue-500 hover:border-blue-200 hover:bg-blue-50 transition-colors disabled:opacity-50 shrink-0">
           <i class="fas fa-sync-alt text-[11px]" :class="{ 'animate-spin': isRefreshing }"></i>
         </button>

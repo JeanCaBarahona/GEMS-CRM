@@ -138,7 +138,7 @@
               <p class="text-white font-medium">{{ task.title }}</p>
               <p class="text-gray-400 text-sm">{{ task.dueDate }}</p>
             </div>
-            <button class="text-purple-400 hover:text-purple-300">
+            <button title="Ver detalle" class="text-purple-400 hover:text-purple-300">
               <i class="fas fa-arrow-right"></i>
             </button>
           </div>

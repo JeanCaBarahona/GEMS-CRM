@@ -12,7 +12,7 @@
       <div class="bg-gradient-to-r from-purple-600 to-pink-600 p-4 rounded-t-2xl">
         <div class="flex items-center justify-between">
           <h3 class="text-white font-semibold text-lg">Nuevo Chat</h3>
-          <button
+          <button title="Cerrar"
             @click="$emit('close')"
             class="text-white hover:text-purple-200 transition-colors p-1 rounded hover:bg-white/10"
           >
@@ -183,7 +183,7 @@
                   {{ getUserInitials(member.name).substring(0, 1) }}
                 </div>
                 <span>{{ member.name }}</span>
-                <button
+                <button title="Quitar miembro"
                   @click="removeMember(member._id)"
                   class="text-purple-300 hover:text-white transition-colors"
                 >

@@ -426,7 +426,7 @@
             >
               <i class="fas fa-trash"></i>
             </button>
-            <button @click="selectedTask = null" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-md transition-colors ml-1">
+            <button title="Cerrar" @click="selectedTask = null" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-md transition-colors ml-1">
               <i class="fas fa-times text-lg"></i>
             </button>
           </div>
@@ -917,7 +917,7 @@
                   <div class="flex items-center gap-1.5">
                     <!-- Timer & Manual Edit (Pending) -->
                     <div class="flex items-center gap-1">
-                      <button 
+                      <button title="Iniciar temporizador" 
                         @click.stop="toggleTimer(activity)" 
                         class="w-6 h-6 flex items-center justify-center rounded-lg transition-all shadow-sm border text-amber-500 bg-amber-50 border-amber-200 hover:bg-white hover:border-amber-400"
                       >
@@ -962,10 +962,10 @@
                       <!-- Popover de edición de porcentaje -->
                       <div v-if="editingPercentageId === activity._id" class="absolute bottom-full left-0 mb-2 z-50 bg-white rounded-lg shadow-xl border border-slate-200 p-2 flex items-center gap-2 animate-scale-up origin-bottom-left" @click.stop>
                         <input v-model="activity.completionPercentage" type="number" min="0" max="100" class="w-16 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold focus:bg-white transition-all" @keyup.enter="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null">
-                        <button @click.stop="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null" class="p-1 bg-amber-600 text-white rounded hover:bg-amber-700 transition-colors">
+                        <button title="Guardar avance" @click.stop="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null" class="p-1 bg-amber-600 text-white rounded hover:bg-amber-700 transition-colors">
                           <i class="fas fa-check text-[8px]"></i>
                         </button>
-                        <button @click="editingPercentageId = null" class="p-1 bg-slate-100 text-slate-500 rounded hover:bg-slate-200 transition-colors">
+                        <button title="Cancelar" @click="editingPercentageId = null" class="p-1 bg-slate-100 text-slate-500 rounded hover:bg-slate-200 transition-colors">
                           <i class="fas fa-times text-[8px]"></i>
                         </button>
                       </div>
@@ -1093,7 +1093,7 @@
                   <div class="flex items-center gap-1.5">
                     <!-- Timer & Manual Edit (En Proceso) -->
                     <div class="flex items-center gap-1">
-                      <button 
+                      <button :title="isTimerActive(activity) ? 'Detener temporizador' : 'Iniciar temporizador'" 
                         @click.stop="toggleTimer(activity)" 
                         class="w-6 h-6 flex items-center justify-center rounded-lg transition-all shadow-sm border" 
                         :class="isTimerActive(activity) ? 'text-red-500 bg-red-50 border-red-200 animate-pulse' : 'text-blue-500 bg-blue-50 border-blue-200 hover:bg-white hover:border-blue-400'"
@@ -1139,10 +1139,10 @@
                       <!-- Popover de edición de porcentaje -->
                       <div v-if="editingPercentageId === activity._id" class="absolute bottom-full left-0 mb-2 z-50 bg-white rounded-lg shadow-xl border border-slate-200 p-2 flex items-center gap-2 animate-scale-up origin-bottom-left" @click.stop>
                         <input v-model="activity.completionPercentage" type="number" min="0" max="100" class="w-16 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold focus:bg-white transition-all" @keyup.enter="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null">
-                        <button @click.stop="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null" class="p-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+                        <button title="Guardar avance" @click.stop="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null" class="p-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
                           <i class="fas fa-check text-[8px]"></i>
                         </button>
-                        <button @click="editingPercentageId = null" class="p-1 bg-slate-100 text-slate-500 rounded hover:bg-slate-200 transition-colors">
+                        <button title="Cancelar" @click="editingPercentageId = null" class="p-1 bg-slate-100 text-slate-500 rounded hover:bg-slate-200 transition-colors">
                           <i class="fas fa-times text-[8px]"></i>
                         </button>
                       </div>
@@ -1401,7 +1401,7 @@
                   <div class="flex items-center gap-1.5">
                     <!-- Timer & Manual Edit (Vencida) -->
                     <div class="flex items-center gap-1">
-                      <button 
+                      <button title="Iniciar temporizador" 
                         @click.stop="toggleTimer(activity)" 
                         class="w-6 h-6 flex items-center justify-center rounded-lg transition-all shadow-sm border text-red-500 bg-red-50 border-red-200 hover:bg-white hover:border-red-400"
                       >
@@ -1446,10 +1446,10 @@
                       <!-- Popover de edición de porcentaje -->
                       <div v-if="editingPercentageId === activity._id" class="absolute bottom-full left-0 mb-2 z-50 bg-white rounded-lg shadow-xl border border-slate-200 p-2 flex items-center gap-2 animate-scale-up origin-bottom-left" @click.stop>
                         <input v-model="activity.completionPercentage" type="number" min="0" max="100" class="w-16 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold focus:bg-white transition-all" @keyup.enter="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null">
-                        <button @click.stop="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null" class="p-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors">
+                        <button title="Guardar avance" @click.stop="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null" class="p-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors">
                           <i class="fas fa-check text-[8px]"></i>
                         </button>
-                        <button @click="editingPercentageId = null" class="p-1 bg-slate-100 text-slate-500 rounded hover:bg-slate-200 transition-colors">
+                        <button title="Cancelar" @click="editingPercentageId = null" class="p-1 bg-slate-100 text-slate-500 rounded hover:bg-slate-200 transition-colors">
                           <i class="fas fa-times text-[8px]"></i>
                         </button>
                       </div>
@@ -1554,7 +1554,7 @@
                   <p class="text-sm font-medium text-slate-500">Tareas rápidas por defecto</p>
                 </div>
               </div>
-              <button
+              <button title="Cerrar"
                 @click="showQuickSettings = false"
                 class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-lg transition-all duration-200"
               >
@@ -1709,7 +1709,7 @@
               <i class="fas fa-tasks mr-2 text-primary-500"></i>
               {{ isEditingTask ? 'Editar Tarea' : 'Nueva Tarea' }}
             </h2>
-            <button @click="closeTaskModal" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-md transition-colors">
+            <button title="Cerrar" @click="closeTaskModal" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-md transition-colors">
               <i class="fas fa-times text-lg"></i>
             </button>
           </div>
@@ -2060,7 +2060,7 @@
               <i class="fas fa-running mr-2 text-primary-500"></i>
               Gestionar Sprints
             </h2>
-            <button @click="showSprintsModal = false" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-md transition-colors">
+            <button title="Cerrar" @click="showSprintsModal = false" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-md transition-colors">
               <i class="fas fa-times text-lg"></i>
             </button>
           </div>
@@ -2458,7 +2458,7 @@
         <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 animate-scale-up">
           <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 rounded-t-2xl">
             <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">Vincular Caso Técnico</h3>
-            <button @click="showCaseLinkingModal = false" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+            <button title="Cerrar" @click="showCaseLinkingModal = false" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
           </div>
           <div class="p-4">
             <div class="relative mb-4">
@@ -2497,7 +2497,7 @@
         <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 animate-scale-up">
           <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 rounded-t-2xl">
             <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">Vincular Documentación</h3>
-            <button @click="showWikiLinkingModal = false" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+            <button title="Cerrar" @click="showWikiLinkingModal = false" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
           </div>
           <div class="p-4">
             <div class="relative mb-4">

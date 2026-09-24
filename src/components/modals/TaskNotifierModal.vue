@@ -15,7 +15,7 @@
           </div>
           <h2 class="text-xl font-bold text-white">Notificador de Tareas</h2>
         </div>
-        <button 
+        <button title="Cerrar" 
           @click="$emit('close')"
           class="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-white/10 transition-colors"
         >

@@ -23,7 +23,7 @@
           <h3 class="text-lg font-black text-slate-800">
             {{ editingActivity ? 'Editar Actividad' : 'Nueva Actividad' }}
           </h3>
-          <button @click="closeModal" class="text-slate-400 hover:text-slate-600 hover:bg-slate-50 p-1.5 rounded-lg transition-colors">
+          <button title="Cerrar" @click="closeModal" class="text-slate-400 hover:text-slate-600 hover:bg-slate-50 p-1.5 rounded-lg transition-colors">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>

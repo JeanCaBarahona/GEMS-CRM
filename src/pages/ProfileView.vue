@@ -10,11 +10,11 @@
           class="relative group shrink-0 rounded-full focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-200"
           title="Cambiar foto de perfil"
         >
-          <UserAvatar
+          <PersonAvatar
             :name="profileData?.name || 'U'"
-            :photo="profileData.photo || undefined"
-            size="2xl"
-            class="!w-36 !h-36 !rounded-full border-4 border-white shadow-xl ring-4 ring-primary-100/50"
+            :photo="profileData.photo"
+            title=""
+            class="w-36 h-36 rounded-full bg-gradient-to-br from-primary-400 to-indigo-500 text-white text-4xl font-black border-4 border-white shadow-xl ring-4 ring-primary-100/50"
           />
           <!-- Overlay al pasar el mouse -->
           <span class="absolute inset-0 rounded-full bg-slate-900/45 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 text-white">
@@ -296,6 +296,7 @@ import { useNotifications } from '@/composables/useNotifications'
 import AvatarSelector from '@/components/AvatarSelector.vue'
 import ProfilePhotoUploader from '@/components/ProfilePhotoUploader.vue'
 import ProfilePhotoEditor from '@/components/ProfilePhotoEditor.vue'
+import PersonAvatar from '@/components/ui/PersonAvatar.vue'
 import { getAvatarById, getDefaultAvatar } from '@/utils/avatarConfig'
 import { API_CONFIG } from '@/config/api'
 

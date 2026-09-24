@@ -122,13 +122,13 @@
               >
                 <i :class="expense.activo ? 'fas fa-pause' : 'fas fa-play'"></i>
               </button>
-              <button
+              <button title="Editar gasto"
                 @click="$emit('edit', expense)"
                 class="p-2 bg-blue-600/20 text-blue-400 rounded-lg hover:bg-blue-600/30 transition-colors border border-blue-500/30"
               >
                 <i class="fas fa-edit"></i>
               </button>
-              <button
+              <button title="Eliminar gasto"
                 @click="$emit('delete', expense._id!)"
                 class="p-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors border border-red-500/30"
               >

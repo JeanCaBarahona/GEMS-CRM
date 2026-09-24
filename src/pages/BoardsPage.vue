@@ -42,7 +42,7 @@
             >
               {{ getBoardTypeLabel(board.type) }}
             </span>
-            <button
+            <button title="Configurar tablero"
               @click.stop="openBoardSettings(board)"
               class="p-1 text-gray-400 hover:text-white hover:bg-gray-700/50 rounded"
             >

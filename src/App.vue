@@ -41,6 +41,7 @@
             <UserAvatar
               :name="authStore.user?.name || 'Usuario'"
               :avatar="authStore.user?.avatar"
+              :photo="authStore.user?.photo || undefined"
               size="md"
               :clickable="true"
               @click="router.push('/profile')"
@@ -106,64 +107,6 @@
         class="flex flex-col h-screen transition-all duration-300 ease-in-out"
         :class="isSidebarMini ? 'lg:ml-20' : 'lg:ml-64'"
       >
-        <!-- Floating User Avatar (Sober & Professional) -->
-        <div class="fixed top-4 right-6 z-50">
-          <div class="relative">
-            <button
-              @click="showUserMenu = !showUserMenu"
-              class="relative p-0.5 bg-white/80 backdrop-blur-md border border-slate-200 rounded-2xl hover:border-primary-300 transition-all active:scale-95 group shadow-[0_4px_12px_-4px_rgba(0,0,0,0.08)]"
-            >
-              <UserAvatar
-                :name="authStore.user?.name || 'Usuario'"
-                :avatar="authStore.user?.avatar"
-                size="md"
-                class="saturate-110 rounded-[14px]"
-              />
-              <!-- Status dot -->
-              <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full shadow-sm"></div>
-            </button>
-
-            <!-- User Dropdown (Glassmorphism) -->
-            <div
-              v-if="showUserMenu"
-              class="absolute right-0 top-full mt-3 w-64 bg-white/90 backdrop-blur-xl border border-white/40 rounded-3xl shadow-2xl z-50 overflow-hidden font-medium animate-fade-in ring-1 ring-black/5"
-            >
-              <!-- Header: email -->
-              <div class="px-6 py-5 border-b border-slate-100 bg-white/50">
-                <span class="block text-sm text-slate-800 font-bold mb-0.5">{{ authStore.user?.name }}</span>
-                <span class="block text-[10px] text-slate-500 truncate uppercase tracking-widest font-black opacity-60">
-                  {{ authStore.user?.email }}
-                </span>
-              </div>
-
-              <!-- Menu items -->
-              <div class="py-2">
-                <button 
-                  @click="navigateToProfile"
-                  class="w-full text-left px-6 py-3 text-slate-700 hover:bg-primary-50 hover:text-primary-600 transition-colors text-xs flex items-center font-bold"
-                >
-                  <i class="fas fa-user w-5 opacity-50"></i>
-                  Mi Perfil
-                </button>
-                <button
-                  class="w-full text-left px-6 py-3 text-slate-700 hover:bg-primary-50 hover:text-primary-600 transition-colors text-xs flex items-center font-bold"
-                >
-                  <i class="fas fa-cog w-5 opacity-50"></i>
-                  Configuración
-                </button>
-                <div class="border-t border-slate-100 my-1 opacity-50"></div>
-                <button 
-                  @click="handleLogout"
-                  class="w-full text-left px-6 py-3 text-rose-500 hover:bg-rose-50 transition-colors text-xs flex items-center font-bold"
-                >
-                  <i class="fas fa-sign-out-alt w-5 opacity-50"></i>
-                  Cerrar Sesión
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <!-- Main Content Area -->
         <main class="p-4 pb-8 flex-1 min-h-0 overflow-y-auto custom-scrollbar">
           <router-view />
@@ -213,7 +156,6 @@ const activityModalStore = useActivityModalStore()
 // Reactive data
 const sidebarOpen = ref(true)
 const isSidebarMini = ref(false)
-const showUserMenu = ref(false)
 const isDesktop = ref(true)
 // Removed navbar mini-popup; use NewMessageToast instead
 
@@ -257,13 +199,7 @@ const getRoleDisplayName = (role?: string) => {
   return roleNames[role || ''] || role
 }
 
-const navigateToProfile = () => {
-  showUserMenu.value = false
-  router.push('/profile')
-}
-
 const handleLogout = async () => {
-  showUserMenu.value = false
   await authStore.logout()
 }
 
@@ -277,20 +213,12 @@ const handleResize = () => {
   }
 }
 
-// Close user menu when clicking outside
-const handleClickOutside = (event: MouseEvent) => {
-  if (showUserMenu.value && !(event.target as Element).closest('.relative')) {
-    showUserMenu.value = false
-  }
-}
-
 onMounted(async () => {
   // Check authentication on app load
   await authStore.checkAuth()
   
   handleResize()
   window.addEventListener('resize', handleResize)
-  document.addEventListener('click', handleClickOutside)
 
   // Initialize chat in background for unread badge (Disabled by user request)
   /* if (authStore.isAuthenticated) {

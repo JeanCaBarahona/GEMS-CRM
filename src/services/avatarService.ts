@@ -140,6 +140,14 @@ export class AvatarService {
   }
   
   /**
+   * Guarda la foto de perfil ya recortada en el editor (data URL, queda en la BD)
+   */
+  static async saveProfilePhoto(dataUrl: string): Promise<AvatarResponse> {
+    const response = await apiClient.put('/avatars/photo', { dataUrl })
+    return response.data
+  }
+
+  /**
    * Sube una foto de perfil personalizada
    */
   static async uploadProfilePhoto(file: File): Promise<AvatarResponse> {

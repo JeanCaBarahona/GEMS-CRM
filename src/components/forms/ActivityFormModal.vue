@@ -443,10 +443,10 @@
             <input type="file" accept="image/*" multiple class="hidden" @change="onAttachmentSelect" :disabled="savingAttachment" />
           </label>
 
-          <p v-if="localAttachments.length === 0" class="text-center text-[11px] text-slate-300 font-medium py-3">Sin adjuntos todavía</p>
+          <p v-if="allAttachments.length === 0" class="text-center text-[11px] text-slate-300 font-medium py-3">Sin adjuntos todavía</p>
 
           <div
-            v-for="att in localAttachments"
+            v-for="att in allAttachments"
             :key="att._id"
             class="group flex items-center gap-2.5 px-3 py-2.5 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all"
           >
@@ -483,6 +483,16 @@
               </p>
             </div>
             <button
+              v-if="att.fromComment"
+              type="button"
+              @click="sideTab = 'comments'"
+              class="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-400 hover:bg-primary-50 hover:text-primary-600 text-[9px] font-bold transition-colors"
+              title="Viene de un comentario — para quitarlo, edita o borra el comentario"
+            >
+              <i class="fas fa-comment text-[8px]"></i>Comentario
+            </button>
+            <button
+              v-else
               type="button"
               @click="removeAttachment(att)"
               class="w-6 h-6 rounded-md text-slate-300 hover:text-rose-500 hover:bg-rose-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shrink-0"
@@ -993,6 +1003,51 @@ watch(() => form.projectId, async () => {
 
 // ── Adjuntos (solo actividades) ─────────────────────────────────────────────
 const localAttachments = computed<ActivityAttachment[]>(() => localTask.value?.attachments || [])
+
+// Las fotos y links que se ponen en los comentarios también se listan en Adjuntos.
+// Se derivan de los comentarios (no se duplican en la BD): si se borra el
+// comentario, desaparecen de aquí también.
+type ListedAttachment = ActivityAttachment & { fromComment?: boolean }
+const COMMENT_LINK = /https?:\/\/[^\s<>"']+/gi
+const commentAttachments = computed<ListedAttachment[]>(() => {
+  const items: ListedAttachment[] = []
+  for (const comment of localComments.value as any[]) {
+    const author = { name: commentAuthorName(comment) }
+    ;(comment.images || []).forEach((img: any, i: number) => {
+      if (!img?.url) return
+      items.push({
+        _id: `comment-${comment._id}-img-${i}`,
+        kind: 'image',
+        name: img.name || img.originalName || 'Imagen de un comentario',
+        url: img.url,
+        uploadedBy: author,
+        uploadedAt: comment.createdAt,
+        fromComment: true
+      } as ListedAttachment)
+    })
+    for (const match of String(comment.text || '').matchAll(COMMENT_LINK)) {
+      const url = match[0].replace(/[.,;:!?)\]]+$/, '')
+      items.push({
+        _id: `comment-${comment._id}-link-${match.index}`,
+        kind: 'link',
+        name: url.replace(/^https?:\/\/(www\.)?/i, ''),
+        url,
+        uploadedBy: author,
+        uploadedAt: comment.createdAt,
+        fromComment: true
+      } as ListedAttachment)
+    }
+  }
+  return items
+})
+const allAttachments = computed<ListedAttachment[]>(() => {
+  const seen = new Set<string>()
+  return [...localAttachments.value, ...commentAttachments.value].filter(att => {
+    if (seen.has(att.url)) return false
+    seen.add(att.url)
+    return true
+  })
+})
 const savingAttachment = ref(false)
 const draggingAttachment = ref(false)
 const newLinkUrl = ref('')
@@ -1003,7 +1058,7 @@ const sideTabs = computed(() => {
     { key: 'comments', label: 'Comentarios', icon: 'fas fa-comments', tooltip: 'Ver y escribir comentarios de la tarea', count: localComments.value.length },
   ]
   if (!isBoardTask.value) {
-    tabs.push({ key: 'attachments', label: 'Adjuntos', icon: 'fas fa-paperclip', tooltip: 'Ver y subir archivos de la tarea', count: localAttachments.value.length })
+    tabs.push({ key: 'attachments', label: 'Adjuntos', icon: 'fas fa-paperclip', tooltip: 'Enlaces y capturas de la tarea (incluye los de los comentarios)', count: allAttachments.value.length })
   }
   tabs.push({ key: 'history', label: 'Historial', icon: 'fas fa-clock-rotate-left', tooltip: 'Ver quién cambió qué y cuándo' })
   return tabs

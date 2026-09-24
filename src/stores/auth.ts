@@ -10,6 +10,7 @@ export interface User {
   department: string
   position: string
   avatar?: string
+  photo?: string | null
   permissions?: {
     dashboard: boolean
     clients: {

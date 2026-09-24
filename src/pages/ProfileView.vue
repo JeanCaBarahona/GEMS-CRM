@@ -4,13 +4,28 @@
     <div class="bg-white/70 backdrop-blur-md rounded-3xl p-8 border border-slate-200/60 shadow-sm transition-all duration-300">
       <div class="flex flex-col md:flex-row items-center gap-8">
         <!-- Profile Avatar -->
-        <div class="relative">
+        <button
+          type="button"
+          @click="showPhotoEditor = true"
+          class="relative group shrink-0 rounded-full focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-200"
+          title="Cambiar foto de perfil"
+        >
           <UserAvatar
             :name="profileData?.name || 'U'"
+            :photo="profileData.photo || undefined"
             size="2xl"
-            class="w-36 h-36 !rounded-full border-4 border-white shadow-xl ring-4 ring-primary-100/50"
+            class="!w-36 !h-36 !rounded-full border-4 border-white shadow-xl ring-4 ring-primary-100/50"
           />
-        </div>
+          <!-- Overlay al pasar el mouse -->
+          <span class="absolute inset-0 rounded-full bg-slate-900/45 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 text-white">
+            <i class="fas fa-camera text-xl"></i>
+            <span class="text-[10px] font-black uppercase tracking-widest">Cambiar</span>
+          </span>
+          <!-- Botón cámara siempre visible -->
+          <span class="absolute bottom-1 right-1 w-10 h-10 rounded-full bg-primary-500 text-white border-4 border-white shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+            <i class="fas fa-camera text-xs"></i>
+          </span>
+        </button>
         
         <!-- Basic Info -->
         <div class="text-center md:text-left flex-1">
@@ -263,7 +278,12 @@
       </div>
     </div>
 
-    <!-- Photo/Avatar Modals removed by user request -->
+    <ProfilePhotoEditor
+      v-if="showPhotoEditor"
+      :current-photo="profileData.photo"
+      @close="showPhotoEditor = false"
+      @update="handlePhotoUpdate"
+    />
   </div>
 </template>
 
@@ -275,6 +295,7 @@ import { AvatarService } from '@/services/avatarService'
 import { useNotifications } from '@/composables/useNotifications'
 import AvatarSelector from '@/components/AvatarSelector.vue'
 import ProfilePhotoUploader from '@/components/ProfilePhotoUploader.vue'
+import ProfilePhotoEditor from '@/components/ProfilePhotoEditor.vue'
 import { getAvatarById, getDefaultAvatar } from '@/utils/avatarConfig'
 import { API_CONFIG } from '@/config/api'
 
@@ -286,6 +307,7 @@ const loading = ref(false)
 const isEditing = ref(false)
 const showAvatarSelector = ref(false)
 const showPhotoUploader = ref(false)
+const showPhotoEditor = ref(false)
 const tempSelectedAvatar = ref<string>('')
 const photoErrored = ref(false)
 

@@ -10,8 +10,17 @@
     :title="name"
     @click="handleClick"
   >
-    <!-- Forzado a iniciales por solicitud de usuario (Abril 2026) -->
+    <!-- Foto de perfil subida por el usuario; si no hay (o falla), iniciales.
+         Los avatares de gema siguen ocultos por solicitud (Abril 2026). -->
+    <img
+      v-if="resolvedPhoto"
+      :src="resolvedPhoto"
+      :alt="name"
+      class="w-full h-full object-cover"
+      @error="handleImageError"
+    />
     <div
+      v-else
       :class="[
         'w-full h-full flex items-center justify-center',
         (bgGradient || finalGradient),

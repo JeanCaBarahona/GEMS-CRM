@@ -351,171 +351,16 @@
     </div>
 
     <!-- Vista de Lista -->
-    <div v-else-if="currentView === 'tasks'" class="bg-white rounded-2xl border border-slate-200 shadow-sm mt-6 flex flex-col min-h-0 overflow-visible">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="bg-slate-50/50 border-b border-slate-200 text-[10px] uppercase font-black text-slate-500 tracking-wider">
-              <th class="py-5 px-4 pl-8">Actividad</th>
-              <th class="py-5 px-4 hidden md:table-cell">Cliente</th>
-              <th class="py-5 px-4">Asignado</th>
-              <th class="py-5 px-4">Estado</th>
-              <th class="py-5 px-4 hidden sm:table-cell">Prioridad</th>
-              <th class="py-5 px-4 pr-8 text-right">Acciones</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100">
-            <tr v-for="activity in filteredActivities" :key="activity._id" class="hover:bg-slate-50/80 transition-colors group">
-              <td class="py-6 px-4 pl-8">
-                <div class="font-bold text-slate-800 text-sm tracking-tight cursor-pointer hover:text-primary-600 transition-colors" @click="toggleCardExpansion(activity._id!)">{{ activity.title }}</div>
-                <div 
-                  class="text-[11px] text-slate-500 mt-1.5 max-w-md font-medium cursor-pointer transition-all duration-300"
-                  :class="expandedCards.has(activity._id!) ? 'line-clamp-none bg-slate-50 p-2 rounded border border-slate-100 mt-2' : 'line-clamp-1'"
-                  @click="toggleCardExpansion(activity._id!)"
-                >
-                  {{ activity.description || 'Sin descripción' }}
-                </div>
-                
-                <div v-if="activity.estimatedTime || activity.timeSpent || activity.completionPercentage !== undefined" class="mt-4 flex items-center gap-4">
-                  <div class="flex-1 max-w-[140px] bg-slate-100 rounded-full h-1.5 overflow-hidden flex items-center shadow-inner relative group/progress">
-                    <div class="bg-primary-500 h-1.5 rounded-full transition-all shadow-sm" :style="{ width: `${activity.completionPercentage || 0}%` }"></div>
-                  </div>
-                  
-                  <div class="flex items-center gap-3">
-                    <!-- Percentage Edit -->
-                    <div class="relative">
-                      <div @click.stop="editingPercentageId = activity._id!" class="flex items-center gap-1 text-[10px] font-black text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-100 cursor-pointer hover:bg-white hover:border-primary-300 transition-all">
-                      <span class="text-primary-600">{{ Math.min(activity.completionPercentage || 0, 100) }}%</span>
-                      </div>
-                      <div v-if="editingPercentageId === activity._id" class="absolute bottom-full left-0 mb-2 z-50 bg-white rounded-lg shadow-xl border border-slate-200 p-2 flex items-center gap-2 animate-scale-up origin-bottom-left" @click.stop>
-                        <input 
-                          type="number" 
-                          v-model="activity.completionPercentage" 
-                          max="100"
-                          min="0"
-                          class="w-12 text-[10px] font-bold border-slate-200 rounded p-1"
-                          @input="activity.completionPercentage = Math.min(activity.completionPercentage || 0, 100)"
-                          @keyup.enter="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null"
-                          @blur="editingPercentageId = null"
-                          v-focus
-                        />
-                        <button @click.stop="updatePercentage(activity, activity.completionPercentage); editingPercentageId = null" class="text-emerald-500 hover:text-emerald-600"><i class="fas fa-check"></i></button>
-                      </div>
-                    </div>
-
-                    <!-- Timer & Manual Edit -->
-                    <div class="flex items-center gap-1.5">
-                      <!-- Starter (Iniciador) -->
-                      <button 
-                        @click.stop="toggleTimer(activity)" 
-                        class="w-7 h-7 flex items-center justify-center rounded-lg transition-all shadow-sm" 
-                        :class="isTimerActive(activity) ? 'text-red-500 bg-red-50 hover:bg-red-100 border border-red-100 animate-pulse' : 'text-primary-500 bg-primary-50 hover:bg-primary-100 border border-primary-50'"
-                        title="Iniciar/Detener Temporizador"
-                      >
-                        <i :class="isTimerActive(activity) ? 'fas fa-stop' : 'fas fa-play'" class="text-[9px]"></i>
-                      </button>
-
-                      <!-- Manual Time Display (Click to edit) -->
-                      <div class="relative">
-                        <div 
-                          @click.stop="startEditingTime(activity)" 
-                          class="flex items-center gap-1.5 text-[10px] font-black text-slate-700 bg-white px-2 py-1 rounded border border-slate-200 cursor-pointer hover:border-primary-300 transition-all shadow-sm"
-                        >
-                          <i class="far fa-clock text-[8px] text-slate-400"></i>
-                          <span :class="isTimerActive(activity) ? 'text-red-500 font-black' : ''">{{ formatTime(activity.timeSpent) }}</span>
-                        </div>
-
-                        <!-- Inline Manual Time Edit Popover -->
-                        <div v-if="editingTimeId === activity._id" class="absolute bottom-full left-0 mb-2 z-[60] bg-white rounded-xl shadow-2xl border border-slate-200 p-3 min-w-[140px] animate-scale-up origin-bottom-left" @click.stop>
-                          <div class="flex items-center gap-2 mb-2">
-                            <div class="flex flex-col gap-1">
-                              <span class="text-[8px] font-black text-slate-400 uppercase">Horas</span>
-                              <input v-model="manualHours" type="number" min="0" class="w-12 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold focus:bg-white transition-all">
-                            </div>
-                            <div class="flex flex-col gap-1">
-                              <span class="text-[8px] font-black text-slate-400 uppercase">Minutos</span>
-                              <input v-model="manualMinutes" type="number" min="0" max="59" class="w-12 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[10px] font-bold focus:bg-white transition-all">
-                            </div>
-                          </div>
-                          <div class="flex gap-1.5">
-                            <button @click="saveManualTime(activity)" class="flex-1 py-1.5 bg-primary-600 text-white rounded-lg text-[9px] font-black uppercase hover:bg-primary-700 transition-all">Guardar</button>
-                            <button @click="editingTimeId = null" class="px-2 py-1.5 bg-slate-100 text-slate-500 rounded-lg text-[9px] font-black uppercase hover:bg-slate-200 transition-all">X</button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </td>
-              <td class="py-6 px-4 hidden md:table-cell text-xs font-bold text-slate-600">
-                {{ getClientName(activity.clientId) }}
-              </td>
-              <td class="py-6 px-4">
-                <div class="flex items-center gap-2">
-                  <template v-if="Array.isArray(activity.assignedTo) && activity.assignedTo.length">
-                    <div class="flex -space-x-2">
-                      <AvatarInline
-                        v-for="(user, i) in activity.assignedTo.slice(0, 3)"
-                        :key="user._id || user"
-                        :name="getUserInfo(user).name"
-                        :photo="getUserInfo(user).photo"
-                        :avatar="getUserInfo(user).avatar"
-                        :hide-name="true"
-                        class="ring-2 ring-white relative"
-                        :style="{ zIndex: 10 - i }"
-                      />
-                      <span v-if="activity.assignedTo.length > 3" class="text-[10px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-full ring-2 ring-white relative z-0 flex items-center justify-center">
-                        +{{ activity.assignedTo.length - 3 }}
-                      </span>
-                    </div>
-                  </template>
-                  <template v-else>
-                    <AvatarInline
-                      :name="getSmartAssignedName(activity)"
-                      :photo="(activity.assignedTo && typeof activity.assignedTo === 'object') ? activity.assignedTo.photo : ''"
-                      :avatar="(activity.assignedTo && typeof activity.assignedTo === 'object') ? activity.assignedTo.avatar : ''"
-                    />
-                  </template>
-                </div>
-              </td>
-              <td class="py-6 px-4">
-                <span :class="getStatusBadgeClass(activity.status)" class="text-[10px] font-black px-2.5 py-1 rounded-lg border inline-block whitespace-nowrap shadow-sm">
-                  {{ getStatusLabel(activity.status) }}
-                </span>
-              </td>
-              <td class="py-6 px-4 hidden sm:table-cell">
-                <span 
-                  v-if="activity.priority"
-                  class="px-2.5 py-1 rounded-lg text-[10px] font-black border inline-flex items-center gap-1.5 shadow-sm"
-                  :class="getPriorityClass(activity.priority)"
-                >
-                  <i :class="getPriorityIcon(activity.priority)"></i>
-                  {{ getPriorityLabel(activity.priority) }}
-                </span>
-              </td>
-              <td class="py-6 px-4 pr-8 text-right">
-                <div class="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button @click="markAsCompleted(activity._id!)" class="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all" title="Completar">
-                    <i class="fas fa-check text-xs"></i>
-                  </button>
-                  <button v-if="authStore.canEditActivities" @click="editActivity(activity)" class="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all" title="Editar">
-                    <i class="fas fa-edit text-xs"></i>
-                  </button>
-                  <button v-if="authStore.canDeleteActivities" @click="deleteActivity(activity._id!)" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Eliminar">
-                    <i class="fas fa-trash text-xs"></i>
-                  </button>
-                </div>
-              </td>
-            </tr>
-            <tr v-if="filteredActivities.length === 0">
-              <td colspan="6" class="p-12 text-center text-slate-500 text-sm font-medium">
-                <i class="fas fa-list text-4xl text-slate-200 mb-4 block"></i>
-                No hay actividades para mostrar en la lista
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <div v-else-if="currentView === 'tasks'" class="mt-6">
+      <TaskListView
+        :groups="activityListGroups"
+        :can-edit="authStore.canEditActivities"
+        :can-delete="authStore.canDeleteActivities"
+        @open="editActivity"
+        @toggle-complete="toggleActivityDone"
+        @delete="(activity: ActivityData) => deleteActivity(activity._id!)"
+        @add-task="showCreateModal = true"
+      />
     </div>
 
     <!-- Modal Detalles de Tarea -->
@@ -2690,11 +2535,11 @@ import { casesService } from '../../services/casesService'
 import { wikiService } from '../../services/wikiService'
 import VoiceDictateButton from '@/components/ui/VoiceDictateButton.vue'
 import ActivityFormModal from '../forms/ActivityFormModal.vue'
+import TaskListView, { type TaskListRow, type TaskListGroup } from '../tasks/TaskListView.vue'
 import AssignActivityModal from '../modals/AssignActivityModal.vue'
 import CustomSelect from '../ui/CustomSelect.vue'
 import MonthlyCalendar from '../calendar/MonthlyCalendar.vue'
 import QuickTaskModal from '../modals/QuickTaskModal.vue'
-import AvatarInline from '../AvatarInline.vue'
 // import TaskNotifier from '../notifications/TaskNotifier.vue' // REMOVED
 
 // Props
@@ -3104,6 +2949,56 @@ const overdueActivities = computed(() => {
 const hasMoreOverdue = computed(() =>
   trulyOverdueActivities.value.length > columnLimits.value.overdue
 )
+
+// ── Vista de Lista (TaskListView) ──────────────────────────────────────────
+// A diferencia de las columnas del Kanban (pending/inProgress/...Activities de
+// arriba), acá no se recorta con columnLimits: la lista muestra todo.
+function activityAssignees(activity: any): TaskListRow['assignees'] {
+  const raw = activity.assignedTo
+  const list = Array.isArray(raw) ? raw.filter(Boolean) : (raw ? [raw] : [])
+  return list.map((u: any) => {
+    const info = getUserInfo(u)
+    return { _id: typeof u === 'object' ? u._id : u, name: info.name, photo: info.photo, avatar: info.avatar }
+  })
+}
+
+function activityToListRow(activity: ActivityData): TaskListRow {
+  return {
+    id: activity._id!,
+    title: activity.title,
+    description: activity.description,
+    done: visualStatusFor(activity) === 'completed',
+    assignees: activityAssignees(activity),
+    dueDateLabel: activity.dueDate ? formatDate(activity.dueDate) : undefined,
+    overdue: visualStatusFor(activity) === 'overdue',
+    priorityLabel: activity.priority ? getPriorityLabel(activity.priority) : undefined,
+    priorityClass: activity.priority ? getPriorityClass(activity.priority) : undefined,
+    priorityIcon: activity.priority ? getPriorityIcon(activity.priority) : undefined,
+    raw: activity
+  }
+}
+
+const activityListGroups = computed<TaskListGroup[]>(() => {
+  const byStatus = (status: ReturnType<typeof visualStatusFor>) =>
+    sortActivities(filteredActivities.value.filter(a => visualStatusFor(a) === status)).map(activityToListRow)
+
+  return [
+    { key: 'overdue', label: 'Vencidas', dotClass: 'bg-red-500', rows: byStatus('overdue') },
+    { key: 'pending', label: 'Pendientes', dotClass: 'bg-amber-400', rows: byStatus('pending') },
+    { key: 'in-progress', label: 'En progreso', dotClass: 'bg-primary-400', rows: byStatus('in-progress') },
+    { key: 'completed', label: 'Completadas', dotClass: 'bg-emerald-500', rows: byStatus('completed') }
+  ]
+})
+
+// El check de la fila alterna completada/pendiente (no hay un tercer estado
+// intermedio útil para un toggle simple de un clic).
+async function toggleActivityDone(activity: ActivityData) {
+  if (visualStatusFor(activity) === 'completed') {
+    await markAsPending(activity._id!)
+  } else {
+    await markAsCompleted(activity._id!)
+  }
+}
 
 const formatTime = (seconds: number | undefined) => {
   if (!seconds || seconds === 0) return '0m'
@@ -4901,30 +4796,6 @@ const selectTask = (task: any) => {
 
 const toggleGroup = (groupName: keyof typeof groupsExpanded.value) => {
   groupsExpanded.value[groupName] = !groupsExpanded.value[groupName]
-}
-
-const getStatusBadgeClass = (status: string) => {
-  const classes = {
-    backlog: 'bg-gray-600/50 text-gray-300',
-    todo: 'bg-blue-600/50 text-blue-300',
-    'in-progress': 'bg-yellow-600/50 text-yellow-300',
-    review: 'bg-purple-600/50 text-purple-300',
-    testing: 'bg-orange-600/50 text-orange-300',
-    done: 'bg-green-600/50 text-green-300'
-  }
-  return classes[status as keyof typeof classes] || classes.backlog
-}
-
-const getStatusLabel = (status: string) => {
-  const labels = {
-    backlog: 'Backlog',
-    todo: 'To Do',
-    'in-progress': 'In Progress',
-    review: 'Review',
-    testing: 'Testing',
-    done: 'Done'
-  }
-  return labels[status as keyof typeof labels] || status
 }
 
 const getTaskSprintName = (task: any) => {

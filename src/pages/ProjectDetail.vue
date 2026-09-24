@@ -121,7 +121,22 @@
         <!-- Actividad: tareas y actividades vinculadas — mismo modelo visual, -->
         <!-- crear/editar reutiliza el modal estándar de toda la app. -->
         <div v-else-if="activeTab === 'activity'">
-          <div class="flex justify-end mb-4">
+          <div class="flex items-center justify-between mb-4">
+            <!-- Toggle vista: mismo componente de lista que /activities -->
+            <div class="flex bg-slate-100 rounded-lg p-1 border border-slate-200">
+              <button
+                type="button"
+                @click="linkedView = 'list'"
+                :class="linkedView === 'list' ? 'bg-white text-primary-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-800'"
+                class="px-3 py-1.5 rounded-md text-xs font-medium transition-all"
+              ><i class="fas fa-list mr-1.5"></i>Lista</button>
+              <button
+                type="button"
+                @click="linkedView = 'board'"
+                :class="linkedView === 'board' ? 'bg-white text-primary-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-800'"
+                class="px-3 py-1.5 rounded-md text-xs font-medium transition-all"
+              ><i class="fas fa-columns mr-1.5"></i>Tablero</button>
+            </div>
             <button
               type="button"
               @click="openCreate"
@@ -138,6 +153,17 @@
             <i class="fas fa-inbox text-slate-300 text-2xl mb-2"></i>
             <p class="text-xs font-bold text-slate-400">Sin tareas ni actividades vinculadas todavía</p>
           </div>
+
+          <TaskListView
+            v-else-if="linkedView === 'list'"
+            :groups="linkedListGroups"
+            show-kind-badge
+            :can-delete="false"
+            @open="openEdit"
+            @toggle-complete="toggleLinkedItemDone"
+            @add-task="openCreate"
+          />
+
           <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div v-for="group in statusGroups" :key="group.key" class="space-y-2">
               <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
@@ -197,6 +223,7 @@ import { API_CONFIG } from '@/config/api'
 import { useNotifications } from '@/composables/useNotifications'
 import FileDropzone from '@/components/ui/FileDropzone.vue'
 import ActivityFormModal from '@/components/forms/ActivityFormModal.vue'
+import TaskListView, { type TaskListGroup } from '@/components/tasks/TaskListView.vue'
 import type { TeamMember } from '@/types'
 
 const route = useRoute()
@@ -215,6 +242,7 @@ const tabs = [
   { key: 'activity', label: 'Actividad', icon: 'fas fa-list-check' }
 ] as const
 const activeTab = ref<'docs' | 'files' | 'activity'>('docs')
+const linkedView = ref<'list' | 'board'>('list')
 
 const statusLabel = (st?: string) =>
   ({ active: 'activo', paused: 'pausado', completed: 'completado', archived: 'archivado' } as Record<string, string>)[st || ''] || 'activo'
@@ -311,7 +339,11 @@ const removeLink = async (linkId: string) => {
 // Son dos modelos distintos en el backend (Task y Activity), pero para esta
 // vista es la misma idea — "cosas por hacer" del proyecto — así que se listan
 // juntas; crear/editar reutiliza el mismo ActivityFormModal de toda la app.
-interface LinkedItem { id: string; title: string; status: string; statusLabel: string; kind: 'task' | 'activity'; raw: any }
+interface LinkedItem {
+  id: string; title: string; description?: string; status: string; statusLabel: string
+  kind: 'task' | 'activity'; assignedTo?: any; dueDate?: string | null; priority?: string | null
+  raw: any
+}
 const linkedItems = ref<LinkedItem[]>([])
 const loadingLinked = ref(false)
 
@@ -330,6 +362,68 @@ const statusGroups = computed(() => [
   { key: 'done', label: 'Completada', dot: 'bg-emerald-500', items: linkedItems.value.filter(isDone) }
 ])
 
+// ── Vista de Lista (TaskListView, la misma que usa /activities) ──
+// Task y Activity son dos modelos con formas ligeramente distintas
+// (prioridad: Task usa 'critical', Activity usa 'urgent' para el tope), así
+// que se normalizan acá antes de pasarlas al componente compartido.
+function resolveAssignees(raw: any): { _id?: string; name: string; photo?: string; avatar?: string }[] {
+  const list = Array.isArray(raw) ? raw : (raw ? [raw] : [])
+  return list.filter(Boolean).map((u: any) => {
+    if (typeof u === 'object' && u.name) return { _id: u._id, name: u.name, photo: u.photo, avatar: u.avatar }
+    const member = teamMembers.value.find((m: any) => m._id === u)
+    return { _id: typeof u === 'string' ? u : undefined, name: member?.name || 'Sin asignar', photo: (member as any)?.photo, avatar: (member as any)?.avatar }
+  })
+}
+
+const PRIORITY_META: Record<string, { label: string; class: string; icon: string }> = {
+  low: { label: 'Baja', class: 'bg-slate-500 text-white border-slate-400/30', icon: 'fas fa-arrow-down' },
+  medium: { label: 'Media', class: 'bg-indigo-500 text-white border-indigo-400/30', icon: 'fas fa-minus' },
+  high: { label: 'Alta', class: 'bg-amber-500 text-white border-amber-400/30', icon: 'fas fa-arrow-up' },
+  urgent: { label: 'Urgente', class: 'bg-rose-500 text-white border-rose-400/30', icon: 'fas fa-exclamation' },
+  critical: { label: 'Crítica', class: 'bg-rose-500 text-white border-rose-400/30', icon: 'fas fa-exclamation' }
+}
+
+function formatDueDate(date?: string | null): string | undefined {
+  if (!date) return undefined
+  return new Date(date).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })
+}
+
+const linkedListGroups = computed<TaskListGroup[]>(() => {
+  const toRow = (item: LinkedItem) => {
+    const priority = item.priority ? PRIORITY_META[item.priority] : undefined
+    return {
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      done: isDone(item),
+      assignees: resolveAssignees(item.assignedTo),
+      dueDateLabel: formatDueDate(item.dueDate),
+      overdue: !isDone(item) && !!item.dueDate && new Date(item.dueDate) < new Date(),
+      priorityLabel: priority?.label,
+      priorityClass: priority?.class,
+      priorityIcon: priority?.icon,
+      kindLabel: item.kind === 'task' ? 'Tarea' : 'Actividad',
+      kindClass: item.kind === 'task' ? 'bg-indigo-50 text-indigo-500' : 'bg-amber-50 text-amber-600',
+      raw: item
+    }
+  }
+  return statusGroups.value.map(g => ({ key: g.key, label: g.label, dotClass: g.dot, rows: g.items.map(toRow) }))
+})
+
+// Las Activity tienen un status simple ('completed'); las Task del tablero se
+// mueven por columnas del Kanban, así que acá el check solo actúa sobre
+// actividades — para una tarea de tablero, se abre el detalle en vez de
+// intentar adivinar a qué columna "completada" debería pasar.
+async function toggleLinkedItemDone(item: LinkedItem) {
+  if (item.kind !== 'activity') { openEdit(item); return }
+  try {
+    await activityService.updateStatus(item.id, isDone(item) ? 'pending' : 'completed')
+    await loadLinkedItems()
+  } catch (err: any) {
+    showError('Error', err.message || 'No se pudo actualizar el estado')
+  }
+}
+
 const loadLinkedItems = async () => {
   if (!project.value?._id) return
   loadingLinked.value = true
@@ -341,10 +435,18 @@ const loadLinkedItems = async () => {
     const tasks = Array.isArray(tasksRes) ? tasksRes : []
     const items: LinkedItem[] = []
     tasks.filter((t: any) => t.projectId === project.value!._id).forEach((t: any) => {
-      items.push({ id: t._id, title: t.title, status: t.boardStatus, statusLabel: TASK_STATUS_LABELS[t.boardStatus] || t.boardStatus, kind: 'task', raw: t })
+      items.push({
+        id: t._id, title: t.title, description: t.description, status: t.boardStatus,
+        statusLabel: TASK_STATUS_LABELS[t.boardStatus] || t.boardStatus, kind: 'task',
+        assignedTo: t.assignedTo, dueDate: t.dueDate, priority: t.priority, raw: t
+      })
     })
     activities.filter(a => a.projectId === project.value!._id).forEach(a => {
-      items.push({ id: a._id!, title: a.title, status: a.status, statusLabel: ACTIVITY_STATUS_LABELS[a.status] || a.status, kind: 'activity', raw: a })
+      items.push({
+        id: a._id!, title: a.title, description: a.description, status: a.status,
+        statusLabel: ACTIVITY_STATUS_LABELS[a.status] || a.status, kind: 'activity',
+        assignedTo: a.assignedTo, dueDate: a.dueDate as any, priority: a.priority, raw: a
+      })
     })
     linkedItems.value = items
   } catch {

@@ -851,7 +851,7 @@
     <!-- Tablero Kanban -->
     <div
       v-else-if="currentView === 'kanban'"
-      class="grid grid-cols-1 gap-2 sm:gap-3 md:grid-cols-2 lg:grid-cols-4"
+      class="grid grid-cols-1 gap-2 sm:gap-3 md:grid-cols-2 lg:grid-cols-4 motion-stagger"
     >
       <!-- Recurrentes diarias: no tienen estado ni prioridad, se marcan con "+ Hoy" -->
       <section
@@ -868,7 +868,7 @@
           </span>
           <span class="hidden sm:inline text-[11px] text-slate-400 font-medium">Marca con <b class="text-teal-600">+ Hoy</b> cuando la hagas</span>
         </div>
-        <div class="flex gap-2.5 overflow-x-auto pb-1 custom-scrollbar-slim">
+        <div v-auto-animate class="flex gap-2.5 overflow-x-auto pb-1 custom-scrollbar-slim">
           <div
             v-for="{ activity, stats } in recurringBoardItems"
             :key="activity._id"
@@ -881,7 +881,7 @@
                 class="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center transition-colors"
                 :class="stats.doneToday ? 'bg-teal-500 text-white' : 'bg-teal-50 text-teal-500'"
               >
-                <i :class="stats.doneToday ? 'fas fa-check' : 'fas fa-repeat'" class="text-xs"></i>
+                <i :key="String(stats.doneToday)" :class="stats.doneToday ? 'fas fa-check motion-pop' : 'fas fa-repeat'" class="text-xs"></i>
               </div>
               <div class="min-w-0 flex-1">
                 <h3 class="text-[13px] font-bold leading-snug truncate" :class="stats.doneToday ? 'text-slate-400' : 'text-slate-800 group-hover:text-teal-700'">{{ activity.title }}</h3>
@@ -937,6 +937,7 @@
             'flex flex-col gap-3 flex-1 overflow-y-auto overflow-x-visible px-1.5 pb-6 transition-all duration-300 min-h-0 content-start custom-scrollbar-slim',
             isDragging && draggedActivity?.status !== 'pending' ? 'ring-2 ring-amber-400/50 rounded-lg bg-amber-50/50' : ''
           ]"
+          v-auto-animate="{ duration: 260 }"
           @drop="onDrop($event, 'pending')"
           @dragover.prevent
           @dragenter.prevent
@@ -1113,6 +1114,7 @@
             'flex flex-col gap-3 flex-1 overflow-y-auto overflow-x-visible px-1.5 pb-6 transition-all duration-300 min-h-0 content-start custom-scrollbar-slim',
             isDragging && draggedActivity?.status !== 'in-progress' ? 'ring-2 ring-blue-400/50 rounded-lg bg-blue-50/50' : ''
           ]"
+          v-auto-animate="{ duration: 260 }"
           @drop="onDrop($event, 'in-progress')"
           @dragover.prevent
           @dragenter.prevent
@@ -1289,6 +1291,7 @@
             'flex flex-col gap-3 flex-1 overflow-y-auto overflow-x-visible px-1.5 pb-6 transition-all duration-300 min-h-0 content-start custom-scrollbar-slim',
             isDragging && draggedActivity?.status !== 'completed' ? 'ring-2 ring-emerald-400/50 rounded-lg bg-emerald-50/50' : ''
           ]"
+          v-auto-animate="{ duration: 260 }"
           @drop="onDrop($event, 'completed')"
           @dragover.prevent
           @dragenter.prevent
@@ -1424,6 +1427,7 @@
             'flex flex-col gap-3 flex-1 overflow-y-auto overflow-x-visible px-1.5 pb-6 transition-all duration-300 min-h-0 content-start custom-scrollbar-slim',
             isDragging && draggedActivity?.status !== 'overdue' ? 'ring-2 ring-red-400/50 rounded-lg bg-red-50/50' : ''
           ]"
+          v-auto-animate="{ duration: 260 }"
           @drop="onDrop($event, 'overdue')"
           @dragover.prevent
           @dragenter.prevent

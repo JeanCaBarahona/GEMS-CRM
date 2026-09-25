@@ -504,7 +504,7 @@
         </div>
 
         <!-- Lista de comentarios (scrollable) -->
-        <div v-else key="comments" class="flex-1 overflow-y-auto px-4 pb-4 space-y-3 custom-scrollbar">
+        <div v-else key="comments" v-auto-animate class="flex-1 overflow-y-auto px-4 pb-4 space-y-3 custom-scrollbar">
           <!-- Empty state -->
           <div v-if="localComments.length === 0 && !loadingComments" class="flex flex-col items-center justify-center py-10 text-center">
             <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mb-3">

@@ -69,7 +69,7 @@
         </div>
 
         <!-- Lista -->
-        <div class="max-h-96 overflow-y-auto custom-scrollbar">
+        <div v-auto-animate class="max-h-96 overflow-y-auto custom-scrollbar">
           <div v-if="loading" class="flex items-center justify-center py-8">
             <div class="w-5 h-5 border-2 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
           </div>

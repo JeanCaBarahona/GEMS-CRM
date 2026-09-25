@@ -163,7 +163,7 @@
           </div>
 
           <!-- Tarjetas -->
-          <div v-if="client.projects?.length" class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div v-if="client.projects?.length" v-auto-animate class="grid grid-cols-1 lg:grid-cols-2 gap-3">
             <div
               v-for="pr in client.projects"
               :key="pr._id"

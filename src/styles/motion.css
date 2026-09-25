@@ -1,0 +1,145 @@
+/*
+ * Sistema de movimiento de la app (microinteracciones y animaciones).
+ *
+ * Mismo enfoque que SmoothUI (que es solo React): curvas tipo resorte,
+ * respuesta inmediata al tocar y entradas suaves. Las listas se animan con
+ * @formkit/auto-animate (directiva v-auto-animate); esto cubre lo global.
+ *
+ * Todo se apaga si el sistema pide "reducir movimiento".
+ */
+
+:root {
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);   /* rebote leve */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);    /* frena suave */
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-press: 140ms;
+  --dur-fast: 180ms;
+  --dur-base: 280ms;
+  --dur-slow: 420ms;
+}
+
+/* ── Keyframes ─────────────────────────────────────────────────────────── */
+@keyframes motion-page-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes motion-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes motion-dialog-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.965); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes motion-drawer-in {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes motion-pop {
+  0%   { scale: 0.6; }
+  55%  { scale: 1.18; }
+  100% { scale: 1; }
+}
+@keyframes motion-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes motion-shimmer {
+  from { background-position: -200% 0; }
+  to   { background-position: 200% 0; }
+}
+
+/* ── Botones y controles: respuesta al presionar ──────────────────────────
+ * `scale` (propiedad individual) se suma a los `transform` de Tailwind, así
+ * los botones posicionados con translate no se mueven de lugar. Las reglas de
+ * transición van en :where() (especificidad 0): si el botón ya tiene sus
+ * clases transition-* de Tailwind, se respetan. */
+:where(button:not(:disabled), [role='button'], a.btn) {
+  transition-property: color, background-color, border-color, box-shadow, opacity, scale, transform;
+  transition-duration: var(--dur-fast);
+  transition-timing-function: var(--ease-smooth);
+}
+button:not(:disabled):active,
+[role='button']:active,
+a.btn:active {
+  scale: 0.96;
+  transition-duration: var(--dur-press);
+}
+/* Botones grandes (anchos completos) se hunden menos */
+button.w-full:not(:disabled):active {
+  scale: 0.985;
+}
+
+/* Campos: foco suave */
+:where(input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea) {
+  transition: border-color var(--dur-fast) var(--ease-smooth),
+    box-shadow var(--dur-fast) var(--ease-smooth),
+    background-color var(--dur-fast) var(--ease-smooth);
+}
+
+/* Checkbox y radio: pop al marcar */
+input[type='checkbox']:checked,
+input[type='radio']:checked {
+  animation: motion-pop var(--dur-base) var(--ease-spring);
+}
+
+/* ── Páginas: entrada al navegar (ver App.vue) ─────────────────────────── */
+.motion-page {
+  animation: motion-page-in var(--dur-slow) var(--ease-out-expo) backwards;
+}
+
+/* ── Modales: fondo que aparece + panel con resorte ───────────────────────
+ * Aplica a los overlays `fixed inset-0` centrados. El fondo absoluto (si lo
+ * hay) solo aparece; el panel entra con escala. `.motion-none` lo desactiva. */
+.fixed.inset-0.flex.items-center.justify-center:not(.motion-none) {
+  animation: motion-fade-in var(--dur-fast) ease-out backwards;
+}
+.fixed.inset-0.flex.items-center.justify-center:not(.motion-none) > :not(.absolute):not(.fixed) {
+  animation: motion-dialog-in var(--dur-slow) var(--ease-spring) backwards;
+}
+/* Paneles laterales (drawers) */
+.fixed.inset-0.flex.justify-end:not(.motion-none) > :not(.absolute):not(.fixed) {
+  animation: motion-drawer-in var(--dur-slow) var(--ease-out-expo) backwards;
+}
+
+/* ── Utilidades para usar en componentes ──────────────────────────────── */
+/* Pop de "hecho": úsala con :key para que se repita al cambiar el valor */
+.motion-pop {
+  animation: motion-pop var(--dur-slow) var(--ease-spring);
+}
+/* Entrada escalonada de hijos (primer render) */
+.motion-stagger > * {
+  animation: motion-rise var(--dur-slow) var(--ease-out-expo) backwards;
+}
+.motion-stagger > :nth-child(2) { animation-delay: 40ms; }
+.motion-stagger > :nth-child(3) { animation-delay: 80ms; }
+.motion-stagger > :nth-child(4) { animation-delay: 120ms; }
+.motion-stagger > :nth-child(5) { animation-delay: 160ms; }
+.motion-stagger > :nth-child(6) { animation-delay: 200ms; }
+.motion-stagger > :nth-child(7) { animation-delay: 240ms; }
+.motion-stagger > :nth-child(n + 8) { animation-delay: 280ms; }
+/* Elevación al pasar el mouse */
+.motion-lift {
+  transition: transform var(--dur-base) var(--ease-spring), box-shadow var(--dur-base) var(--ease-smooth);
+}
+.motion-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px -12px rgba(15, 23, 42, 0.18);
+}
+
+/* ── Accesibilidad: sin movimiento si el usuario lo pidió ───────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+  button:active,
+  [role='button']:active {
+    scale: none !important;
+  }
+}

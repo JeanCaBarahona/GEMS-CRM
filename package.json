@@ -18,6 +18,7 @@
     "deploy": "npm run build && gh-pages -d dist"
   },
   "dependencies": {
+    "@formkit/auto-animate": "^0.10.0",
     "@headlessui/vue": "^1.7.23",
     "@heroicons/vue": "^2.2.0",
     "@tiptap/extension-color": "^3.22.5",

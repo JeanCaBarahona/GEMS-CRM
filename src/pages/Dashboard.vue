@@ -65,7 +65,7 @@
     </div>
 
     <!-- ══ Main grid ══════════════════════════════════════════════════ -->
-    <div class="grid grid-cols-1 xl:grid-cols-3 gap-3">
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-3 motion-stagger">
 
       <!-- ── Left: AI Insights + Agenda ─────────────────────────────── -->
       <div class="xl:col-span-2 flex flex-col gap-3">
@@ -112,7 +112,7 @@
       </div>
 
       <!-- ── Right column ─────────────────────────────────────────── -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-3">
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-3 motion-stagger">
 
         <!-- Ritmo del día -->
         <div class="bg-white border border-slate-200 rounded-xl px-4 py-3">

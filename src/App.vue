@@ -112,7 +112,12 @@
       >
         <!-- Main Content Area -->
         <main class="p-4 pb-8 flex-1 min-h-0 overflow-y-auto custom-scrollbar">
-          <router-view />
+          <router-view v-slot="{ Component, route: viewRoute }">
+            <!-- Cada página entra con un fade + subida suave (motion.css) -->
+            <div :key="viewRoute.path" class="motion-page h-full">
+              <component :is="Component" />
+            </div>
+          </router-view>
         </main>
       </div>
 

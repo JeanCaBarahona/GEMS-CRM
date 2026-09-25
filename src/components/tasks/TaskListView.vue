@@ -20,7 +20,7 @@
         <span class="w-20 shrink-0 text-right pr-1">Acciones</span>
       </div>
 
-      <div v-for="group in groups" :key="group.key" class="border-b border-slate-100 last:border-b-0">
+      <div v-for="group in groups" :key="group.key" v-auto-animate="{ duration: 240 }" class="border-b border-slate-100 last:border-b-0">
         <!-- Header de sección -->
         <button
           type="button"
@@ -59,9 +59,9 @@
               :class="row.done
                 ? 'bg-emerald-500 border-emerald-500 text-white'
                 : 'border-slate-300 hover:border-primary-400 text-transparent'"
-              title="Marcar como completada"
+              :title="row.done ? 'Marcar como pendiente' : 'Marcar como completada'"
             >
-              <i class="fas fa-check text-[9px]"></i>
+              <i :key="String(row.done)" class="fas fa-check text-[9px]" :class="{ 'motion-pop': row.done }"></i>
             </button>
 
             <!-- Nombre -->
@@ -112,7 +112,7 @@
                     : 'bg-white text-teal-600 border border-teal-200 hover:bg-teal-50'"
                   :title="row.recurring.doneToday ? 'Ya la registraste hoy — clic para deshacer' : 'Registrar que hiciste esta tarea hoy'"
                 >
-                  <i :class="row.recurring.doneToday ? 'fas fa-check' : 'fas fa-plus'" class="mr-0.5"></i>Hoy
+                  <i :key="String(row.recurring.doneToday)" :class="row.recurring.doneToday ? 'fas fa-check motion-pop' : 'fas fa-plus'" class="mr-0.5"></i>Hoy
                 </button>
                 <span class="text-[10px] font-bold text-slate-400" :title="`${row.recurring.totalDays} días registrados · racha de ${row.recurring.streak}`">{{ row.recurring.totalDays }}d</span>
               </div>

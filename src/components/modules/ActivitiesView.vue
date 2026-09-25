@@ -208,6 +208,15 @@
           >
             <i class="fas fa-user text-[9px]"></i> Mis Tareas
           </button>
+          <!-- Creadas por mí -->
+          <button
+            @click="toggleCreatedByMe"
+            :class="createdByMe ? 'bg-violet-500 text-white' : 'bg-slate-100 text-slate-500 hover:bg-violet-50 hover:text-violet-600'"
+            class="px-3.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5"
+            :title="createdByMe ? 'Mostrando solo las actividades que tú creaste — clic para quitar el filtro' : 'Ver solo las actividades que tú creaste (sin importar a quién estén asignadas)'"
+          >
+            <i class="fas fa-pen-to-square text-[9px]"></i> Creadas por mí
+          </button>
           <button
             @click="clearFilters"
             class="px-3.5 py-1.5 bg-slate-100 text-slate-500 hover:bg-slate-200 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"
@@ -2745,6 +2754,8 @@ const assignLoading = ref(false)
 // Filtros
 const selectedDepartment = ref('')
 const selectedTeamMember = ref('')
+// Solo actividades creadas por el usuario actual
+const createdByMe = ref(false)
 const selectedStatus = ref('')
 const selectedClient = ref('')
 const selectedProject = ref('')
@@ -2890,6 +2901,15 @@ const filteredActivities = computed(() => {
       }
 
       return false
+    })
+  }
+
+  // Filtrar por creador (botón "Creadas por mí")
+  if (createdByMe.value) {
+    const myId = authStore.user?._id
+    filtered = filtered.filter(activity => {
+      const creator: any = activity.createdBy
+      return !!myId && (typeof creator === 'object' && creator ? creator._id : creator) === myId
     })
   }
 
@@ -3275,6 +3295,15 @@ const getUserInfo = (user: any) => {
   return { name: 'Sin asignar', photo: '', avatar: '' }
 }
 
+// Tiempo registrado + lo que llevan corriendo los temporizadores activos
+const timeSpentIncludingRunning = (activity: any): number => {
+  const running = (activity.activeSessions || []).reduce((acc: number, session: any) => {
+    const start = session?.startTime ? new Date(session.startTime).getTime() : NaN
+    return Number.isFinite(start) ? acc + Math.max(0, Math.floor((Date.now() - start) / 1000)) : acc
+  }, 0)
+  return (activity.timeSpent || 0) + running
+}
+
 const copyActivitiesSummary = () => {
   if (filteredActivities.value.length === 0) {
     toast('No hay actividades para exportar', 'info')
@@ -3291,8 +3320,11 @@ const copyActivitiesSummary = () => {
   }
   text += `----------------------------------\n\n`
 
+  let totalSeconds = 0
   filteredActivities.value.forEach(activity => {
     const statusIcon = activity.status === 'completed' ? '✅' : activity.status === 'in-progress' ? '🔄' : '⏳'
+    const seconds = timeSpentIncludingRunning(activity)
+    totalSeconds += seconds
     const assigned = getSmartAssignedName(activity)
     const clientName = getClientName(activity.clientId)
     const percentage = activity.completionPercentage || 0
@@ -3303,9 +3335,12 @@ const copyActivitiesSummary = () => {
     text += `👤 Asignado: ${assigned}\n`
     text += `🏢 Cliente: ${clientName}\n`
     text += `📈 Progreso: ${percentage}%\n`
+    text += `⏱️ Tiempo empleado: ${formatTime(seconds)}${activity.estimatedTime ? ` (estimado: ${activity.estimatedTime})` : ''}${(activity as any).activeSessions?.length ? ' · temporizador en curso' : ''}\n`
     text += `🗓️ Fecha: ${dateStr} - ${dueDateStr}\n`
     text += `\n`
   })
+  text += `----------------------------------\n`
+  text += `⏱️ *Total empleado: ${formatTime(totalSeconds)}* en ${filteredActivities.value.length} actividad(es)\n`
 
   // Copiar al portapapeles
   const textArea = document.createElement("textarea")
@@ -3746,6 +3781,7 @@ const filtersLocked = ref(false)
 const hasActiveFilters = computed(() => {
   return selectedDepartment.value !== '' || 
          selectedTeamMember.value !== '' || 
+         createdByMe.value ||
          selectedStatus.value !== '' ||
          startDate.value !== '' ||
          endDate.value !== ''
@@ -3754,6 +3790,7 @@ const hasActiveFilters = computed(() => {
 const clearFilters = () => {
   selectedDepartment.value = ''
   selectedTeamMember.value = ''
+  createdByMe.value = false
   selectedStatus.value = ''
   startDate.value = ''
   endDate.value = ''
@@ -3761,10 +3798,18 @@ const clearFilters = () => {
 
 const setMyTasksFilter = () => {
   selectedTeamMember.value = authStore.user?._id || ''
+  createdByMe.value = false
   selectedDepartment.value = ''
   selectedStatus.value = ''
   startDate.value = ''
   endDate.value = ''
+}
+
+// "Creadas por mí" muestra todo lo que creaste, esté asignado a quien esté:
+// por eso quita el filtro de miembro (que por defecto eres tú).
+const toggleCreatedByMe = () => {
+  createdByMe.value = !createdByMe.value
+  if (createdByMe.value) selectedTeamMember.value = ''
 }
 
 const toggleLockFilters = () => {
@@ -3778,7 +3823,8 @@ const toggleLockFilters = () => {
     localStorage.setItem(FILTER_STORAGE_KEY.value, JSON.stringify({
       department: selectedDepartment.value,
       teamMember: selectedTeamMember.value,
-      status: selectedStatus.value
+      status: selectedStatus.value,
+      createdByMe: createdByMe.value
     }))
   }
 }
@@ -3791,6 +3837,7 @@ const loadSavedFilters = () => {
       selectedDepartment.value = parsed.department || ''
       selectedTeamMember.value = parsed.teamMember || ''
       selectedStatus.value = parsed.status || ''
+      createdByMe.value = !!parsed.createdByMe
       filtersLocked.value = true
     } catch {}
   } else {

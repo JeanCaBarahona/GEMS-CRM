@@ -827,8 +827,11 @@
     </Teleport>
 
     <!-- Loading state -->
-    <div v-if="loading" class="flex items-center justify-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+    <!-- Esqueleto con la forma de la vista actual mientras cargan los datos -->
+    <div v-if="loading" class="mt-1">
+      <SkeletonBoard v-if="currentView === 'kanban'" variant="kanban" />
+      <SkeletonBoard v-else-if="currentView === 'tasks'" variant="list" class="mt-6" />
+      <AppLoader v-else label="Cargando actividades…" />
     </div>
 
     <!-- Error state -->
@@ -2680,6 +2683,8 @@ const isDragging = ref(false)
 import DailyScrum from '../../pages/DailyScrum.vue'
 import TeamActivities from '../../pages/TeamActivities.vue'
 import PersonAvatar from '../ui/PersonAvatar.vue'
+import SkeletonBoard from '../ui/SkeletonBoard.vue'
+import AppLoader from '../ui/AppLoader.vue'
 
 const currentView = ref<'kanban' | 'tasks' | 'calendar' | 'daily' | 'team'>('kanban')
 

@@ -52,10 +52,7 @@
     <div class="space-y-4 pb-20">
       <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden flex flex-col min-h-[400px] relative">
         <div v-if="loading" class="flex items-center justify-center absolute inset-0 z-10 bg-white/60 backdrop-blur-[2px]">
-          <div class="flex flex-col items-center gap-3">
-            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-500"></div>
-            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cargando Clientes</span>
-          </div>
+          <AppLoader label="Cargando clientes…" :padded="false" />
         </div>
       
         <div v-else-if="error" class="flex-1 flex items-center justify-center p-12">
@@ -338,6 +335,7 @@
 </template>
 
 <script setup lang="ts">
+import AppLoader from '@/components/ui/AppLoader.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useClientStore } from '../stores/clientStore'
 import type { Client, ClientForm } from '../types'

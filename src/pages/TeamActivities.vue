@@ -83,7 +83,7 @@
 
       <!-- Loading state -->
       <div v-if="loading" class="flex items-center justify-center py-12">
-        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600"></div>
+        <AppLoader label="Cargando actividades del equipo…" :padded="false" />
       </div>
 
       <!-- Vista de tarjetas por miembro -->
@@ -245,6 +245,7 @@
 </template>
 
 <script setup lang="ts">
+import AppLoader from '@/components/ui/AppLoader.vue'
 import PersonAvatar from '../components/ui/PersonAvatar.vue'
 import { ref, computed, onMounted } from 'vue'
 import { activityService, type ActivityData } from '../services/activityService'

@@ -17,8 +17,7 @@
 
     <!-- Loading -->
     <div v-if="loading" class="text-center py-8">
-      <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400"></div>
-      <p class="mt-2 text-gray-300">Cargando pagos recurrentes...</p>
+      <AppLoader label="Cargando pagos recurrentes…" :padded="false" />
     </div>
 
     <!-- Empty State -->
@@ -113,6 +112,7 @@
 </template>
 
 <script setup lang="ts">
+import AppLoader from '@/components/ui/AppLoader.vue'
 import { ref, onMounted } from 'vue'
 import { accountingService, type Transaction } from '../../services/accountingService'
 

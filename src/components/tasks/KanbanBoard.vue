@@ -102,10 +102,7 @@
 
     <!-- Loading -->
     <div v-if="loading" class="flex-1 flex items-center justify-center">
-      <div class="text-center">
-        <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <p class="mt-4 text-gray-600">Cargando tablero...</p>
-      </div>
+      <AppLoader label="Cargando tablero…" :padded="false" />
     </div>
 
     <!-- Board Columns -->
@@ -134,6 +131,7 @@
 </template>
 
 <script setup lang="ts">
+import AppLoader from '@/components/ui/AppLoader.vue'
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useBoardsStore } from '@/stores/boards'

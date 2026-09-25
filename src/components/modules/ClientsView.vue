@@ -60,7 +60,7 @@
 
     <!-- Loading state -->
     <div v-if="loading" class="flex items-center justify-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+      <AppLoader label="Cargando clientes…" :padded="false" />
     </div>
 
     <!-- Error state -->
@@ -244,6 +244,7 @@
 </template>
 
 <script setup lang="ts">
+import AppLoader from '@/components/ui/AppLoader.vue'
 import { ref, computed, onMounted, watch } from 'vue'
 import { clientService, type ClientData } from '../../services/clientService'
 import { useNotifications } from '../../composables/useNotifications'

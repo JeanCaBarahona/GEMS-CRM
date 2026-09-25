@@ -16,7 +16,7 @@
 
     <!-- Lista de Roles -->
     <div v-if="loading" class="text-center py-8">
-      <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400"></div>
+      <AppLoader label="Cargando roles…" :padded="false" />
     </div>
     
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -117,6 +117,7 @@
 </template>
 
 <script setup lang="ts">
+import AppLoader from '@/components/ui/AppLoader.vue'
 import { ref, onMounted } from 'vue'
 import { rolesService, type Role, type RolePermissions } from '../services/rolesService'
 import { useNotifications } from '../composables/useNotifications'

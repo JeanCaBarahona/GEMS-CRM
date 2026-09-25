@@ -88,7 +88,7 @@
       
       <!-- Componente TaskNotifier con tareas cargadas -->
       <div v-if="loading" class="flex items-center justify-center p-8">
-        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
+        <AppLoader label="Cargando tareas…" :padded="false" />
       </div>
       
       <div v-else>
@@ -99,6 +99,7 @@
 </template>
 
 <script setup lang="ts">
+import AppLoader from '@/components/ui/AppLoader.vue'
 import { ref, onMounted } from 'vue'
 import Layout from '../components/Layout.vue'
 import TaskNotifierEmbed from '../components/notifications/TaskNotifierEmbed.vue'

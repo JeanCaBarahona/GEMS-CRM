@@ -39,8 +39,7 @@
 
     <!-- Loading -->
     <div v-if="loading" class="text-center py-8">
-      <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400"></div>
-      <p class="mt-2 text-gray-300">Cargando gastos fijos...</p>
+      <AppLoader label="Cargando gastos fijos…" :padded="false" />
     </div>
 
     <!-- Empty State -->
@@ -143,6 +142,7 @@
 </template>
 
 <script setup lang="ts">
+import AppLoader from '@/components/ui/AppLoader.vue'
 import { ref, computed } from 'vue'
 import type { FixedExpense } from '../../services/accountingService'
 

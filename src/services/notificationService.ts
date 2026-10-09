@@ -3,7 +3,7 @@ import { API_CONFIG } from '../config/api'
 export interface AppNotification {
   _id: string
   userId: string
-  category: 'mention' | 'assignment' | 'comment' | 'due-soon' | 'overdue' | 'info'
+  category: 'mention' | 'assignment' | 'comment' | 'due-soon' | 'overdue' | 'info' | 'approval'
   entityType: 'activity' | 'task' | 'client' | 'other'
   entityId?: string
   title: string

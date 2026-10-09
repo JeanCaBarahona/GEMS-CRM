@@ -23,8 +23,18 @@ import InternalTickets from './pages/tickets/InternalTickets.vue'
 import ExternalTickets from './pages/tickets/ExternalTickets.vue'
 import DailyScrum from './pages/DailyScrum.vue'
 import Prospects from './pages/Prospects.vue'
+import TaskApprovals from './pages/TaskApprovals.vue'
 
 const routes = [
+  {
+    path: '/aprobaciones',
+    name: 'TaskApprovals',
+    component: TaskApprovals,
+    meta: {
+      requiresAuth: true,
+      requiredPermissions: ['view-activities']
+    }
+  },
   {
     path: '/daily-scrum',
     name: 'DailyScrum',

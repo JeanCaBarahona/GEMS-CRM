@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import axios from 'axios'
 import { useAuthStore } from './auth'
 import { API_CONFIG } from '../config/api'
+import type { DeleteResult } from '../services/taskApprovalService'
 
 const API_URL = API_CONFIG.BASE_URL.replace('/api', '')
 
@@ -301,15 +302,24 @@ export const useTasksStore = defineStore('tasks', () => {
     }
   }
 
-  async function deleteTask(id: string) {
+  // Solo el líder del área o un administrador elimina directamente; para los
+  // demás el backend crea una solicitud de autorización (202) y la tarea sigue.
+  async function deleteTask(id: string, reason?: string): Promise<DeleteResult> {
     loading.value = true
     error.value = null
     try {
-      await axios.delete(`${API_URL}/api/tasks/${id}`, config.value)
+      const response = await axios.delete(`${API_URL}/api/tasks/${id}`, {
+        ...config.value,
+        data: reason ? { reason } : undefined
+      })
+      if (response.status === 202 && response.data?.pendingApproval) {
+        return { deleted: false, approvalRequest: response.data.approvalRequest }
+      }
       tasks.value = tasks.value.filter(t => t._id !== id)
       if (currentTask.value?._id === id) {
         currentTask.value = null
       }
+      return { deleted: true }
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Error al eliminar tarea'
       console.error('Error deleting task:', err)

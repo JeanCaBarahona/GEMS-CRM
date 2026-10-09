@@ -310,6 +310,8 @@ export const useAuthStore = defineStore('auth', () => {
     
     if (canViewActivities.value) {
       modules.push({ id: 'activities', name: 'Actividades', icon: 'fas fa-tasks', path: '/activities', canAccess: true })
+      // Autorizaciones para ampliar plazos y eliminar tareas (las aprueba el líder del área)
+      modules.push({ id: 'task-approvals', name: 'Autorizaciones', icon: 'fas fa-user-shield', path: '/aprobaciones', canAccess: true })
     }
 
     

@@ -138,6 +138,39 @@
               </div>
             </div>
 
+            <!-- Ampliación de plazo: solo el líder del área la aprueba -->
+            <div
+              v-if="pendingExtension && !needsExtensionApproval"
+              class="form-section flex items-start gap-3 px-4 py-3 bg-amber-50/70 border border-amber-100 rounded-2xl"
+            >
+              <i class="fas fa-hourglass-half text-amber-500 mt-0.5"></i>
+              <p class="text-xs font-bold text-amber-800 leading-relaxed">
+                Hay una solicitud pendiente de {{ pendingExtension.requestedBy?.name || 'un miembro del equipo' }}
+                para mover la entrega al {{ formatExtensionDate(pendingExtension.requestedDueDate) }}.
+                <router-link to="/aprobaciones" class="underline hover:text-amber-900" @click="emit('close')">Ver solicitudes</router-link>
+              </p>
+            </div>
+            <div
+              v-if="needsExtensionApproval"
+              class="form-section space-y-2 px-4 py-3 bg-orange-50/70 border border-orange-100 rounded-2xl"
+            >
+              <div class="flex items-start gap-3">
+                <i class="fas fa-user-shield text-orange-500 mt-0.5"></i>
+                <p class="text-xs font-bold text-orange-800 leading-relaxed">
+                  Ampliar la fecha de entrega requiere la aprobación de {{ extensionApproverLabel }}.
+                  Al guardar se envía la solicitud; los demás cambios se guardan de inmediato y la fecha actual
+                  se mantiene hasta que la aprueben.
+                </p>
+              </div>
+              <textarea
+                v-model="dueDateChangeReason"
+                rows="2"
+                maxlength="1000"
+                placeholder="¿Por qué necesitas más tiempo?"
+                class="w-full px-3 py-2 bg-white border border-orange-200 rounded-xl text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none"
+              ></textarea>
+            </div>
+
             <!-- Tarea recurrente: registro diario con "+" -->
             <div
               v-if="!isBoardTask && form.type === 'recurring'"
@@ -699,13 +732,19 @@ import { useAuthStore } from '../../stores/auth'
 import { useNotifications } from '../../composables/useNotifications'
 import type { TeamMember, Client } from '../../types'
 import PersonAvatar from '../ui/PersonAvatar.vue'
+import {
+  taskApprovalService,
+  describeApprovers,
+  APPROVER_SOURCE_LABELS,
+  type EntityApprovalState
+} from '../../services/taskApprovalService'
 
 console.log('ActivityFormModal script setup initialized')
 
 const boardsStore = useBoardsStore()
 const tasksStore = useTasksStore()
 const authStore = useAuthStore()
-const { showSuccess, showError, confirmDelete } = useNotifications()
+const { showSuccess, showError, showWarning, confirmDelete } = useNotifications()
 
 interface Props {
   activity?: any | null
@@ -865,11 +904,63 @@ const formatDateTimeLocal = (dateString: any) => {
   }
 }
 
+// ── Ampliación de plazo ──────────────────────────────────────────────────────
+// El input muestra la fecha en UTC (formatDateTimeLocal), así que se interpreta
+// también en UTC al compararla y al enviarla: así no depende de la zona horaria
+// del navegador ni del servidor.
+const dueDateInputToIso = (value: string): string | undefined => {
+  if (!value) return undefined
+  const d = new Date(`${value}Z`)
+  return isNaN(d.getTime()) ? undefined : d.toISOString()
+}
+
+const extensionState = ref<EntityApprovalState | null>(null)
+const dueDateChangeReason = ref('')
+const pendingExtension = computed(() => extensionState.value?.pendingExtension || null)
+
+const isExtendingDueDate = computed(() => {
+  if (!isEditing.value || !props.activity?.dueDate || form.type === 'recurring') return false
+  const next = dueDateInputToIso(form.dueDate)
+  if (!next) return false
+  return new Date(next).getTime() - new Date(props.activity.dueDate).getTime() > 60_000
+})
+
+const needsExtensionApproval = computed(() =>
+  isExtendingDueDate.value && !!extensionState.value && !extensionState.value.canManageDirectly
+)
+
+const extensionApproverLabel = computed(() => {
+  const source = extensionState.value?.approverSource
+  return source ? APPROVER_SOURCE_LABELS[source] : 'el líder de tu área'
+})
+
+const formatExtensionDate = (date: string | null) => {
+  if (!date) return 'sin fecha'
+  try {
+    return format(new Date(date), "d MMM yyyy, HH:mm", { locale: es })
+  } catch {
+    return date
+  }
+}
+
+async function loadExtensionState() {
+  extensionState.value = null
+  dueDateChangeReason.value = ''
+  const id = props.activity?._id
+  if (!id) return
+  try {
+    extensionState.value = await taskApprovalService.entityState(isBoardTask.value ? 'task' : 'activity', id)
+  } catch (e) {
+    // Sin esta información el backend igual valida; solo no se muestra el aviso previo
+    console.warn('No se pudo consultar el estado de ampliación de plazo:', e)
+  }
+}
+
 const handleSubmit = async () => {
   loading.value = true
   try {
     const isTask = !!props.boardId || !!props.activity?.boardId || !!props.activity?.boardStatus
-    
+
     const taskData: any = {
       title: form.title,
       description: form.description,
@@ -878,7 +969,10 @@ const handleSubmit = async () => {
       type: form.type,
       completionPercentage: form.completionPercentage,
       // Una recurrente no vence (el backend también lo fuerza)
-      dueDate: form.type === 'recurring' ? null : (form.dueDate || undefined)
+      dueDate: form.type === 'recurring' ? null : dueDateInputToIso(form.dueDate)
+    }
+    if (needsExtensionApproval.value && dueDateChangeReason.value.trim()) {
+      taskData.dueDateChangeReason = dueDateChangeReason.value.trim()
     }
 
     // Campos específicos según el modelo
@@ -916,7 +1010,12 @@ const handleSubmit = async () => {
       } else {
         savedData = await activityService.update(props.activity._id, taskData)
       }
-      showSuccess(isTask ? 'Tarea actualizada' : 'Actividad actualizada')
+      // La nueva fecha quedó como solicitud: se guardó todo lo demás
+      if (savedData?.dueDateExtensionRequest) {
+        showWarning(`Cambios guardados. La nueva fecha de entrega quedó pendiente de aprobación de ${describeApprovers(savedData.dueDateExtensionRequest)}`)
+      } else {
+        showSuccess(isTask ? 'Tarea actualizada' : 'Actividad actualizada')
+      }
     } else {
       if (isTask) {
         savedData = await tasksStore.createTask(taskData)
@@ -928,8 +1027,9 @@ const handleSubmit = async () => {
     
     emit('saved', savedData)
     emit('close')
-  } catch (error) {
-    showError('Error al sincronizar la información')
+  } catch (error: any) {
+    const serverMessage = error?.response?.data?.error || (error instanceof Error && error.message !== 'No se pudo actualizar la actividad' ? error.message : '')
+    showError(serverMessage || 'Error al sincronizar la información')
     console.error('Submit Error:', error)
   } finally {
     loading.value = false
@@ -1461,9 +1561,12 @@ watch(() => props.activity, (val) => {
   populateForm()
 }, { deep: true })
 
+watch(() => props.activity?._id, loadExtensionState)
+
 onMounted(() => {
   populateForm()
   loadFullTask()
+  loadExtensionState()
 })
 </script>
 

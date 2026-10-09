@@ -1,4 +1,5 @@
 import { API_CONFIG } from '../config/api'
+import type { DeleteResult } from './taskApprovalService'
 
 export interface ActivityData {
   _id?: string
@@ -152,39 +153,39 @@ class ActivityService {
     }
   }
 
-  async update(id: string, activityData: Partial<ActivityData>): Promise<ActivityData> {
-    try {
-      const response = await fetch(`${this.baseUrl}${this.endpoint}/${id}`, {
-        method: 'PUT',
-        headers: this.getHeaders(),
-        body: JSON.stringify(activityData),
-      })
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-      
-      return await response.json()
-    } catch (error) {
-      console.error('Error updating activity:', error)
-      throw new Error('No se pudo actualizar la actividad')
+  // Si la nueva fecha de entrega requiere aprobación del líder, la respuesta trae
+  // `dueDateExtensionRequest` y conserva la fecha anterior.
+  async update(id: string, activityData: Partial<ActivityData> & { dueDateChangeReason?: string }): Promise<ActivityData & { dueDateExtensionRequest?: any }> {
+    const response = await fetch(`${this.baseUrl}${this.endpoint}/${id}`, {
+      method: 'PUT',
+      headers: this.getHeaders(),
+      body: JSON.stringify(activityData),
+    })
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      console.error('Error updating activity:', data)
+      throw new Error(data?.error || 'No se pudo actualizar la actividad')
     }
+    return data
   }
 
-  async deleteActivity(id: string): Promise<void> {
-    try {
-      const response = await fetch(`${this.baseUrl}${this.endpoint}/${id}`, {
-        method: 'DELETE',
-        headers: this.getHeaders(),
-      })
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-    } catch (error) {
-      console.error('Error deleting activity:', error)
-      throw new Error('No se pudo eliminar la actividad')
+  // Solo el líder del área o un administrador elimina directamente; para los
+  // demás el backend crea una solicitud de autorización (202) y no borra nada.
+  async deleteActivity(id: string, reason?: string): Promise<DeleteResult> {
+    const response = await fetch(`${this.baseUrl}${this.endpoint}/${id}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+      body: JSON.stringify(reason ? { reason } : {}),
+    })
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      console.error('Error deleting activity:', data)
+      throw new Error(data?.error || 'No se pudo eliminar la actividad')
     }
+    if (response.status === 202 && data?.pendingApproval) {
+      return { deleted: false, approvalRequest: data.approvalRequest }
+    }
+    return { deleted: true }
   }
 
   // Métodos específicos para asignaciones

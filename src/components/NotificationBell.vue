@@ -134,9 +134,11 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { format, formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { notificationService, type AppNotification } from '@/services/notificationService'
+import { useRouter } from 'vue-router'
 import { useActivityModalStore } from '@/stores/activityModal'
 
 const activityModalStore = useActivityModalStore()
+const router = useRouter()
 
 const open = ref(false)
 const loading = ref(false)
@@ -190,7 +192,9 @@ const filteredNotifications = computed(() => {
   const list = visibleNotifications.value
   if (activeTab.value === 'mention') return list.filter(n => n.category === 'mention')
   if (activeTab.value === 'assignment') return list.filter(n => n.category === 'assignment')
-  if (activeTab.value === 'due') return list.filter(n => n.category === 'due-soon' || n.category === 'overdue')
+  if (activeTab.value === 'due') {
+    return list.filter(n => n.category === 'due-soon' || n.category === 'overdue' || n.category === 'approval')
+  }
   return list
 })
 
@@ -285,6 +289,12 @@ async function onNotificationClick(n: AppNotification) {
 
   closeDropdown()
 
+  // Solicitud de autorización por aprobar: ir a la bandeja del líder
+  if (n.category === 'approval' && n.metadata?.status === 'pending') {
+    router.push('/aprobaciones')
+    return
+  }
+
   // Abrir el modal "Refinar Tarea" en el mismo lugar (sin navegar)
   if (n.entityId) {
     const type = n.entityType === 'task' ? 'task' : 'activity'
@@ -300,6 +310,7 @@ function categoryIcon(category: string): string {
     case 'comment': return 'fas fa-comment text-emerald-500'
     case 'due-soon': return 'fas fa-clock text-amber-500'
     case 'overdue': return 'fas fa-exclamation-triangle text-rose-500'
+    case 'approval': return 'fas fa-user-shield text-orange-500'
     default: return 'fas fa-bell text-slate-400'
   }
 }
@@ -311,6 +322,7 @@ function categoryIconBg(category: string): string {
     case 'comment': return 'bg-emerald-50'
     case 'due-soon': return 'bg-amber-50'
     case 'overdue': return 'bg-rose-50'
+    case 'approval': return 'bg-orange-50'
     default: return 'bg-slate-50'
   }
 }

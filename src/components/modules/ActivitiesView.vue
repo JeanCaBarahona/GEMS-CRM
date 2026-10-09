@@ -2622,6 +2622,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { activityService, type ActivityData } from '../../services/activityService'
+import { taskApprovalService, describeApprovers } from '../../services/taskApprovalService'
 import { clientService, type ClientData, type ProjectData } from '../../services/clientService'
 import { teamService } from '../../services/teamService'
 import { useNotifications } from '../../composables/useNotifications'
@@ -3679,23 +3680,31 @@ const extendDeadline = async (activityId: string) => {
     const activity = activities.value.find(a => a._id === activityId)
     if (!activity) return
     
-    // Establecer nueva fecha de vencimiento (7 días a partir de hoy)
+    // Nueva fecha de vencimiento: 7 días a partir de hoy
     const newDeadline = new Date()
     newDeadline.setDate(newDeadline.getDate() + 7)
-    
-    await activityService.update(activityId, {
-      ...activity,
-      dueDate: newDeadline.toISOString(),
-      status: 'pending' // Cambiar de vencida a pendiente
+
+    // Solo el líder del área amplía directamente; para los demás queda como
+    // solicitud de autorización y la actividad conserva su fecha y estado.
+    const result = await taskApprovalService.requestExtension({
+      entityType: 'activity',
+      entityId: activityId,
+      requestedDueDate: newDeadline.toISOString(),
+      reason: 'Ampliación de 7 días desde el tablero de actividades'
     })
-    
+
+    if (!result.applied) {
+      toast(`Solicitud enviada a ${describeApprovers(result.request)} para ampliar el plazo 7 días`, 'warning')
+      return
+    }
+
     // Actualizar en el estado local
     const activityIndex = activities.value.findIndex(a => a._id === activityId)
     if (activityIndex !== -1) {
-      activities.value[activityIndex].dueDate = newDeadline.toISOString()
-      activities.value[activityIndex].status = 'pending'
+      activities.value[activityIndex].dueDate = result.dueDate
+      if (result.status) activities.value[activityIndex].status = result.status as ActivityData['status']
     }
-    
+
     toast('Plazo extendido por 7 días', 'success')
   } catch (err) {
     showError('Error al extender plazo', err instanceof Error ? err.message : 'Error desconocido')
@@ -3720,7 +3729,11 @@ const deleteActivity = async (activityId: string) => {
   const result = await confirmDelete(activity.title, 'actividad')
   if (result.isConfirmed) {
     try {
-      await activityService.deleteActivity(activityId)
+      const deletion = await activityService.deleteActivity(activityId)
+      if (!deletion.deleted) {
+        toast(`Solicitud de eliminación enviada a ${describeApprovers(deletion.approvalRequest)}`, 'warning')
+        return
+      }
       activities.value = activities.value.filter(a => a._id !== activityId)
       showSuccess('Actividad eliminada correctamente')
     } catch (err) {
@@ -5095,7 +5108,8 @@ const confirmCascadeDelete = async () => {
     const allIds = [cascadeDeleteInfo.value.taskId, ...childrenIds]
     
     // 🌿 Recopilar todas las ramas de GitHub a eliminar
-    const branchesToDelete: Array<{
+    let branchesToDelete: Array<{
+      taskId: string
       repoOwner: string
       repoName: string
       branch: string
@@ -5142,6 +5156,7 @@ const confirmCascadeDelete = async () => {
         
         if (canDelete) {
           branchesToDelete.push({
+            taskId: id,
             repoOwner: task.github.repoOwner,
             repoName: task.github.repoName,
             branch: task.github.branch,
@@ -5151,27 +5166,44 @@ const confirmCascadeDelete = async () => {
       }
     }
     
-    // Borrar todos los elementos de la base de datos
+    // Borrar todos los elementos de la base de datos. Solo el líder del área o
+    // un administrador elimina directamente: lo demás queda como solicitud de
+    // autorización y no se toca (ni su actividad asociada ni su rama).
+    const pendingApprovals: Array<{ title: string; approvers: string }> = []
+    const deletedIds = new Set<string>()
     for (const id of allIds) {
-      // 🗑️ Primero eliminar la actividad asociada en el Kanban (si existe)
       const task = tasksStore.tasks.find(t => t._id === id)
-      if (task) {
-        // Buscar actividad asociada por taskId
-        const relatedActivity = activities.value.find(a => a.taskId === id)
-        if (relatedActivity && relatedActivity._id) {
-          try {
-            await activityService.deleteActivity(relatedActivity._id)
-            console.log(`🗑️ Actividad eliminada del Kanban: ${relatedActivity.title}`)
-          } catch (error) {
-            console.warn(`⚠️ No se pudo eliminar actividad del Kanban:`, error)
-          }
+      const deletion = await tasksStore.deleteTask(id)
+      if (!deletion.deleted) {
+        pendingApprovals.push({ title: task?.title || 'Tarea', approvers: describeApprovers(deletion.approvalRequest) })
+        continue
+      }
+      deletedIds.add(id)
+
+      // 🗑️ Eliminar también la actividad asociada en el Kanban (si existe)
+      const relatedActivity = activities.value.find(a => a.taskId === id)
+      if (relatedActivity && relatedActivity._id) {
+        try {
+          await activityService.deleteActivity(relatedActivity._id)
+          console.log(`🗑️ Actividad eliminada del Kanban: ${relatedActivity.title}`)
+        } catch (error) {
+          console.warn(`⚠️ No se pudo eliminar actividad del Kanban:`, error)
         }
       }
-      
-      // Luego eliminar la tarea del board
-      await tasksStore.deleteTask(id)
     }
-    
+    branchesToDelete = branchesToDelete.filter(b => deletedIds.has(b.taskId))
+
+    if (pendingApprovals.length > 0) {
+      const detail = pendingApprovals.length === 1
+        ? `"${pendingApprovals[0].title}"`
+        : `${pendingApprovals.length} elementos`
+      toast(`Se pidió autorización a ${pendingApprovals[0].approvers} para eliminar ${detail}`, 'warning')
+    }
+    if (deletedIds.size === 0) {
+      await loadActivities()
+      return
+    }
+
     // 🌿 Eliminar ramas de GitHub (en segundo plano, no bloquear si falla)
     if (branchesToDelete.length > 0) {
       console.log(`🌿 Eliminando ${branchesToDelete.length} ramas de GitHub...`)
@@ -5195,10 +5227,10 @@ const confirmCascadeDelete = async () => {
       }
       
       if (branchesToDelete.length > 0) {
-        await toast(`${allIds.length} elementos y ${branchesToDelete.length} ramas eliminadas`, 'success')
+        await toast(`${deletedIds.size} elementos y ${branchesToDelete.length} ramas eliminadas`, 'success')
       }
     } else {
-      await toast(`${allIds.length} elementos eliminados correctamente`, 'success')
+      await toast(`${deletedIds.size} elementos eliminados correctamente`, 'success')
     }
     
     selectedTask.value = null

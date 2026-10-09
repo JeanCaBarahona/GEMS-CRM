@@ -57,6 +57,15 @@ export interface EntityApprovalState {
   pendingDeletion: TaskApprovalRequest | null
 }
 
+/** Evento de window con el resumen nuevo (detail: ApprovalSummary) para refrescar contadores */
+export const APPROVALS_CHANGED_EVENT = 'task-approvals:changed'
+
+export interface ApprovalSummary {
+  toReview: number
+  waiting: number
+  canReview: boolean
+}
+
 /** Resultado de eliminar una actividad o tarea */
 export interface DeleteResult {
   deleted: boolean
@@ -81,12 +90,20 @@ export const APPROVAL_KIND_LABELS: Record<ApprovalKind, string> = {
   deletion: 'Eliminación'
 }
 
-/** Texto para avisar a quién se le envió la solicitud */
+/** A quién se le envió la solicitud, corto para avisos de una línea: nombres o, si no hay, el rol */
 export function describeApprovers(summary?: { approverSource?: ApproverSource; approvers?: ApprovalUser[] } | null): string {
   if (!summary) return 'el líder de tu área'
   const names = (summary.approvers || []).map(a => a.name).filter(Boolean)
-  const who = (summary.approverSource && APPROVER_SOURCE_LABELS[summary.approverSource]) || 'el líder de tu área'
-  return names.length ? `${who} (${names.join(', ')})` : who
+  if (names.length) return names.length > 2 ? `${names.slice(0, 2).join(', ')} y otros` : names.join(' y ')
+  return (summary.approverSource && APPROVER_SOURCE_LABELS[summary.approverSource]) || 'el líder de tu área'
+}
+
+/** Evento de window para pedir que la página de Autorizaciones y el menú se recarguen */
+export const APPROVALS_REFRESH_EVENT = 'task-approvals:refresh'
+
+/** Avisar que se creó una solicitud desde otra pantalla */
+export function notifyApprovalsChanged() {
+  window.dispatchEvent(new Event(APPROVALS_REFRESH_EVENT))
 }
 
 class TaskApprovalService {
@@ -115,9 +132,10 @@ class TaskApprovalService {
     return this.request<TaskApprovalRequest[]>(`?${params.toString()}`)
   }
 
-  async pendingCount(): Promise<number> {
-    const data = await this.request<{ count: number }>('/pending-count')
-    return data.count || 0
+  /** Pendientes por aprobar (toReview), mis solicitudes en espera (waiting) y si puedo aprobar */
+  async summary(): Promise<ApprovalSummary> {
+    const data = await this.request<{ count?: number; mine?: number; canReview?: boolean }>('/pending-count')
+    return { toReview: data.count || 0, waiting: data.mine || 0, canReview: !!data.canReview }
   }
 
   entityState(entityType: ApprovalEntityType, entityId: string) {

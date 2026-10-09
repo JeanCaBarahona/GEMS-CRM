@@ -71,8 +71,21 @@
               :title="isSidebarMini ? module.name : ''"
               data-tooltip-placement="right"
             >
-              <i :class="[module.icon, 'w-5 h-5 flex items-center justify-center opacity-80 transition-transform group-hover:scale-110', !isSidebarMini ? 'mr-3' : '', $route.path === module.path ? 'text-white' : 'text-slate-400 group-hover:text-primary-500']"></i>
-              <span v-if="!isSidebarMini" class="transition-opacity duration-300 whitespace-nowrap overflow-hidden">{{ module.name }}</span>
+              <span class="relative flex">
+                <i :class="[module.icon, 'w-5 h-5 flex items-center justify-center opacity-80 transition-transform group-hover:scale-110', !isSidebarMini ? 'mr-3' : '', $route.path === module.path ? 'text-white' : 'text-slate-400 group-hover:text-primary-500']"></i>
+                <!-- Solicitudes que le toca aprobar al usuario -->
+                <span
+                  v-if="module.id === 'task-approvals' && approvalsToReview > 0 && isSidebarMini"
+                  class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-500 ring-2 ring-white"
+                ></span>
+              </span>
+              <span v-if="!isSidebarMini" class="flex-1 transition-opacity duration-300 whitespace-nowrap overflow-hidden">{{ module.name }}</span>
+              <span
+                v-if="!isSidebarMini && module.id === 'task-approvals' && approvalsToReview > 0"
+                class="ml-2 min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-black flex items-center justify-center"
+                :class="$route.path === module.path ? 'bg-white text-primary-600' : 'bg-amber-500 text-white'"
+                title="Solicitudes que requieren tu aprobación"
+              >{{ approvalsToReview }}</span>
             </router-link>
           </div>
         </nav>
@@ -144,7 +157,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
+import { taskApprovalService, APPROVALS_CHANGED_EVENT, APPROVALS_REFRESH_EVENT, type ApprovalSummary } from './services/taskApprovalService'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from './stores/auth'
 import { useChatStore } from './stores/chatStore'
@@ -169,6 +183,33 @@ const isDesktop = ref(true)
 
 // Computed properties
 const availableModules = computed(() => authStore.getAvailableModules)
+
+// Contador del menú "Autorizaciones": solicitudes que el usuario debe aprobar.
+// Se refresca al navegar (aprobar desde la página también navega/recarga).
+const approvalsToReview = ref(0)
+async function refreshApprovalsCount() {
+  if (!authStore.user || !availableModules.value.some(m => m.id === 'task-approvals')) {
+    approvalsToReview.value = 0
+    return
+  }
+  try {
+    approvalsToReview.value = (await taskApprovalService.summary()).toReview
+  } catch {
+    // Sin conexión o sin organización: el menú simplemente no muestra el contador
+  }
+}
+watch(() => route.fullPath, refreshApprovalsCount)
+const onApprovalsChanged = (e: Event) => {
+  approvalsToReview.value = (e as CustomEvent<ApprovalSummary>).detail?.toReview ?? approvalsToReview.value
+}
+onMounted(() => {
+  window.addEventListener(APPROVALS_CHANGED_EVENT, onApprovalsChanged)
+  window.addEventListener(APPROVALS_REFRESH_EVENT, refreshApprovalsCount)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener(APPROVALS_CHANGED_EVENT, onApprovalsChanged)
+  window.removeEventListener(APPROVALS_REFRESH_EVENT, refreshApprovalsCount)
+})
 
 const currentModule = computed(() => {
   const current = availableModules.value.find(m => m.path === route.path)

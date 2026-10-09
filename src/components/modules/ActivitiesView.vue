@@ -2622,7 +2622,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { activityService, type ActivityData } from '../../services/activityService'
-import { taskApprovalService, describeApprovers } from '../../services/taskApprovalService'
+import { taskApprovalService, describeApprovers, notifyApprovalsChanged } from '../../services/taskApprovalService'
 import { clientService, type ClientData, type ProjectData } from '../../services/clientService'
 import { teamService } from '../../services/teamService'
 import { useNotifications } from '../../composables/useNotifications'
@@ -3694,7 +3694,8 @@ const extendDeadline = async (activityId: string) => {
     })
 
     if (!result.applied) {
-      toast(`Solicitud enviada a ${describeApprovers(result.request)} para ampliar el plazo 7 días`, 'warning')
+      toast(`Ampliación enviada a ${describeApprovers(result.request)}`, 'warning')
+      notifyApprovalsChanged()
       return
     }
 
@@ -3731,7 +3732,8 @@ const deleteActivity = async (activityId: string) => {
     try {
       const deletion = await activityService.deleteActivity(activityId)
       if (!deletion.deleted) {
-        toast(`Solicitud de eliminación enviada a ${describeApprovers(deletion.approvalRequest)}`, 'warning')
+        toast(`Eliminación enviada a ${describeApprovers(deletion.approvalRequest)}`, 'warning')
+        notifyApprovalsChanged()
         return
       }
       activities.value = activities.value.filter(a => a._id !== activityId)
@@ -5194,10 +5196,9 @@ const confirmCascadeDelete = async () => {
     branchesToDelete = branchesToDelete.filter(b => deletedIds.has(b.taskId))
 
     if (pendingApprovals.length > 0) {
-      const detail = pendingApprovals.length === 1
-        ? `"${pendingApprovals[0].title}"`
-        : `${pendingApprovals.length} elementos`
-      toast(`Se pidió autorización a ${pendingApprovals[0].approvers} para eliminar ${detail}`, 'warning')
+      const detail = pendingApprovals.length === 1 ? 'Eliminación' : `${pendingApprovals.length} eliminaciones`
+      toast(`${detail} enviada${pendingApprovals.length === 1 ? '' : 's'} a ${pendingApprovals[0].approvers}`, 'warning')
+      notifyApprovalsChanged()
     }
     if (deletedIds.size === 0) {
       await loadActivities()

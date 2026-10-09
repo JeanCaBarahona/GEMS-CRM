@@ -139,35 +139,49 @@
             </div>
 
             <!-- Ampliación de plazo: solo el líder del área la aprueba -->
+            <!-- Solicitudes pendientes sobre esta tarea: el texto depende de quién mira -->
             <div
-              v-if="pendingExtension && !needsExtensionApproval"
-              class="form-section flex items-start gap-3 px-4 py-3 bg-amber-50/70 border border-amber-100 rounded-2xl"
+              v-for="notice in pendingNotices"
+              :key="notice.key"
+              class="form-section flex items-start gap-3 px-4 py-3 border rounded-2xl"
+              :class="notice.box"
             >
-              <i class="fas fa-hourglass-half text-amber-500 mt-0.5"></i>
-              <p class="text-xs font-bold text-amber-800 leading-relaxed">
-                Hay una solicitud pendiente de {{ pendingExtension.requestedBy?.name || 'un miembro del equipo' }}
-                para mover la entrega al {{ formatExtensionDate(pendingExtension.requestedDueDate) }}.
-                <router-link to="/aprobaciones" class="underline hover:text-amber-900" @click="emit('close')">Ver solicitudes</router-link>
-              </p>
+              <span class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" :class="notice.iconBox">
+                <i :class="notice.icon" class="text-xs"></i>
+              </span>
+              <div class="min-w-0 flex-1">
+                <p class="text-[11px] font-black uppercase tracking-widest" :class="notice.titleClass">{{ notice.title }}</p>
+                <p class="text-xs font-semibold text-slate-600 leading-relaxed mt-0.5">{{ notice.detail }}</p>
+              </div>
+              <router-link
+                to="/aprobaciones"
+                class="self-center shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-black transition-colors"
+                :class="notice.linkClass"
+                @click="emit('close')"
+              >{{ notice.linkLabel }}</router-link>
             </div>
             <div
               v-if="needsExtensionApproval"
-              class="form-section space-y-2 px-4 py-3 bg-orange-50/70 border border-orange-100 rounded-2xl"
+              class="form-section space-y-3 px-4 py-3.5 bg-orange-50/70 border border-orange-200 rounded-2xl"
             >
               <div class="flex items-start gap-3">
-                <i class="fas fa-user-shield text-orange-500 mt-0.5"></i>
-                <p class="text-xs font-bold text-orange-800 leading-relaxed">
-                  Ampliar la fecha de entrega requiere la aprobación de {{ extensionApproverLabel }}.
-                  Al guardar se envía la solicitud; los demás cambios se guardan de inmediato y la fecha actual
-                  se mantiene hasta que la aprueben.
-                </p>
+                <span class="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                  <i class="fas fa-user-shield text-xs"></i>
+                </span>
+                <div class="min-w-0">
+                  <p class="text-[11px] font-black uppercase tracking-widest text-orange-700">Necesita aprobación</p>
+                  <p class="text-xs font-semibold text-slate-600 leading-relaxed mt-0.5">
+                    Ampliar la entrega lo aprueba {{ extensionApproverLabel }}. Al guardar se envía la solicitud:
+                    tus otros cambios se guardan de una vez y la fecha actual se mantiene hasta que respondan.
+                  </p>
+                </div>
               </div>
               <textarea
                 v-model="dueDateChangeReason"
                 rows="2"
                 maxlength="1000"
-                placeholder="¿Por qué necesitas más tiempo?"
-                class="w-full px-3 py-2 bg-white border border-orange-200 rounded-xl text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none"
+                placeholder="Cuéntale a tu líder por qué necesitas más tiempo"
+                class="w-full px-3.5 py-2.5 bg-white border border-orange-200 rounded-xl text-xs font-medium text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-400 resize-none transition-all"
               ></textarea>
             </div>
 
@@ -735,8 +749,10 @@ import PersonAvatar from '../ui/PersonAvatar.vue'
 import {
   taskApprovalService,
   describeApprovers,
+  notifyApprovalsChanged,
   APPROVER_SOURCE_LABELS,
-  type EntityApprovalState
+  type EntityApprovalState,
+  type TaskApprovalRequest
 } from '../../services/taskApprovalService'
 
 console.log('ActivityFormModal script setup initialized')
@@ -918,6 +934,51 @@ const extensionState = ref<EntityApprovalState | null>(null)
 const dueDateChangeReason = ref('')
 const pendingExtension = computed(() => extensionState.value?.pendingExtension || null)
 
+// Avisos de solicitudes pendientes. "Pendiente" no significa lo mismo para todos:
+// quien pidió está esperando; el líder tiene que actuar; los demás solo se enteran.
+const pendingNotices = computed(() => {
+  const me = String(authStore.user?._id || '')
+  const list: TaskApprovalRequest[] = []
+  if (pendingExtension.value && !needsExtensionApproval.value) list.push(pendingExtension.value)
+  if (extensionState.value?.pendingDeletion) list.push(extensionState.value.pendingDeletion)
+
+  return list.map(req => {
+    const isMine = String(req.requestedBy?._id || '') === me
+    const iApprove = (req.approvers || []).some(a => String(a._id) === me)
+    const names = (req.approvers || []).map(a => a.name).filter(Boolean).join(', ') || 'tu líder'
+    const what = req.kind === 'deletion'
+      ? 'eliminar esta tarea'
+      : `mover la entrega al ${formatExtensionDate(req.requestedDueDate)}`
+    const base = { key: req._id, icon: req.kind === 'deletion' ? 'fas fa-trash-alt' : 'fas fa-calendar-plus' }
+
+    if (isMine) {
+      return {
+        ...base,
+        title: 'Tu solicitud está en espera',
+        detail: `Pediste ${what}. La está revisando ${names}; te avisaremos en la campana.`,
+        box: 'bg-sky-50/70 border-sky-100', iconBox: 'bg-sky-100 text-sky-600', titleClass: 'text-sky-700',
+        linkClass: 'bg-white text-sky-700 border border-sky-200 hover:bg-sky-100', linkLabel: 'Ver seguimiento'
+      }
+    }
+    if (iApprove) {
+      return {
+        ...base,
+        title: 'Requiere tu aprobación',
+        detail: `${req.requestedBy?.name || 'Un miembro del equipo'} pide ${what}.`,
+        box: 'bg-amber-50/70 border-amber-200', iconBox: 'bg-amber-100 text-amber-600', titleClass: 'text-amber-700',
+        linkClass: 'bg-amber-500 text-white hover:bg-amber-600', linkLabel: 'Revisar'
+      }
+    }
+    return {
+      ...base,
+      title: 'Solicitud en revisión',
+      detail: `${req.requestedBy?.name || 'Un miembro del equipo'} pidió ${what}. La revisa ${names}.`,
+      box: 'bg-slate-50 border-slate-200', iconBox: 'bg-slate-100 text-slate-500', titleClass: 'text-slate-500',
+      linkClass: 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100', linkLabel: 'Ver'
+    }
+  })
+})
+
 const isExtendingDueDate = computed(() => {
   if (!isEditing.value || !props.activity?.dueDate || form.type === 'recurring') return false
   const next = dueDateInputToIso(form.dueDate)
@@ -1012,7 +1073,8 @@ const handleSubmit = async () => {
       }
       // La nueva fecha quedó como solicitud: se guardó todo lo demás
       if (savedData?.dueDateExtensionRequest) {
-        showWarning(`Cambios guardados. La nueva fecha de entrega quedó pendiente de aprobación de ${describeApprovers(savedData.dueDateExtensionRequest)}`)
+        showWarning(`Guardado. Nueva fecha enviada a ${describeApprovers(savedData.dueDateExtensionRequest)}`)
+        notifyApprovalsChanged()
       } else {
         showSuccess(isTask ? 'Tarea actualizada' : 'Actividad actualizada')
       }

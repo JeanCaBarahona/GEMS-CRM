@@ -8,7 +8,7 @@ import { API_CONFIG } from '@/config/api'
 export type ApprovalKind = 'due-date-extension' | 'deletion'
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'cancelled'
 export type ApprovalEntityType = 'activity' | 'task'
-export type ApproverSource = 'department-leader' | 'supervisor' | 'admin'
+export type ApproverSource = 'department-leader' | 'supervisor' | 'admin' | 'self-approval'
 
 export interface ApprovalUser {
   _id: string
@@ -35,6 +35,8 @@ export interface TaskApprovalRequest {
   reviewedBy: ApprovalUser | null
   reviewedAt: string | null
   reviewComment: string
+  /** Hecha por alguien con autoaprobación: no se pidió permiso, solo queda la traza */
+  autoApproved?: boolean
   createdAt: string
 }
 
@@ -51,6 +53,8 @@ export interface PendingApprovalSummary {
 
 export interface EntityApprovalState {
   canManageDirectly: boolean
+  /** Por qué no necesita pedir permiso (null = debe pedirlo) */
+  directAccess?: 'admin' | 'leader' | 'self-approval' | null
   approverSource: ApproverSource | null
   approverIds: string[]
   pendingExtension: TaskApprovalRequest | null
@@ -70,12 +74,15 @@ export interface ApprovalSummary {
 export interface DeleteResult {
   deleted: boolean
   approvalRequest?: PendingApprovalSummary
+  /** Eliminada por alguien con autoaprobación (queda la traza) */
+  autoApproved?: boolean
 }
 
 export const APPROVER_SOURCE_LABELS: Record<ApproverSource, string> = {
   'department-leader': 'el líder de tu área',
   supervisor: 'tu supervisor',
-  admin: 'un administrador'
+  admin: 'un administrador',
+  'self-approval': 'autoaprobación'
 }
 
 export const APPROVAL_STATUS_LABELS: Record<ApprovalStatus, string> = {
@@ -144,7 +151,7 @@ class TaskApprovalService {
 
   requestExtension(payload: { entityType: ApprovalEntityType; entityId: string; requestedDueDate: string; reason?: string }) {
     return this.request<
-      { applied: true; dueDate: string; status?: string } | { applied: false; request: PendingApprovalSummary }
+      { applied: true; autoApproved?: boolean; dueDate: string; status?: string } | { applied: false; request: PendingApprovalSummary }
     >('/due-date-extension', { method: 'POST', body: JSON.stringify(payload) })
   }
 

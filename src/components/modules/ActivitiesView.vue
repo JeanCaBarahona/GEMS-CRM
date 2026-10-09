@@ -3706,7 +3706,8 @@ const extendDeadline = async (activityId: string) => {
       if (result.status) activities.value[activityIndex].status = result.status as ActivityData['status']
     }
 
-    toast('Plazo extendido por 7 días', 'success')
+    toast(result.autoApproved ? 'Plazo extendido 7 días con autoaprobación' : 'Plazo extendido por 7 días', 'success')
+    if (result.autoApproved) notifyApprovalsChanged()
   } catch (err) {
     showError('Error al extender plazo', err instanceof Error ? err.message : 'Error desconocido')
   }
@@ -3737,7 +3738,8 @@ const deleteActivity = async (activityId: string) => {
         return
       }
       activities.value = activities.value.filter(a => a._id !== activityId)
-      showSuccess('Actividad eliminada correctamente')
+      showSuccess(deletion.autoApproved ? 'Actividad eliminada con autoaprobación' : 'Actividad eliminada correctamente')
+      if (deletion.autoApproved) notifyApprovalsChanged()
     } catch (err) {
       showError('Error al eliminar actividad', err instanceof Error ? err.message : 'Error desconocido')
     }

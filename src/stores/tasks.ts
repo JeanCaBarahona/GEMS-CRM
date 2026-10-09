@@ -319,7 +319,7 @@ export const useTasksStore = defineStore('tasks', () => {
       if (currentTask.value?._id === id) {
         currentTask.value = null
       }
-      return { deleted: true }
+      return { deleted: true, autoApproved: !!response.data?.autoApproved }
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Error al eliminar tarea'
       console.error('Error deleting task:', err)

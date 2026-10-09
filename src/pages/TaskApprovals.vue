@@ -158,8 +158,12 @@
                   <PersonAvatar :name="req.requestedBy?.name" :photo="req.requestedBy?.photo" :letters="1"
                     class="w-6 h-6 rounded-full bg-primary-100 text-primary-600 text-[10px] font-black" />
                   <span>
-                    <strong>{{ req.requestedBy?.name || 'Alguien' }}</strong>
-                    {{ req.kind === 'deletion' ? 'quiere eliminarla' : 'pide más tiempo' }}
+                    <strong class="mr-1">{{ req.requestedBy?.name || 'Alguien' }}</strong>
+                    <template v-if="req.autoApproved">
+                      {{ req.kind === 'deletion' ? 'la eliminó' : 'amplió el plazo' }} con
+                      <span class="font-bold text-violet-700"><i class="fas fa-bolt text-[10px]"></i> autoaprobación</span>
+                    </template>
+                    <template v-else>{{ req.kind === 'deletion' ? 'quiere eliminarla' : 'pide más tiempo' }}</template>
                     <span class="text-slate-400">· {{ relative(req.createdAt) }}</span>
                   </span>
                 </div>
@@ -195,7 +199,10 @@
                 </ol>
 
                 <!-- Resultado para el líder -->
-                <p v-if="box === 'inbox' && req.status !== 'pending'" class="mt-3 text-xs text-slate-500">
+                <p v-if="box === 'inbox' && req.autoApproved" class="mt-3 text-xs text-slate-500">
+                  Aplicada de inmediato con permiso especial; no requirió tu aprobación.
+                </p>
+                <p v-else-if="box === 'inbox' && req.status !== 'pending'" class="mt-3 text-xs text-slate-500">
                   <template v-if="req.reviewedBy">
                     {{ req.status === 'approved' ? 'Aprobada' : 'Rechazada' }} por <strong>{{ req.reviewedBy.name }}</strong>
                     {{ req.reviewedAt ? relative(req.reviewedAt) : '' }}
@@ -333,6 +340,9 @@ function stateOf(req: TaskApprovalRequest) {
       ? { label: 'Requiere tu aprobación', pill: 'bg-amber-100 text-amber-800', bar: 'bg-amber-400', icon: '', pulse: true }
       : { label: `En espera de ${approverNames(req)}`, pill: 'bg-sky-100 text-sky-800', bar: 'bg-sky-400', icon: 'fas fa-hourglass-half', pulse: false }
   }
+  if (req.status === 'approved' && req.autoApproved) {
+    return { label: 'Autoaprobada', pill: 'bg-violet-100 text-violet-800', bar: 'bg-violet-500', icon: 'fas fa-bolt', pulse: false }
+  }
   if (req.status === 'approved') {
     return { label: 'Aprobada', pill: 'bg-emerald-100 text-emerald-800', bar: 'bg-emerald-400', icon: 'fas fa-check', pulse: false }
   }
@@ -349,6 +359,23 @@ function stepsOf(req: TaskApprovalRequest) {
   const todo = { dot: 'bg-slate-100 text-slate-300', line: 'bg-slate-200', titleClass: 'text-slate-400', icon: 'fas fa-circle text-[6px]' }
 
   const sent = { ...done, title: 'Enviada', detail: relative(req.createdAt) }
+
+  // Con autoaprobación no hubo revisión: se aplicó al momento y quedó el registro
+  if (req.autoApproved) {
+    return [
+      { ...done, title: 'Registrada', detail: relative(req.createdAt) },
+      {
+        ...done,
+        dot: 'bg-violet-600 text-white',
+        icon: 'fas fa-bolt',
+        titleClass: 'text-violet-700',
+        title: 'Autoaprobada',
+        detail: req.kind === 'deletion'
+          ? 'Eliminada con tu permiso especial'
+          : `Nueva entrega: ${formatDate(req.requestedDueDate)}`
+      }
+    ]
+  }
 
   if (req.status === 'pending') {
     return [

@@ -117,7 +117,14 @@
             </div>
            </div>
            <div class="min-w-0">
-              <h3 class="text-xs font-bold text-slate-800 truncate">{{ member.name }}</h3>
+              <h3 class="text-xs font-bold text-slate-800 truncate flex items-center gap-1.5">
+                {{ member.name }}
+                <span
+                  v-if="member.selfApproval"
+                  class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-violet-100 text-violet-700 text-[8px] font-black uppercase tracking-wider shrink-0"
+                  title="Autoaprobación: amplía plazos y elimina sin pedir autorización (queda registro)"
+                ><i class="fas fa-bolt" style="font-size: 7px"></i> Auto</span>
+              </h3>
               <p class="text-[10px] font-medium text-slate-400 truncate">{{ member.email }}</p>
            </div>
         </div>
@@ -275,6 +282,42 @@
                          </button>
                        </div>
                     </div>
+                    <!-- Permiso especial: autoaprobación -->
+                    <div class="space-y-2">
+                       <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Permiso especial</label>
+                       <button
+                         type="button"
+                         role="switch"
+                         :aria-checked="formData.selfApproval"
+                         @click="formData.selfApproval = !formData.selfApproval"
+                         class="w-full p-4 rounded-2xl border text-left transition-all flex items-center gap-4"
+                         :class="formData.selfApproval ? 'bg-violet-50 border-violet-300 ring-4 ring-violet-500/10' : 'bg-slate-50 border-slate-200 hover:border-slate-300'"
+                       >
+                         <span
+                           class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors"
+                           :class="formData.selfApproval ? 'bg-violet-600 text-white shadow-lg shadow-violet-200' : 'bg-white text-slate-400 border border-slate-200'"
+                         >
+                           <i class="fas fa-bolt"></i>
+                         </span>
+                         <span class="flex-1 min-w-0">
+                           <span class="block text-xs font-black uppercase tracking-widest" :class="formData.selfApproval ? 'text-violet-700' : 'text-slate-600'">Autoaprobación</span>
+                           <span class="block text-[11px] font-medium text-slate-500 leading-snug mt-0.5">
+                             Amplía plazos y elimina tareas sin pedir autorización. Cada acción queda registrada en Autorizaciones.
+                           </span>
+                         </span>
+                         <!-- Interruptor -->
+                         <span
+                           class="relative w-11 h-6 rounded-full shrink-0 transition-colors"
+                           :class="formData.selfApproval ? 'bg-violet-600' : 'bg-slate-300'"
+                         >
+                           <span
+                             class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform"
+                             :class="formData.selfApproval ? 'translate-x-5' : 'translate-x-0'"
+                           ></span>
+                         </span>
+                       </button>
+                       <p class="text-[10px] font-medium text-slate-400 pl-1">Solo un administrador puede activarlo o quitarlo.</p>
+                    </div>
                    <div class="space-y-2">
                       <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Teléfono Corporativo</label>
                       <input v-model="formData.phone" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-violet-500/5">
@@ -356,7 +399,8 @@ const formData = reactive({
   position: '',
   phone: '',
   supervisor: '',
-  departmentRole: 'member' as 'member' | 'leader'
+  departmentRole: 'member' as 'member' | 'leader',
+  selfApproval: false
 })
 
 // Computed
@@ -429,7 +473,7 @@ const closeModal = () => {
   showCreateModal.value = false
   showEditModal.value = false
   editingMember.value = null
-  Object.assign(formData, { name: '', email: '', password: '', role: '', department: '', position: '', phone: '', supervisor: '', departmentRole: 'member' })
+  Object.assign(formData, { name: '', email: '', password: '', role: '', department: '', position: '', phone: '', supervisor: '', departmentRole: 'member', selfApproval: false })
 }
 
 const editMember = (member: TeamMember) => {
@@ -443,7 +487,8 @@ const editMember = (member: TeamMember) => {
     position: member.position || '',
     phone: member.phone || '',
     supervisor: member.supervisor || '',
-    departmentRole: member.departmentRole || 'member'
+    departmentRole: member.departmentRole || 'member',
+    selfApproval: member.selfApproval === true
   })
   showEditModal.value = true
 }

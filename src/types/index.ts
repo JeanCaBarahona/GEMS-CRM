@@ -149,6 +149,8 @@ export interface TeamMember {
   role: 'admin' | 'manager' | 'employee' | 'support' | 'development' | 'fullstack' | 'viewer' | 'client'
   department?: string
   departmentRole?: 'member' | 'leader'
+  /** Permiso especial: amplía plazos y elimina sin pedir autorización (queda la traza) */
+  selfApproval?: boolean
   supervisor?: string
   position?: string
   phone?: string

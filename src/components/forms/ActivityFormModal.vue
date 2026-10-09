@@ -185,6 +185,23 @@
               ></textarea>
             </div>
 
+            <!-- Autoaprobación: se aplica de una vez, pero queda registrado -->
+            <div
+              v-if="isExtendingDueDate && extensionState?.directAccess === 'self-approval'"
+              class="form-section flex items-start gap-3 px-4 py-3 bg-violet-50/70 border border-violet-200 rounded-2xl"
+            >
+              <span class="w-8 h-8 rounded-xl bg-violet-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-violet-200">
+                <i class="fas fa-bolt text-xs"></i>
+              </span>
+              <div class="min-w-0">
+                <p class="text-[11px] font-black uppercase tracking-widest text-violet-700">Autoaprobación</p>
+                <p class="text-xs font-semibold text-slate-600 leading-relaxed mt-0.5">
+                  Tienes permiso especial: la nueva entrega se aplica al guardar, sin pedir autorización.
+                  Queda registrada en Autorizaciones para tu líder.
+                </p>
+              </div>
+            </div>
+
             <!-- Tarea recurrente: registro diario con "+" -->
             <div
               v-if="!isBoardTask && form.type === 'recurring'"
@@ -1074,6 +1091,9 @@ const handleSubmit = async () => {
       // La nueva fecha quedó como solicitud: se guardó todo lo demás
       if (savedData?.dueDateExtensionRequest) {
         showWarning(`Guardado. Nueva fecha enviada a ${describeApprovers(savedData.dueDateExtensionRequest)}`)
+        notifyApprovalsChanged()
+      } else if (savedData?.dueDateAutoApproved) {
+        showSuccess('Plazo ampliado con autoaprobación (queda registrado)')
         notifyApprovalsChanged()
       } else {
         showSuccess(isTask ? 'Tarea actualizada' : 'Actividad actualizada')

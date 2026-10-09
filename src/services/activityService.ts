@@ -185,7 +185,7 @@ class ActivityService {
     if (response.status === 202 && data?.pendingApproval) {
       return { deleted: false, approvalRequest: data.approvalRequest }
     }
-    return { deleted: true }
+    return { deleted: true, autoApproved: !!data?.autoApproved }
   }
 
   // Métodos específicos para asignaciones

@@ -290,33 +290,26 @@
                          role="switch"
                          :aria-checked="formData.selfApproval"
                          @click="formData.selfApproval = !formData.selfApproval"
-                         class="w-full p-4 rounded-2xl border text-left transition-all flex items-center gap-4"
-                         :class="formData.selfApproval ? 'bg-violet-50 border-violet-300 ring-4 ring-violet-500/10' : 'bg-slate-50 border-slate-200 hover:border-slate-300'"
+                         title="Amplía plazos y elimina tareas sin pedir autorización; cada acción queda registrada en Autorizaciones. Solo un administrador puede cambiarlo."
+                         class="w-full px-4 py-3 rounded-2xl border text-left transition-all flex items-center gap-3"
+                         :class="formData.selfApproval ? 'bg-violet-50 border-violet-200' : 'bg-slate-50 border-slate-100 hover:border-slate-200'"
                        >
-                         <span
-                           class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors"
-                           :class="formData.selfApproval ? 'bg-violet-600 text-white shadow-lg shadow-violet-200' : 'bg-white text-slate-400 border border-slate-200'"
-                         >
-                           <i class="fas fa-bolt"></i>
-                         </span>
-                         <span class="flex-1 min-w-0">
-                           <span class="block text-xs font-black uppercase tracking-widest" :class="formData.selfApproval ? 'text-violet-700' : 'text-slate-600'">Autoaprobación</span>
-                           <span class="block text-[11px] font-medium text-slate-500 leading-snug mt-0.5">
-                             Amplía plazos y elimina tareas sin pedir autorización. Cada acción queda registrada en Autorizaciones.
-                           </span>
+                         <i class="fas fa-bolt text-xs w-4 text-center shrink-0" :class="formData.selfApproval ? 'text-violet-600' : 'text-slate-400'"></i>
+                         <span class="flex-1 min-w-0 leading-tight">
+                           <span class="block text-sm font-bold" :class="formData.selfApproval ? 'text-violet-700' : 'text-slate-700'">Autoaprobación</span>
+                           <span class="block text-[10px] font-medium text-slate-400 truncate">Sin pedir permiso · queda registrado</span>
                          </span>
                          <!-- Interruptor -->
                          <span
-                           class="relative w-11 h-6 rounded-full shrink-0 transition-colors"
+                           class="relative w-9 h-5 rounded-full shrink-0 transition-colors"
                            :class="formData.selfApproval ? 'bg-violet-600' : 'bg-slate-300'"
                          >
                            <span
-                             class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform"
-                             :class="formData.selfApproval ? 'translate-x-5' : 'translate-x-0'"
+                             class="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform"
+                             :class="formData.selfApproval ? 'translate-x-4' : 'translate-x-0'"
                            ></span>
                          </span>
                        </button>
-                       <p class="text-[10px] font-medium text-slate-400 pl-1">Solo un administrador puede activarlo o quitarlo.</p>
                     </div>
                    <div class="space-y-2">
                       <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Teléfono Corporativo</label>

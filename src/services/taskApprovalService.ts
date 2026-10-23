@@ -1,9 +1,11 @@
+import { ref } from 'vue'
 import { API_CONFIG } from '@/config/api'
 
 // Autorizaciones sobre actividades y tareas del tablero.
-// Solo el líder del área (o un administrador) puede ampliar la fecha de entrega
-// o eliminar. Cualquier otra persona genera una solicitud que aprueba el líder
-// del área a la que pertenece; el backend aplica la regla en todos los casos.
+// Una vez pactada, la fecha de entrega solo la cambia el líder del área o un
+// administrador (o quien tiene autoaprobación), y lo mismo para eliminar. Ya no
+// se crean solicitudes nuevas: las anteriores se siguen aprobando aquí. Lo
+// eliminado va a la papelera, que solo ven los aprobadores.
 
 export type ApprovalKind = 'due-date-extension' | 'deletion'
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'cancelled'
@@ -68,6 +70,19 @@ export interface ApprovalSummary {
   toReview: number
   waiting: number
   canReview: boolean
+  /** Puede cambiar fechas pactadas y eliminar tareas (admin, líder de área o autoaprobación) */
+  canManageTasks: boolean
+}
+
+export interface TrashedItem {
+  _id: string
+  entityType: ApprovalEntityType
+  entityId: string
+  title: string
+  itemType: string | null
+  deletedBy: ApprovalUser | null
+  deletedAt: string
+  expiresAt: string
 }
 
 /** Resultado de eliminar una actividad o tarea */
@@ -141,8 +156,27 @@ class TaskApprovalService {
 
   /** Pendientes por aprobar (toReview), mis solicitudes en espera (waiting) y si puedo aprobar */
   async summary(): Promise<ApprovalSummary> {
-    const data = await this.request<{ count?: number; mine?: number; canReview?: boolean }>('/pending-count')
-    return { toReview: data.count || 0, waiting: data.mine || 0, canReview: !!data.canReview }
+    const data = await this.request<{ count?: number; mine?: number; canReview?: boolean; canManageTasks?: boolean }>('/pending-count')
+    return {
+      toReview: data.count || 0,
+      waiting: data.mine || 0,
+      canReview: !!data.canReview,
+      canManageTasks: !!data.canManageTasks
+    }
+  }
+
+  async trash(): Promise<{ retentionDays: number; items: TrashedItem[] }> {
+    const response = await fetch(`${API_CONFIG.BASE_URL}/trash`, { headers: this.getHeaders() })
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok) throw new Error(data?.error || `Error ${response.status}`)
+    return data
+  }
+
+  async restore(trashId: string): Promise<{ restored: boolean; entityType: ApprovalEntityType; entityId: string; title: string }> {
+    const response = await fetch(`${API_CONFIG.BASE_URL}/trash/${trashId}/restore`, { method: 'POST', headers: this.getHeaders() })
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok) throw new Error(data?.error || `Error ${response.status}`)
+    return data
   }
 
   entityState(entityType: ApprovalEntityType, entityId: string) {
@@ -169,3 +203,17 @@ class TaskApprovalService {
 }
 
 export const taskApprovalService = new TaskApprovalService()
+
+// Permiso para mostrar u ocultar los controles de eliminar y de cambiar la
+// entrega. Se consulta una vez por sesión; el backend igual valida cada acción.
+const canManageTasksRef = ref(false)
+let canManageTasksLoaded: Promise<void> | null = null
+
+export function useCanManageTasks() {
+  if (!canManageTasksLoaded) {
+    canManageTasksLoaded = taskApprovalService.summary()
+      .then(s => { canManageTasksRef.value = s.canManageTasks })
+      .catch(() => { canManageTasksLoaded = null })
+  }
+  return canManageTasksRef
+}

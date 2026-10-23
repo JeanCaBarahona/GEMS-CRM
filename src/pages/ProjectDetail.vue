@@ -125,6 +125,9 @@
               Organiza el proyecto en features y agrupa las tareas dentro de cada una.
             </p>
             <div class="flex items-center gap-2">
+              <div v-if="backlogTagOptions.length > 1" class="w-48" title="Mostrar solo las tareas con una etiqueta (p. ej. un sprint)">
+                <CustomSelect v-model="backlogTagFilter" size="sm" searchable :options="backlogTagOptions" placeholder="Todas las etiquetas" />
+              </div>
               <button
                 type="button"
                 @click="openCreate"
@@ -189,6 +192,15 @@
                   class="shrink-0 px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider text-violet-600 bg-white border border-violet-200 rounded-lg hover:bg-violet-50 transition-colors"
                 >
                   <i class="fas fa-plus mr-1"></i>Tarea
+                </button>
+                <button
+                  v-if="canDeleteItems"
+                  type="button"
+                  @click="deleteLinkedItem(feature.item)"
+                  title="Eliminar la feature (sus tareas quedan sin feature; se puede recuperar desde la papelera)"
+                  class="shrink-0 w-8 h-8 flex items-center justify-center text-slate-300 hover:text-rose-500 hover:bg-rose-50 border border-transparent hover:border-rose-100 rounded-lg transition-colors"
+                >
+                  <i class="fas fa-trash-alt text-xs"></i>
                 </button>
               </div>
 
@@ -282,14 +294,15 @@
             v-else-if="linkedView === 'list'"
             :groups="linkedListGroups"
             show-kind-badge
-            :can-delete="false"
+            :can-delete="canDeleteItems"
             @open="openEdit"
+            @delete="deleteLinkedItem"
             @toggle-complete="toggleLinkedItemDone"
             @add-task="openCreate"
           />
 
           <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div v-for="group in statusGroups" :key="group.key" class="space-y-2">
+            <div v-for="group in boardGroups" :key="group.key" class="space-y-2">
               <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
                 <span class="w-1.5 h-1.5 rounded-full" :class="group.dot"></span>{{ group.label }}
                 <span class="text-slate-300">· {{ group.items.length }}</span>
@@ -340,7 +353,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { clientService, type ClientData, type ProjectData } from '@/services/clientService'
 import { activityService } from '@/services/activityService'
@@ -350,13 +363,22 @@ import { useNotifications } from '@/composables/useNotifications'
 import FileDropzone from '@/components/ui/FileDropzone.vue'
 import ActivityFormModal from '@/components/forms/ActivityFormModal.vue'
 import TaskListView, { type TaskListGroup } from '@/components/tasks/TaskListView.vue'
+import CustomSelect from '@/components/ui/CustomSelect.vue'
+import { useAuthStore } from '@/stores/auth'
+import { useTasksStore } from '@/stores/tasks'
+import { useCanManageTasks } from '@/services/taskApprovalService'
 import type { TeamMember } from '@/types'
 
 const route = useRoute()
 const clientId = route.params.clientId as string
 const projectId = route.params.projectId as string
 
-const { showError } = useNotifications()
+const { showError, showSuccess, confirmDelete } = useNotifications()
+const authStore = useAuthStore()
+const tasksStore = useTasksStore()
+// Eliminar: permiso de rol (configuración) y además ser líder de área o administrador
+const canManageTasks = useCanManageTasks()
+const canDeleteItems = computed(() => !!authStore.canDeleteActivities && canManageTasks.value)
 
 const loading = ref(true)
 const client = ref<ClientData | null>(null)
@@ -469,8 +491,8 @@ const removeLink = async (linkId: string) => {
 interface LinkedItem {
   id: string; title: string; description?: string; status: string; statusLabel: string
   kind: 'task' | 'activity'; assignedTo?: any; dueDate?: string | null; priority?: string | null
-  // Solo actividades: tipo (feature/task/bug/...) y feature a la que pertenecen
-  type?: string; featureId?: string | null
+  // Solo actividades: tipo (feature/task/bug/...), feature a la que pertenecen y etiquetas
+  type?: string; featureId?: string | null; tags?: string[]
   raw: any
 }
 const linkedItems = ref<LinkedItem[]>([])
@@ -482,6 +504,8 @@ const TASK_STATUS_LABELS: Record<string, string> = {
 const ACTIVITY_STATUS_LABELS: Record<string, string> = {
   pending: 'Pendiente', 'in-progress': 'En proceso', completed: 'Completada', cancelled: 'Cancelada', overdue: 'Vencida'
 }
+// Las features solo tienen dos estados
+const FEATURE_STATUS_LABELS: Record<string, string> = { pending: 'Nueva', completed: 'Terminada' }
 const isDone = (item: LinkedItem) => ['done', 'completed'].includes(item.status)
 const isInProgress = (item: LinkedItem) => ['in-progress', 'review', 'testing'].includes(item.status)
 
@@ -490,6 +514,11 @@ const statusGroups = computed(() => [
   { key: 'progress', label: 'En progreso', dot: 'bg-blue-500', items: linkedItems.value.filter(isInProgress) },
   { key: 'done', label: 'Completada', dot: 'bg-emerald-500', items: linkedItems.value.filter(isDone) }
 ])
+
+// El tablero no muestra features: son bloques amplios de tiempo (se ven en Lista y Backlog)
+const boardGroups = computed(() =>
+  statusGroups.value.map(g => ({ ...g, items: g.items.filter(i => i.type !== 'feature') }))
+)
 
 // ── Vista de Lista (TaskListView, la misma que usa /activities) ──
 // Task y Activity son dos modelos con formas ligeramente distintas
@@ -578,9 +607,10 @@ const loadLinkedItems = async () => {
     activities.filter(a => a.projectId === project.value!._id).forEach(a => {
       items.push({
         id: a._id!, title: a.title, description: a.description, status: a.status,
-        statusLabel: ACTIVITY_STATUS_LABELS[a.status] || a.status, kind: 'activity',
+        statusLabel: (a.type === 'feature' ? FEATURE_STATUS_LABELS[a.status] : undefined) || ACTIVITY_STATUS_LABELS[a.status] || a.status,
+        kind: 'activity',
         assignedTo: a.assignedTo, dueDate: a.dueDate as any, priority: a.priority,
-        type: a.type || 'task', featureId: a.featureId || null, raw: a
+        type: a.type || 'task', featureId: a.featureId || null, tags: a.tags || [], raw: a
       })
     })
     linkedItems.value = items
@@ -594,7 +624,25 @@ const loadLinkedItems = async () => {
 // ── Backlog: Feature → Tareas ──
 // Solo actividades: las tareas de un tablero Kanban tienen su propia jerarquía
 // (épicas/features del tablero) y siguen apareciendo en la pestaña Actividad.
-const backlogActivities = computed(() => linkedItems.value.filter(i => i.kind === 'activity'))
+const backlogTagFilter = ref('')
+const backlogTagOptions = computed(() => [
+  { value: '', label: 'Todas las etiquetas' },
+  ...[...new Set(linkedItems.value.flatMap(i => i.tags || []))]
+    .sort((a, b) => a.localeCompare(b, 'es'))
+    .map(tag => ({ value: tag, label: tag }))
+])
+// Con una etiqueta elegida se ven sus tareas y las features que las agrupan
+const backlogActivities = computed(() => {
+  const all = linkedItems.value.filter(i => i.kind === 'activity')
+  const tag = backlogTagFilter.value
+  if (!tag) return all
+  const tagged = all.filter(i => (i.tags || []).includes(tag))
+  const featureIds = new Set(tagged.map(i => i.featureId).filter(Boolean))
+  return all.filter(i => tagged.includes(i) || (i.type === 'feature' && featureIds.has(i.id)))
+})
+watch(backlogTagOptions, (options) => {
+  if (backlogTagFilter.value && !options.some(o => o.value === backlogTagFilter.value)) backlogTagFilter.value = ''
+})
 const hasBoardTasks = computed(() => linkedItems.value.some(i => i.kind === 'task'))
 
 const backlogFeatures = computed(() =>
@@ -665,6 +713,22 @@ const openEdit = (item: LinkedItem) => {
 const onActivitySaved = () => {
   showActivityModal.value = false
   loadLinkedItems()
+}
+
+// Eliminar (va a la papelera). Al borrar una feature sus tareas quedan "Sin feature".
+// TaskListView emite el `raw` de la fila, que aquí es el LinkedItem.
+async function deleteLinkedItem(item: LinkedItem) {
+  const isFeature = item.type === 'feature'
+  const result = await confirmDelete(isFeature ? `${item.title} (sus tareas quedan sin feature)` : item.title)
+  if (!result.isConfirmed) return
+  try {
+    if (item.kind === 'task') await tasksStore.deleteTask(item.id)
+    else await activityService.deleteActivity(item.id)
+    showSuccess(`${isFeature ? 'Feature eliminada' : 'Tarea eliminada'} (se puede recuperar desde la papelera)`)
+    await loadLinkedItems()
+  } catch (err: any) {
+    showError('Error', err?.response?.data?.error || err.message || 'No se pudo eliminar')
+  }
 }
 
 onMounted(async () => {

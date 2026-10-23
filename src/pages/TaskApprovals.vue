@@ -11,8 +11,8 @@
             <div>
               <h1 class="text-xl font-black text-slate-800">Autorizaciones</h1>
               <p class="text-sm text-slate-500 mt-0.5 max-w-xl">
-                Ampliar el plazo o eliminar una tarea requiere la aprobación del líder del área.
-                <template v-if="summary.canReview">Aquí apruebas las solicitudes de tu equipo y sigues las tuyas.</template>
+                La fecha de entrega pactada y la eliminación de tareas son del líder del área o un administrador.
+                <template v-if="summary.canReview">Aquí resuelves las solicitudes que quedaron de tu equipo y recuperas tareas eliminadas.</template>
                 <template v-else>Aquí sigues el estado de las solicitudes que enviaste.</template>
               </p>
             </div>
@@ -28,7 +28,7 @@
         </div>
 
         <!-- Resumen: qué me toca a mí y qué estoy esperando -->
-        <div class="grid gap-3" :class="summary.canReview ? 'sm:grid-cols-2' : 'sm:grid-cols-1 max-w-md'">
+        <div class="grid gap-3" :class="summary.canReview ? 'sm:grid-cols-3' : 'sm:grid-cols-1 max-w-md'">
           <button
             v-if="summary.canReview"
             @click="goTo('inbox')"
@@ -59,10 +59,25 @@
               </p>
             </div>
           </button>
+          <button
+            v-if="summary.canReview"
+            @click="goTo('trash')"
+            title="Tareas y actividades eliminadas que todavía se pueden recuperar"
+            class="text-left p-4 rounded-2xl border transition-all flex items-center gap-4"
+            :class="box === 'trash' ? 'border-rose-300 bg-rose-50/70 ring-4 ring-rose-100' : 'border-slate-200 hover:border-rose-200 hover:bg-rose-50/40'"
+          >
+            <div class="w-11 h-11 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+              <i class="fas fa-trash-arrow-up"></i>
+            </div>
+            <div class="min-w-0">
+              <p class="text-2xl font-black text-slate-800 leading-none">{{ box === 'trash' ? trashItems.length : '—' }}</p>
+              <p class="text-xs font-bold text-rose-700 mt-1">Papelera · se recupera hasta {{ retentionDays }} días</p>
+            </div>
+          </button>
         </div>
 
         <!-- Filtros -->
-        <div class="flex flex-col xl:flex-row xl:items-center gap-3">
+        <div v-if="box !== 'trash'" class="flex flex-col xl:flex-row xl:items-center gap-3">
           <div class="inline-flex flex-wrap p-1 bg-slate-100 rounded-xl max-w-full self-start">
             <button
               v-for="opt in statusOptions"
@@ -89,8 +104,62 @@
         </div>
       </div>
 
+      <!-- Papelera: solo aprobadores -->
+      <div v-if="box === 'trash'" class="flex-1 overflow-y-auto custom-scrollbar p-6 bg-slate-50/40">
+        <p class="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3">
+          Eliminadas en los últimos {{ retentionDays }} días
+        </p>
+        <div v-if="loading && trashItems.length === 0" class="space-y-3">
+          <div v-for="n in 3" :key="n" class="h-20 rounded-2xl bg-white border border-slate-100 animate-pulse"></div>
+        </div>
+        <div v-else-if="error" class="p-4 bg-rose-50 border border-rose-100 text-rose-700 rounded-xl text-sm font-medium">
+          {{ error }}
+        </div>
+        <div v-else-if="trashItems.length === 0" class="text-center py-16 bg-white rounded-2xl border border-dashed border-slate-200">
+          <div class="w-14 h-14 mx-auto rounded-2xl flex items-center justify-center mb-3 bg-rose-50 text-rose-200">
+            <i class="fas fa-trash-can text-2xl"></i>
+          </div>
+          <p class="text-sm font-black text-slate-600">La papelera está vacía</p>
+          <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">Lo que se elimine quedará aquí {{ retentionDays }} días por si hay que recuperarlo.</p>
+        </div>
+        <div v-else class="space-y-3">
+          <article
+            v-for="item in trashItems"
+            :key="item._id"
+            class="relative bg-white border border-slate-200 rounded-2xl overflow-hidden flex flex-col sm:flex-row sm:items-center gap-4 p-5 pl-6"
+          >
+            <span class="absolute left-0 top-0 bottom-0 w-1 bg-rose-300"></span>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-500">
+                  {{ item.entityType === 'task' ? 'Tarea de tablero' : item.itemType === 'feature' ? 'Feature' : 'Actividad' }}
+                </span>
+                <span class="text-[11px] font-bold" :class="daysLeft(item) <= 7 ? 'text-rose-600' : 'text-slate-400'">
+                  {{ daysLeft(item) <= 0 ? 'Se borra hoy' : `Se borra definitivamente en ${daysLeft(item)} día${daysLeft(item) === 1 ? '' : 's'}` }}
+                </span>
+              </div>
+              <p class="mt-2 text-base font-black text-slate-800 truncate">{{ item.title || 'Sin título' }}</p>
+              <p class="mt-1 text-xs text-slate-500 flex items-center gap-1.5">
+                <PersonAvatar v-if="item.deletedBy" :name="item.deletedBy.name" :photo="item.deletedBy.photo" :letters="1"
+                  class="w-5 h-5 rounded-full bg-primary-100 text-primary-600 text-[9px] font-black" />
+                Eliminada por <strong>{{ item.deletedBy?.name || 'alguien' }}</strong> · {{ relative(item.deletedAt) }}
+              </p>
+            </div>
+            <button
+              @click="restoreItem(item)"
+              :disabled="busyId === item._id"
+              title="Devolver la tarea a donde estaba, con sus comentarios, historial y adjuntos"
+              class="shrink-0 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-sm font-black transition-colors shadow-sm shadow-emerald-200"
+            >
+              <i :class="busyId === item._id ? 'fas fa-spinner animate-spin' : 'fas fa-rotate-left'"></i>
+              Recuperar
+            </button>
+          </article>
+        </div>
+      </div>
+
       <!-- Lista -->
-      <div class="flex-1 overflow-y-auto custom-scrollbar p-6 bg-slate-50/40">
+      <div v-else class="flex-1 overflow-y-auto custom-scrollbar p-6 bg-slate-50/40">
         <p class="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3">
           {{ box === 'inbox' ? 'Solicitudes de tu equipo' : 'Solicitudes que enviaste' }}
         </p>
@@ -280,10 +349,11 @@ import {
   type TaskApprovalRequest,
   type ApprovalStatus,
   type ApprovalKind,
-  type ApprovalSummary
+  type ApprovalSummary,
+  type TrashedItem
 } from '../services/taskApprovalService'
 
-type Box = 'inbox' | 'mine'
+type Box = 'inbox' | 'mine' | 'trash'
 
 const { showSuccess, showError, confirmDelete } = useNotifications()
 const activityModalStore = useActivityModalStore()
@@ -292,7 +362,9 @@ const box = ref<Box>('mine')
 const statusFilter = ref<ApprovalStatus | 'all'>('pending')
 const kindFilter = ref<ApprovalKind | ''>('')
 const requests = ref<TaskApprovalRequest[]>([])
-const summary = ref<ApprovalSummary>({ toReview: 0, waiting: 0, canReview: false })
+const summary = ref<ApprovalSummary>({ toReview: 0, waiting: 0, canReview: false, canManageTasks: false })
+const trashItems = ref<TrashedItem[]>([])
+const retentionDays = ref(60)
 const loading = ref(false)
 const error = ref('')
 const busyId = ref<string | null>(null)
@@ -433,7 +505,13 @@ async function load() {
         return
       }
     }
-    if (!summary.value.canReview && box.value === 'inbox') box.value = 'mine'
+    if (!summary.value.canReview && box.value !== 'mine') box.value = 'mine'
+    if (box.value === 'trash') {
+      const trash = await taskApprovalService.trash()
+      trashItems.value = trash.items
+      retentionDays.value = trash.retentionDays
+      return
+    }
     requests.value = await taskApprovalService.list(box.value, statusFilter.value, kindFilter.value || undefined)
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'No se pudieron cargar las solicitudes'
@@ -455,7 +533,7 @@ async function review(req: TaskApprovalRequest, action: 'approve' | 'reject') {
     if (action === 'approve') {
       await taskApprovalService.approve(req._id, comment)
       showSuccess(req.kind === 'deletion'
-        ? 'Eliminación aprobada: la tarea fue eliminada'
+        ? 'Eliminación aprobada: la tarea quedó en la papelera'
         : 'Ampliación aprobada: la nueva fecha ya quedó en la tarea')
     } else {
       await taskApprovalService.reject(req._id, comment)
@@ -482,6 +560,23 @@ async function cancel(req: TaskApprovalRequest) {
   } finally {
     busyId.value = null
   }
+}
+
+async function restoreItem(item: TrashedItem) {
+  busyId.value = item._id
+  try {
+    await taskApprovalService.restore(item._id)
+    showSuccess(`"${item.title}" se recuperó`)
+    await load()
+  } catch (e) {
+    showError(e instanceof Error ? e.message : 'No se pudo recuperar')
+  } finally {
+    busyId.value = null
+  }
+}
+
+function daysLeft(item: TrashedItem) {
+  return differenceInCalendarDays(new Date(item.expiresAt), new Date())
 }
 
 function openEntity(req: TaskApprovalRequest) {

@@ -19,6 +19,19 @@ export const useActivityModalStore = defineStore('activityModal', () => {
   const clients = ref<ClientData[]>([])
   const teamMembers = ref<TeamMember[]>([])
   const loaded = ref(false)
+  // Ids de las actividades/tareas abiertas ahora en algún modal (el de esta
+  // store o el de una página): evita abrir otro modal al leer ?openActivity
+  const shownIds = ref(new Set<string>())
+
+  function markShown(id: string) {
+    shownIds.value = new Set(shownIds.value).add(id)
+  }
+
+  function unmarkShown(id: string) {
+    const next = new Set(shownIds.value)
+    next.delete(id)
+    shownIds.value = next
+  }
 
   async function ensureDeps() {
     if (loaded.value) return
@@ -84,5 +97,8 @@ export const useActivityModalStore = defineStore('activityModal', () => {
     openWith,
     close,
     ensureDeps,
+    shownIds,
+    markShown,
+    unmarkShown,
   }
 })

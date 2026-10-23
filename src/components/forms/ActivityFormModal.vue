@@ -1,5 +1,9 @@
 <template>
-  <div class="fixed -inset-1 bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-4 z-[100] animate-in fade-in duration-300" @click="closeOnOutsideClick">
+  <div
+    class="fixed -inset-1 bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-4 z-[100] animate-in fade-in duration-300"
+    @mousedown="onBackdropMousedown"
+    @click="closeOnOutsideClick"
+  >
     <div
       class="bg-white rounded-3xl shadow-2xl border border-slate-200/60 w-full max-h-[95vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-300"
       :class="isEditingTask ? 'max-w-6xl' : 'max-w-3xl'"
@@ -33,7 +37,7 @@
         </div>
         <button
           type="button"
-          @click="$emit('close')"
+          @click="requestClose"
           title="Cerrar sin guardar los cambios"
           class="w-9 h-9 shrink-0 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all border border-transparent hover:border-rose-100"
         >
@@ -99,8 +103,8 @@
               </div>
             </div>
 
-            <!-- Fila 1b: Ambiente y fechas -->
-            <div class="form-section grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Fila 1b: Ambiente y fechas (Inicio, Fin real y Entrega pactada) -->
+            <div class="form-section grid grid-cols-1 gap-4" :class="isBoardTask ? 'md:grid-cols-2' : 'md:grid-cols-4'">
               <div v-if="!isBoardTask" class="group/field space-y-1.5">
                 <label :class="labelClass">Ambiente</label>
                 <CustomSelect
@@ -125,21 +129,40 @@
                   />
                 </div>
               </div>
-              <!-- Una recurrente no tiene fecha de entrega: no vence -->
-              <div v-if="form.type !== 'recurring'" class="group/field space-y-1.5">
-                <label :class="labelClass">Entrega</label>
+              <!-- Fin: fecha real en que se terminó (se pone sola al completar) -->
+              <div v-if="!isBoardTask && form.type !== 'recurring'" class="group/field space-y-1.5">
+                <label :class="labelClass" title="Fecha real en que se terminó la tarea; se llena sola al completarla">Fin</label>
                 <div class="relative group">
                   <input
-                    v-model="form.dueDate"
+                    v-model="form.endDate"
                     type="datetime-local"
                     class="w-full px-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 hover:border-slate-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all text-xs font-bold shadow-sm"
                   />
                 </div>
               </div>
+              <!-- Entrega: fecha pactada. Una recurrente no tiene: no vence -->
+              <div v-if="form.type !== 'recurring'" class="group/field space-y-1.5">
+                <label :class="labelClass">
+                  Entrega
+                  <i
+                    v-if="dueDateLocked"
+                    class="fas fa-lock text-[9px] text-slate-300 ml-1"
+                    title="Fecha pactada: solo el líder del área o un administrador puede cambiarla"
+                  ></i>
+                </label>
+                <div class="relative group">
+                  <input
+                    v-model="form.dueDate"
+                    type="datetime-local"
+                    :disabled="dueDateLocked"
+                    :title="dueDateLocked ? 'Fecha pactada: solo el líder del área o un administrador puede cambiarla' : 'Fecha de entrega pactada; una vez guardada no se podrá cambiar'"
+                    class="w-full px-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-2xl text-slate-700 hover:border-slate-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-400 transition-all text-xs font-bold shadow-sm disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed disabled:hover:border-slate-200"
+                  />
+                </div>
+              </div>
             </div>
 
-            <!-- Ampliación de plazo: solo el líder del área la aprueba -->
-            <!-- Solicitudes pendientes sobre esta tarea: el texto depende de quién mira -->
+            <!-- Solicitudes pendientes de antes sobre esta tarea: el texto depende de quién mira -->
             <div
               v-for="notice in pendingNotices"
               :key="notice.key"
@@ -160,34 +183,9 @@
                 @click="emit('close')"
               >{{ notice.linkLabel }}</router-link>
             </div>
-            <div
-              v-if="needsExtensionApproval"
-              class="form-section space-y-3 px-4 py-3.5 bg-orange-50/70 border border-orange-200 rounded-2xl"
-            >
-              <div class="flex items-start gap-3">
-                <span class="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
-                  <i class="fas fa-user-shield text-xs"></i>
-                </span>
-                <div class="min-w-0">
-                  <p class="text-[11px] font-black uppercase tracking-widest text-orange-700">Necesita aprobación</p>
-                  <p class="text-xs font-semibold text-slate-600 leading-relaxed mt-0.5">
-                    Ampliar la entrega lo aprueba {{ extensionApproverLabel }}. Al guardar se envía la solicitud:
-                    tus otros cambios se guardan de una vez y la fecha actual se mantiene hasta que respondan.
-                  </p>
-                </div>
-              </div>
-              <textarea
-                v-model="dueDateChangeReason"
-                rows="2"
-                maxlength="1000"
-                placeholder="Cuéntale a tu líder por qué necesitas más tiempo"
-                class="w-full px-3.5 py-2.5 bg-white border border-orange-200 rounded-xl text-xs font-medium text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-400 resize-none transition-all"
-              ></textarea>
-            </div>
-
             <!-- Autoaprobación: se aplica de una vez, pero queda registrado -->
             <div
-              v-if="isExtendingDueDate && extensionState?.directAccess === 'self-approval'"
+              v-if="isChangingDueDate && extensionState?.directAccess === 'self-approval'"
               class="form-section flex items-start gap-3 px-4 py-3 bg-violet-50/70 border border-violet-200 rounded-2xl"
             >
               <span class="w-8 h-8 rounded-xl bg-violet-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-violet-200">
@@ -196,7 +194,7 @@
               <div class="min-w-0">
                 <p class="text-[11px] font-black uppercase tracking-widest text-violet-700">Autoaprobación</p>
                 <p class="text-xs font-semibold text-slate-600 leading-relaxed mt-0.5">
-                  Tienes permiso especial: la nueva entrega se aplica al guardar, sin pedir autorización.
+                  Tienes permiso especial: el cambio de la entrega pactada se aplica al guardar.
                   Queda registrada en Autorizaciones para tu líder.
                 </p>
               </div>
@@ -271,6 +269,40 @@
                       ...projectFeatures.map(f => ({ value: f._id!, label: f.title }))
                     ]"
                   />
+                </div>
+                <!-- Etiquetas: sprint u otra agrupación para filtrar el backlog y sacar estadísticas -->
+                <div v-if="!isBoardTask" class="group/field space-y-1.5">
+                  <label :class="labelClass">Etiquetas</label>
+                  <div
+                    class="flex flex-wrap items-center gap-1.5 px-2.5 py-2 bg-slate-50/50 border border-slate-200 rounded-2xl shadow-sm transition-all focus-within:bg-white focus-within:ring-4 focus-within:ring-primary-500/10 focus-within:border-primary-400"
+                  >
+                    <span
+                      v-for="tag in form.tags"
+                      :key="tag"
+                      class="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100 text-[11px] font-bold"
+                    >
+                      <i class="fas fa-tag text-[8px] opacity-60"></i>{{ tag }}
+                      <button
+                        type="button"
+                        @click="removeTag(tag)"
+                        class="w-4 h-4 rounded flex items-center justify-center hover:bg-indigo-100"
+                        :title="`Quitar la etiqueta ${tag}`"
+                      ><i class="fas fa-times text-[8px]"></i></button>
+                    </span>
+                    <input
+                      v-model="tagInput"
+                      type="text"
+                      list="activity-tag-suggestions"
+                      maxlength="40"
+                      class="flex-1 min-w-[8rem] bg-transparent text-xs font-bold text-slate-700 placeholder-slate-300 focus:outline-none py-0.5"
+                      :placeholder="form.tags.length ? '' : 'Ej: sprint 12 (Enter para agregar)'"
+                      @keydown="onTagKeydown"
+                      @blur="addTag()"
+                    />
+                    <datalist id="activity-tag-suggestions">
+                      <option v-for="tag in tagSuggestions" :key="tag" :value="tag" />
+                    </datalist>
+                  </div>
                 </div>
                 <!-- Se estira para llenar el alto de la fila; tope para que la lista no crezca sin fin -->
                 <div class="group/field flex-1 flex flex-col gap-1.5 min-h-0 max-h-[280px]">
@@ -390,7 +422,7 @@
           <div class="ml-auto flex items-center gap-3">
             <button
               type="button"
-              @click="$emit('close')"
+              @click="requestClose"
               title="Cerrar sin guardar los cambios"
               class="px-5 py-2.5 bg-white text-slate-500 hover:text-slate-800 border border-slate-200 rounded-xl transition-all font-black text-[11px] uppercase tracking-widest hover:bg-slate-50 active:scale-95"
             >
@@ -491,20 +523,29 @@
             </div>
           </form>
 
-          <!-- Captura de pantalla -->
+          <!-- Captura de pantalla o documento (PDF, Word, Excel) -->
           <label
             class="flex flex-col items-center justify-center gap-1 py-4 border-2 border-dashed rounded-2xl cursor-pointer transition-all"
             :class="draggingAttachment ? 'border-primary-400 bg-primary-50/60' : 'border-slate-200 bg-white hover:border-primary-300 hover:bg-primary-50/30'"
-            title="Adjuntar una captura de pantalla a esta tarea"
+            title="Adjuntar una captura de pantalla o un documento PDF, Word o Excel a esta tarea"
             @dragover.prevent="draggingAttachment = true"
             @dragleave.prevent="draggingAttachment = false"
             @drop.prevent="onAttachmentDrop"
           >
-            <i v-if="!savingAttachment" class="fas fa-image text-lg text-slate-300"></i>
+            <span v-if="!savingAttachment" class="flex items-center gap-2 text-lg text-slate-300">
+              <i class="fas fa-image"></i><i class="fas fa-file-pdf"></i><i class="fas fa-file-word"></i><i class="fas fa-file-excel"></i>
+            </span>
             <div v-else class="w-5 h-5 border-2 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
-            <span class="text-[11px] font-bold text-slate-500">{{ savingAttachment ? 'Guardando...' : 'Captura de pantalla' }}</span>
-            <span class="text-[10px] text-slate-300">Arrastra, haz clic o pega con Ctrl+V</span>
-            <input type="file" accept="image/*" multiple class="hidden" @change="onAttachmentSelect" :disabled="savingAttachment" />
+            <span class="text-[11px] font-bold text-slate-500">{{ savingAttachment ? 'Guardando...' : 'Captura o documento' }}</span>
+            <span class="text-[10px] text-slate-300 text-center px-2">Arrastra, haz clic o pega con Ctrl+V · PDF, Word o Excel hasta 5 MB</span>
+            <input
+              type="file"
+              :accept="ATTACHMENT_ACCEPT"
+              multiple
+              class="hidden"
+              @change="onAttachmentSelect"
+              :disabled="savingAttachment"
+            />
           </label>
 
           <p v-if="allAttachments.length === 0" class="text-center text-[11px] text-slate-300 font-medium py-3">Sin adjuntos todavía</p>
@@ -533,6 +574,13 @@
                 @click="previewUrl = att.url"
                 class="block text-left text-[12px] font-bold text-slate-700 truncate hover:text-primary-600 w-full"
                 title="Ver la captura en grande"
+              >{{ att.name }}</button>
+              <button
+                v-else-if="att.fileId"
+                type="button"
+                @click="openFileAttachment(att)"
+                class="block text-left text-[12px] font-bold text-slate-700 truncate hover:text-primary-600 w-full"
+                :title="(att.mimetype || '').includes('pdf') ? `Abrir ${att.name} en una pestaña nueva` : `Descargar ${att.name}`"
               >{{ att.name }}</button>
               <a
                 v-else
@@ -744,10 +792,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed, watch, nextTick } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount, computed, watch, nextTick } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import axios from 'axios'
+import Swal from 'sweetalert2'
 import { API_CONFIG } from '../../config/api'
 import AssignedUsersSelector from '../AssignedUsersSelector.vue'
 import CustomSelect from '../ui/CustomSelect.vue'
@@ -761,13 +811,12 @@ import { useBoardsStore } from '../../stores/boards'
 import { useTasksStore } from '../../stores/tasks'
 import { useAuthStore } from '../../stores/auth'
 import { useNotifications } from '../../composables/useNotifications'
+import { useActivityModalStore } from '../../stores/activityModal'
 import type { TeamMember, Client } from '../../types'
 import PersonAvatar from '../ui/PersonAvatar.vue'
 import {
   taskApprovalService,
-  describeApprovers,
   notifyApprovalsChanged,
-  APPROVER_SOURCE_LABELS,
   type EntityApprovalState,
   type TaskApprovalRequest
 } from '../../services/taskApprovalService'
@@ -777,7 +826,10 @@ console.log('ActivityFormModal script setup initialized')
 const boardsStore = useBoardsStore()
 const tasksStore = useTasksStore()
 const authStore = useAuthStore()
-const { showSuccess, showError, showWarning, confirmDelete } = useNotifications()
+const { showSuccess, showError, confirmDelete } = useNotifications()
+const route = useRoute()
+const router = useRouter()
+const activityModalStore = useActivityModalStore()
 
 interface Props {
   activity?: any | null
@@ -833,7 +885,9 @@ const form = reactive({
   completionPercentage: 0,
   featureId: '' as string,
   acceptanceCriteria: '',
-  environment: '' as string
+  environment: '' as string,
+  endDate: '',
+  tags: [] as string[]
 })
 
 // Estado de la actividad: los tres que usa el Kanban de Actividades. Si la
@@ -846,11 +900,42 @@ const STATUS_LABELS: Record<string, string> = {
   overdue: 'Vencida',
   cancelled: 'Cancelada'
 }
+// Las features son bloques amplios de tiempo: solo Nueva o Terminada (no pasan por el Kanban)
+const FEATURE_STATUS_LABELS: Record<string, string> = { pending: 'Nueva', completed: 'Terminada' }
 const statusOptions = computed(() => {
+  if (form.type === 'feature') {
+    return Object.entries(FEATURE_STATUS_LABELS).map(([value, label]) => ({ value, label }))
+  }
   const base = ['pending', 'in-progress', 'completed']
   if (form.status && !base.includes(form.status)) base.push(form.status)
   return base.map(value => ({ value, label: STATUS_LABELS[value] || value }))
 })
+watch(() => form.type, (type) => {
+  if (type === 'feature' && !(form.status in FEATURE_STATUS_LABELS)) form.status = 'pending'
+})
+
+// ── Etiquetas ───────────────────────────────────────────────────────────────
+const tagInput = ref('')
+const tagSuggestions = ref<string[]>([])
+
+function addTag() {
+  const tag = tagInput.value.trim().toLowerCase().replace(/\s+/g, ' ').replace(/,+$/, '')
+  tagInput.value = ''
+  if (tag && !form.tags.includes(tag)) form.tags.push(tag)
+}
+
+function removeTag(tag: string) {
+  form.tags = form.tags.filter(t => t !== tag)
+}
+
+function onTagKeydown(e: KeyboardEvent) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault()
+    addTag()
+  } else if (e.key === 'Backspace' && !tagInput.value && form.tags.length) {
+    form.tags.pop()
+  }
+}
 
 // Etiqueta de campo: se resalta mientras su campo (group/field) tiene el foco
 const labelClass = 'block ml-1 text-[11px] font-black text-slate-400 uppercase tracking-widest transition-colors duration-200 group-focus-within/field:text-primary-500'
@@ -902,6 +987,8 @@ const populateForm = () => {
       // En tareas del tablero acceptanceCriteria es una lista; solo aplica el texto de actividades
       form.acceptanceCriteria = typeof props.activity.acceptanceCriteria === 'string' ? props.activity.acceptanceCriteria : ''
       form.environment = props.activity.environment || ''
+      form.endDate = props.activity.endDate ? formatDateTimeLocal(props.activity.endDate) : ''
+      form.tags = Array.isArray(props.activity.tags) ? [...props.activity.tags] : []
     } else {
       // Valores por defecto para nueva tarea
       form.title = ''
@@ -919,6 +1006,8 @@ const populateForm = () => {
       form.featureId = props.initialFeatureId || ''
       form.acceptanceCriteria = ''
       form.environment = ''
+      form.endDate = ''
+      form.tags = []
     }
     savedSnapshot.value = JSON.stringify(form)
   } catch (err) {
@@ -937,7 +1026,7 @@ const formatDateTimeLocal = (dateString: any) => {
   }
 }
 
-// ── Ampliación de plazo ──────────────────────────────────────────────────────
+// ── Fecha de entrega pactada ─────────────────────────────────────────────────
 // El input muestra la fecha en UTC (formatDateTimeLocal), así que se interpreta
 // también en UTC al compararla y al enviarla: así no depende de la zona horaria
 // del navegador ni del servidor.
@@ -948,15 +1037,20 @@ const dueDateInputToIso = (value: string): string | undefined => {
 }
 
 const extensionState = ref<EntityApprovalState | null>(null)
-const dueDateChangeReason = ref('')
 const pendingExtension = computed(() => extensionState.value?.pendingExtension || null)
+
+// Una vez pactada, la entrega solo la cambia el líder del área o un admin
+// (mientras se consulta el permiso queda bloqueada; el backend igual valida).
+const dueDateLocked = computed(() =>
+  isEditing.value && !!props.activity?.dueDate && !extensionState.value?.canManageDirectly
+)
 
 // Avisos de solicitudes pendientes. "Pendiente" no significa lo mismo para todos:
 // quien pidió está esperando; el líder tiene que actuar; los demás solo se enteran.
 const pendingNotices = computed(() => {
   const me = String(authStore.user?._id || '')
   const list: TaskApprovalRequest[] = []
-  if (pendingExtension.value && !needsExtensionApproval.value) list.push(pendingExtension.value)
+  if (pendingExtension.value) list.push(pendingExtension.value)
   if (extensionState.value?.pendingDeletion) list.push(extensionState.value.pendingDeletion)
 
   return list.map(req => {
@@ -996,20 +1090,11 @@ const pendingNotices = computed(() => {
   })
 })
 
-const isExtendingDueDate = computed(() => {
+const isChangingDueDate = computed(() => {
   if (!isEditing.value || !props.activity?.dueDate || form.type === 'recurring') return false
   const next = dueDateInputToIso(form.dueDate)
   if (!next) return false
-  return new Date(next).getTime() - new Date(props.activity.dueDate).getTime() > 60_000
-})
-
-const needsExtensionApproval = computed(() =>
-  isExtendingDueDate.value && !!extensionState.value && !extensionState.value.canManageDirectly
-)
-
-const extensionApproverLabel = computed(() => {
-  const source = extensionState.value?.approverSource
-  return source ? APPROVER_SOURCE_LABELS[source] : 'el líder de tu área'
+  return Math.abs(new Date(next).getTime() - new Date(props.activity.dueDate).getTime()) > 60_000
 })
 
 const formatExtensionDate = (date: string | null) => {
@@ -1023,7 +1108,6 @@ const formatExtensionDate = (date: string | null) => {
 
 async function loadExtensionState() {
   extensionState.value = null
-  dueDateChangeReason.value = ''
   const id = props.activity?._id
   if (!id) return
   try {
@@ -1046,12 +1130,11 @@ const handleSubmit = async () => {
       status: form.status,
       type: form.type,
       completionPercentage: form.completionPercentage,
-      // Una recurrente no vence (el backend también lo fuerza)
-      dueDate: form.type === 'recurring' ? null : dueDateInputToIso(form.dueDate)
     }
-    if (needsExtensionApproval.value && dueDateChangeReason.value.trim()) {
-      taskData.dueDateChangeReason = dueDateChangeReason.value.trim()
-    }
+    // Una recurrente no vence (el backend también lo fuerza). Con la entrega
+    // bloqueada no se manda: no hay nada que cambiar.
+    if (form.type === 'recurring') taskData.dueDate = null
+    else if (!dueDateLocked.value) taskData.dueDate = dueDateInputToIso(form.dueDate)
 
     // Campos específicos según el modelo
     if (isTask) {
@@ -1075,6 +1158,8 @@ const handleSubmit = async () => {
       taskData.featureId = form.type === 'feature' || !form.projectId ? null : (form.featureId || null)
       taskData.acceptanceCriteria = form.acceptanceCriteria
       taskData.environment = form.environment || null
+      taskData.endDate = dueDateInputToIso(form.endDate) || null
+      taskData.tags = form.tags
       // Marcarla como completada desde el formulario deja el avance al 100%,
       // igual que al completarla desde el Kanban.
       if (form.status === 'completed') taskData.completionPercentage = 100
@@ -1088,12 +1173,8 @@ const handleSubmit = async () => {
       } else {
         savedData = await activityService.update(props.activity._id, taskData)
       }
-      // La nueva fecha quedó como solicitud: se guardó todo lo demás
-      if (savedData?.dueDateExtensionRequest) {
-        showWarning(`Guardado. Nueva fecha enviada a ${describeApprovers(savedData.dueDateExtensionRequest)}`)
-        notifyApprovalsChanged()
-      } else if (savedData?.dueDateAutoApproved) {
-        showSuccess('Plazo ampliado con autoaprobación (queda registrado)')
+      if (savedData?.dueDateAutoApproved) {
+        showSuccess('Entrega cambiada con autoaprobación (queda registrado)')
         notifyApprovalsChanged()
       } else {
         showSuccess(isTask ? 'Tarea actualizada' : 'Actividad actualizada')
@@ -1118,10 +1199,39 @@ const handleSubmit = async () => {
   }
 }
 
+// Solo cierra si el clic empezó y terminó en el fondo: al seleccionar texto
+// con el mouse y soltar fuera del modal, el navegador dispara un click en el
+// fondo que antes cerraba la tarea.
+let backdropMousedown = false
+const onBackdropMousedown = (event: MouseEvent) => {
+  backdropMousedown = event.target === event.currentTarget
+}
 const closeOnOutsideClick = (event: Event) => {
-  if (event.target === event.currentTarget) {
-    emit('close')
+  const startedOnBackdrop = backdropMousedown
+  backdropMousedown = false
+  if (startedOnBackdrop && event.target === event.currentTarget) {
+    requestClose()
   }
+}
+
+// Con cambios sin guardar (o una tarea nueva ya escrita) pregunta antes de cerrar
+async function requestClose() {
+  if (isDirty.value && !loading.value) {
+    const result = await Swal.fire({
+      icon: 'question',
+      title: isEditing.value ? '¿Descartar los cambios?' : '¿Descartar la tarea?',
+      text: isEditing.value
+        ? 'Tienes cambios sin guardar en esta tarea.'
+        : 'Todavía no se ha creado. Si la descartas, se pierde lo que escribiste.',
+      showCancelButton: true,
+      confirmButtonText: 'Descartar',
+      cancelButtonText: 'Seguir editando',
+      reverseButtons: true,
+      customClass: { popup: 'crm-confirm-modal', confirmButton: 'crm-btn-del', cancelButton: 'crm-btn-keep' }
+    })
+    if (!result.isConfirmed) return
+  }
+  emit('close')
 }
 
 // ── Comentarios ────────────────────────────────────────────────────────────────
@@ -1222,12 +1332,16 @@ const commentAttachments = computed<ListedAttachment[]>(() => {
 const allAttachments = computed<ListedAttachment[]>(() => {
   const seen = new Set<string>()
   return [...localAttachments.value, ...commentAttachments.value].filter(att => {
-    if (seen.has(att.url)) return false
-    seen.add(att.url)
+    const key = att.url || att._id
+    if (seen.has(key)) return false
+    seen.add(key)
     return true
   })
 })
 const savingAttachment = ref(false)
+const ATTACHMENT_ACCEPT = 'image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv'
+const DOCUMENT_FILE = /\.(pdf|docx?|xlsx?|csv)$/i
+const MAX_DOCUMENT_SIZE = 5 * 1024 * 1024
 const draggingAttachment = ref(false)
 const newLinkUrl = ref('')
 const newLinkName = ref('')
@@ -1237,7 +1351,7 @@ const sideTabs = computed(() => {
     { key: 'comments', label: 'Comentarios', icon: 'fas fa-comments', tooltip: 'Ver y escribir comentarios de la tarea', count: localComments.value.length },
   ]
   if (!isBoardTask.value) {
-    tabs.push({ key: 'attachments', label: 'Adjuntos', icon: 'fas fa-paperclip', tooltip: 'Enlaces y capturas de la tarea (incluye los de los comentarios)', count: allAttachments.value.length })
+    tabs.push({ key: 'attachments', label: 'Adjuntos', icon: 'fas fa-paperclip', tooltip: 'Enlaces, capturas y documentos de la tarea (incluye los de los comentarios)', count: allAttachments.value.length })
   }
   tabs.push({ key: 'history', label: 'Historial', icon: 'fas fa-clock-rotate-left', tooltip: 'Ver quién cambió qué y cuándo' })
   return tabs
@@ -1261,11 +1375,18 @@ async function addLinkAttachment() {
   }
 }
 
-// Capturas: se comprimen en el navegador y se guardan en la base (sin archivos en el servidor)
+// Capturas: se comprimen en el navegador y se guardan en la base como data URL.
+// Documentos (PDF, Word, Excel hasta 5 MB): se suben tal cual y quedan en la base.
 async function addScreenshots(files: File[]) {
   const images = files.filter(f => f.type.startsWith('image/'))
-  if (!commentEntityId.value || images.length === 0) {
-    if (files.length) showError('Solo se pueden adjuntar imágenes; para documentos agrega un enlace')
+  const documents = files.filter(f => !f.type.startsWith('image/') && DOCUMENT_FILE.test(f.name))
+  if (!commentEntityId.value || (images.length === 0 && documents.length === 0)) {
+    if (files.length) showError('Solo se pueden adjuntar imágenes o documentos PDF, Word o Excel')
+    return
+  }
+  const tooBig = documents.filter(f => f.size > MAX_DOCUMENT_SIZE)
+  if (tooBig.length) {
+    showError(`${tooBig.map(f => f.name).join(', ')} pesa más de 5 MB; súbelo a Drive y agrega el enlace`)
     return
   }
   savingAttachment.value = true
@@ -1275,11 +1396,24 @@ async function addScreenshots(files: File[]) {
       const name = file.name && file.name !== 'image.png' ? file.name.replace(/\.[^.]+$/, '') : 'Captura de pantalla'
       localTask.value = await activityService.addAttachment(commentEntityId.value, { kind: 'image', dataUrl, name })
     }
-    showSuccess(images.length === 1 ? 'Captura adjuntada' : `${images.length} capturas adjuntadas`)
+    for (const file of documents) {
+      localTask.value = await activityService.uploadAttachmentFile(commentEntityId.value, file)
+    }
+    const total = images.length + documents.length
+    showSuccess(total === 1 ? 'Adjunto agregado' : `${total} adjuntos agregados`)
   } catch (e: any) {
-    showError(e?.message || 'No se pudo guardar la captura')
+    showError(e?.message || 'No se pudo guardar el adjunto')
   } finally {
     savingAttachment.value = false
+  }
+}
+
+async function openFileAttachment(att: ActivityAttachment) {
+  if (!commentEntityId.value) return
+  try {
+    await activityService.openAttachmentFile(commentEntityId.value, att)
+  } catch (e: any) {
+    showError(e?.message || 'No se pudo abrir el archivo')
   }
 }
 
@@ -1323,6 +1457,7 @@ async function toggleDailyCheck() {
 
 function attachmentSubtitle(att: ActivityAttachment) {
   if (isImageAttachment(att)) return `Captura${att.size ? ` · ${formatFileSize(att.size)}` : ''}`
+  if (att.kind === 'file') return `Documento${att.size ? ` · ${formatFileSize(att.size)}` : ''}`
   try {
     return new URL(att.url).hostname.replace(/^www\./, '')
   } catch {
@@ -1645,10 +1780,48 @@ watch(() => props.activity, (val) => {
 
 watch(() => props.activity?._id, loadExtensionState)
 
+// Enlace compartible: mientras la tarea está abierta, la URL lleva
+// ?openActivity=<id> (o ?openTask=<id>), así copiar el link abre esta tarea.
+const shareKey = computed(() => (isBoardTask.value ? 'openTask' : 'openActivity'))
+const sharedId = ref<string | null>(null)
+
+function setShareLink(id: string | null | undefined) {
+  if (sharedId.value) activityModalStore.unmarkShown(sharedId.value)
+  sharedId.value = id || null
+  if (!id) return
+  activityModalStore.markShown(id)
+  if (route.query[shareKey.value] !== id) {
+    router.replace({ query: { ...route.query, [shareKey.value]: id } }).catch(() => {})
+  }
+}
+
+watch(() => props.activity?._id, (id) => setShareLink(id))
+
+onBeforeUnmount(() => {
+  const id = sharedId.value
+  if (!id) return
+  activityModalStore.unmarkShown(id)
+  if (route.query[shareKey.value] === id) {
+    const { [shareKey.value]: _removed, ...rest } = route.query
+    router.replace({ query: rest }).catch(() => {})
+  }
+})
+
+async function loadTagSuggestions() {
+  if (isBoardTask.value) return
+  try {
+    tagSuggestions.value = await activityService.getTags()
+  } catch {
+    // Sin sugerencias igual se pueden escribir etiquetas nuevas
+  }
+}
+
 onMounted(() => {
   populateForm()
   loadFullTask()
   loadExtensionState()
+  setShareLink(props.activity?._id)
+  loadTagSuggestions()
 })
 </script>
 

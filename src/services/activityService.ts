@@ -17,7 +17,12 @@ export interface ActivityData {
     role: string
   }
   priority?: 'low' | 'medium' | 'high' | 'urgent'
+  // Fecha de entrega pactada: una vez puesta solo la cambia el líder del área o un admin
   dueDate?: string
+  // Fecha real en que se terminó (se pone sola al completar)
+  endDate?: string | null
+  // Etiquetas libres (sprint, etc.), en minúsculas
+  tags?: string[]
   estimatedTime?: string
   taskId?: string // ✅ ID de la tarea del board asociada
   completionPercentage?: number
@@ -47,10 +52,12 @@ export type ActivityEnvironment = 'development' | 'testing' | 'production'
 export interface ActivityAttachment {
   _id: string
   // link: enlace externo; image: captura guardada en la base (url = data URL);
-  // file: archivos subidos al disco antes de pasar a solo enlaces/capturas
+  // file: documento (PDF, Word, Excel) en la base si trae fileId — se descarga
+  // con openAttachmentFile; sin fileId, un archivo antiguo con url al disco
   kind?: 'link' | 'image' | 'file'
   name: string
   url: string
+  fileId?: string | null
   mimetype?: string
   size?: number
   uploadedBy?: { _id: string; name: string } | string
@@ -153,9 +160,9 @@ class ActivityService {
     }
   }
 
-  // Si la nueva fecha de entrega requiere aprobación del líder, la respuesta trae
-  // `dueDateExtensionRequest` y conserva la fecha anterior.
-  async update(id: string, activityData: Partial<ActivityData> & { dueDateChangeReason?: string }): Promise<ActivityData & { dueDateExtensionRequest?: any }> {
+  // Cambiar una fecha de entrega ya pactada sin ser líder ni admin da 403.
+  // Con autoaprobación la respuesta trae `dueDateAutoApproved`.
+  async update(id: string, activityData: Partial<ActivityData> & { dueDateChangeReason?: string }): Promise<ActivityData & { dueDateAutoApproved?: boolean }> {
     const response = await fetch(`${this.baseUrl}${this.endpoint}/${id}`, {
       method: 'PUT',
       headers: this.getHeaders(),
@@ -169,8 +176,8 @@ class ActivityService {
     return data
   }
 
-  // Solo el líder del área o un administrador elimina directamente; para los
-  // demás el backend crea una solicitud de autorización (202) y no borra nada.
+  // Solo el líder del área, un administrador o quien tiene autoaprobación puede
+  // eliminar (403 para el resto). Lo eliminado queda en la papelera.
   async deleteActivity(id: string, reason?: string): Promise<DeleteResult> {
     const response = await fetch(`${this.baseUrl}${this.endpoint}/${id}`, {
       method: 'DELETE',
@@ -329,6 +336,14 @@ class ActivityService {
   }
 
   // Features de un proyecto (para el selector "Feature" del modal y el Backlog)
+  // Etiquetas ya usadas en la organización (para sugerirlas y filtrar)
+  async getTags(): Promise<string[]> {
+    const response = await fetch(`${this.baseUrl}${this.endpoint}/tags`, { headers: this.getHeaders() })
+    if (!response.ok) throw new Error(`No se pudieron cargar las etiquetas (HTTP ${response.status})`)
+    const data = await response.json()
+    return Array.isArray(data) ? data : []
+  }
+
   async getFeatures(projectId: string): Promise<ActivityData[]> {
     return this.getWithFilters({ projectId, type: 'feature' })
   }
@@ -361,6 +376,50 @@ class ActivityService {
       throw new Error(body?.error || `No se pudo registrar el día (HTTP ${response.status})`)
     }
     return response.json()
+  }
+
+  // Documento PDF, Word o Excel (máx. 5 MB): se guarda en la base
+  async uploadAttachmentFile(id: string, file: File): Promise<ActivityData> {
+    const token = localStorage.getItem('token')
+    const body = new FormData()
+    body.append('file', file)
+    const response = await fetch(`${this.baseUrl}${this.endpoint}/${id}/attachments/file`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body,
+    })
+    if (!response.ok) {
+      const data = await response.json().catch(() => null)
+      throw new Error(data?.error || `No se pudo subir el archivo (HTTP ${response.status})`)
+    }
+    return response.json()
+  }
+
+  // El documento necesita el token, así que se baja como blob y se abre en otra pestaña
+  async openAttachmentFile(id: string, attachment: ActivityAttachment): Promise<void> {
+    // La pestaña se abre antes del fetch para que el navegador no la bloquee
+    const tab = window.open('', '_blank')
+    try {
+      const response = await fetch(`${this.baseUrl}${this.endpoint}/${id}/attachments/${attachment._id}/file`, {
+        headers: this.getHeaders(),
+      })
+      if (!response.ok) throw new Error(`No se pudo abrir el archivo (HTTP ${response.status})`)
+      const url = URL.createObjectURL(await response.blob())
+      // PDF se ve en el navegador; Word y Excel se descargan con su nombre
+      if (tab && (attachment.mimetype || '').includes('pdf')) {
+        tab.location.href = url
+      } else {
+        tab?.close()
+        const link = document.createElement('a')
+        link.href = url
+        link.download = attachment.name
+        link.click()
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 60_000)
+    } catch (error) {
+      tab?.close()
+      throw error
+    }
   }
 
   async deleteAttachment(id: string, attachmentId: string): Promise<ActivityData> {

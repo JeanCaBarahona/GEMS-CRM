@@ -76,6 +76,12 @@
                   class="shrink-0 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full"
                   :class="row.kindClass"
                 >{{ row.kindLabel }}</span>
+                <span
+                  v-for="tag in (row.tags || []).slice(0, 3)"
+                  :key="tag"
+                  class="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-500"
+                  :title="`Etiqueta: ${tag}`"
+                ><i class="fas fa-tag text-[7px] opacity-60"></i>{{ tag }}</span>
               </div>
               <p v-if="row.description" class="text-[11px] text-slate-400 font-medium truncate mt-0.5">{{ row.description }}</p>
             </button>
@@ -183,6 +189,7 @@ export interface TaskListRow {
   priorityIcon?: string
   kindLabel?: string
   kindClass?: string
+  tags?: string[]
   // Solo tareas recurrentes: estado del "+" diario
   recurring?: { doneToday: boolean; totalDays: number; streak: number }
   raw: any

@@ -199,6 +199,22 @@ async function refreshApprovalsCount() {
   }
 }
 watch(() => route.fullPath, refreshApprovalsCount)
+
+// Enlace compartido a una tarea (?openActivity=<id> o ?openTask=<id>): se abre
+// en cualquier página. Actividades lo maneja su propia vista; si ya hay un modal
+// mostrando esa tarea (el modal pone el parámetro al abrirse), no se abre otro.
+watch(
+  () => [route.query.openActivity, route.query.openTask, authStore.user?._id],
+  () => {
+    if (!authStore.user || route.path.startsWith('/activities')) return
+    const activityId = typeof route.query.openActivity === 'string' ? route.query.openActivity : ''
+    const taskId = typeof route.query.openTask === 'string' ? route.query.openTask : ''
+    const id = activityId || taskId
+    if (!id || activityModalStore.isOpen || activityModalStore.shownIds.has(id)) return
+    activityModalStore.open(id, activityId ? 'activity' : 'task')
+  },
+  { immediate: true }
+)
 const onApprovalsChanged = (e: Event) => {
   approvalsToReview.value = (e as CustomEvent<ApprovalSummary>).detail?.toReview ?? approvalsToReview.value
 }

@@ -306,7 +306,8 @@
               { value: '', label: 'Todos los estados' },
               { value: 'pending', label: 'Pendiente' },
               { value: 'in-progress', label: 'En Proceso' },
-              { value: 'completed', label: 'Completada' }
+              { value: 'completed', label: 'Completada' },
+              { value: 'overdue', label: 'Vencida' }
             ]"
           />
         </div>
@@ -381,10 +382,13 @@
             ]"
           />
         </div>
+        <div class="w-full sm:w-48" title="Mostrar solo las tareas con una etiqueta (p. ej. un sprint) y ver su resumen">
+          <CustomSelect v-model="listTagFilter" size="sm" searchable :options="listTagOptions" placeholder="Todas las etiquetas" />
+        </div>
         <button
-          v-if="listProjectFilter || listFeatureFilter || listTypeFilter"
+          v-if="listProjectFilter || listFeatureFilter || listTypeFilter || listTagFilter"
           type="button"
-          @click="listProjectFilter = ''; listFeatureFilter = ''; listTypeFilter = ''"
+          @click="listProjectFilter = ''; listFeatureFilter = ''; listTypeFilter = ''; listTagFilter = ''"
           class="px-3 py-1.5 text-[11px] font-black uppercase tracking-wider text-slate-400 hover:text-primary-600 transition-colors"
           title="Quitar todos los filtros de la lista"
         >
@@ -392,11 +396,35 @@
         </button>
       </div>
 
+      <!-- Estadísticas de la etiqueta elegida -->
+      <div
+        v-if="listTagStats"
+        class="flex flex-wrap items-center gap-x-6 gap-y-2 mb-3 px-4 py-3 bg-white border border-slate-100 rounded-2xl shadow-sm"
+      >
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100 text-xs font-black">
+          <i class="fas fa-tag text-[10px]"></i>{{ listTagFilter }}
+        </span>
+        <div class="text-xs text-slate-500"><b class="text-slate-800 text-sm">{{ listTagStats.total }}</b> tareas</div>
+        <div class="text-xs text-slate-500"><b class="text-amber-600 text-sm">{{ listTagStats.pending }}</b> pendientes</div>
+        <div class="text-xs text-slate-500"><b class="text-primary-600 text-sm">{{ listTagStats.inProgress }}</b> en progreso</div>
+        <div class="text-xs text-slate-500"><b class="text-emerald-600 text-sm">{{ listTagStats.completed }}</b> completadas</div>
+        <div class="text-xs text-slate-500"><b class="text-red-600 text-sm">{{ listTagStats.overdue }}</b> vencidas</div>
+        <div class="text-xs text-slate-500" title="Completadas con fecha de fin igual o anterior a la entrega pactada">
+          <b class="text-slate-800 text-sm">{{ listTagStats.onTime }}</b> a tiempo
+        </div>
+        <div class="flex items-center gap-2 ml-auto min-w-[10rem]" :title="`${listTagStats.progress}% de las tareas completadas`">
+          <div class="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+            <div class="h-full bg-emerald-500 rounded-full transition-all" :style="{ width: `${listTagStats.progress}%` }"></div>
+          </div>
+          <span class="text-xs font-black text-slate-600 tabular-nums">{{ listTagStats.progress }}%</span>
+        </div>
+      </div>
+
       <TaskListView
         :groups="activityListGroups"
         show-kind-badge
         :can-edit="authStore.canEditActivities"
-        :can-delete="authStore.canDeleteActivities"
+        :can-delete="authStore.canDeleteActivities && canDeleteTasks"
         @open="editActivity"
         @toggle-complete="toggleActivityDone"
         @delete="(activity: ActivityData) => deleteActivity(activity._id!)"
@@ -1064,8 +1092,8 @@
 
               <!-- Floating Actions Pill -->
               <div class="absolute right-1.5 top-1.5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0 z-10" @click.stop>
-                <button @click.stop="markAsCompleted(activity._id!)" class="w-6 h-6 flex items-center justify-center text-emerald-600 bg-white/95 backdrop-blur-sm hover:bg-emerald-500 hover:text-white rounded-lg shadow-sm border border-emerald-100 transition-all" title="Completar"><i class="fas fa-check text-[7px]"></i></button>
-                <button @click.stop="deleteActivity(activity._id!)" class="w-6 h-6 flex items-center justify-center text-red-600 bg-white/95 backdrop-blur-sm hover:bg-red-500 hover:text-white rounded-lg shadow-sm border border-red-100 transition-all" title="Eliminar"><i class="fas fa-trash-alt text-[7px]"></i></button>
+                <button @click.stop="markAsCompleted(activity._id!)" class="w-6 h-6 flex items-center justify-center text-emerald-600 bg-white/95 backdrop-blur-sm hover:bg-emerald-500 hover:text-white rounded-lg shadow-sm border border-emerald-100 transition-all" title="Marcar la tarea como completada"><i class="fas fa-check text-[7px]"></i></button>
+                <button v-if="canDeleteTasks" @click.stop="deleteActivity(activity._id!)" class="w-6 h-6 flex items-center justify-center text-red-600 bg-white/95 backdrop-blur-sm hover:bg-red-500 hover:text-white rounded-lg shadow-sm border border-red-100 transition-all" title="Eliminar la tarea (queda 60 días en la papelera)"><i class="fas fa-trash-alt text-[7px]"></i></button>
               </div>
             </div>
           </div>
@@ -1242,8 +1270,8 @@
 
               <!-- Floating Actions Pill -->
               <div class="absolute right-1.5 top-1.5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0 z-10" @click.stop>
-                <button @click.stop="markAsCompleted(activity._id!)" class="w-6 h-6 flex items-center justify-center text-emerald-600 bg-white/95 backdrop-blur-sm hover:bg-emerald-500 hover:text-white rounded-lg shadow-sm border border-emerald-100 transition-all" title="Completar"><i class="fas fa-check text-[7px]"></i></button>
-                <button @click.stop="deleteActivity(activity._id!)" class="w-6 h-6 flex items-center justify-center text-red-600 bg-white/95 backdrop-blur-sm hover:bg-red-500 hover:text-white rounded-lg shadow-sm border border-red-100 transition-all" title="Eliminar"><i class="fas fa-trash-alt text-[7px]"></i></button>
+                <button @click.stop="markAsCompleted(activity._id!)" class="w-6 h-6 flex items-center justify-center text-emerald-600 bg-white/95 backdrop-blur-sm hover:bg-emerald-500 hover:text-white rounded-lg shadow-sm border border-emerald-100 transition-all" title="Marcar la tarea como completada"><i class="fas fa-check text-[7px]"></i></button>
+                <button v-if="canDeleteTasks" @click.stop="deleteActivity(activity._id!)" class="w-6 h-6 flex items-center justify-center text-red-600 bg-white/95 backdrop-blur-sm hover:bg-red-500 hover:text-white rounded-lg shadow-sm border border-red-100 transition-all" title="Eliminar la tarea (queda 60 días en la papelera)"><i class="fas fa-trash-alt text-[7px]"></i></button>
               </div>
             </div>
           </div>
@@ -1388,8 +1416,8 @@
 
               <!-- Floating Actions Pill -->
               <div class="absolute right-1.5 top-1.5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0 z-10" @click.stop>
-                <button @click.stop="markAsPending(activity._id!)" class="w-6 h-6 flex items-center justify-center text-amber-600 bg-white/95 backdrop-blur-sm hover:bg-amber-500 hover:text-white rounded-lg shadow-sm border border-amber-100 transition-all" title="Deshacer"><i class="fas fa-undo text-[7px]"></i></button>
-                <button @click.stop="deleteActivity(activity._id!)" class="w-6 h-6 flex items-center justify-center text-red-600 bg-white/95 backdrop-blur-sm hover:bg-red-500 hover:text-white rounded-lg shadow-sm border border-red-100 transition-all" title="Eliminar"><i class="fas fa-trash-alt text-[7px]"></i></button>
+                <button @click.stop="markAsPending(activity._id!)" class="w-6 h-6 flex items-center justify-center text-amber-600 bg-white/95 backdrop-blur-sm hover:bg-amber-500 hover:text-white rounded-lg shadow-sm border border-amber-100 transition-all" title="Volver a poner la tarea como pendiente"><i class="fas fa-undo text-[7px]"></i></button>
+                <button v-if="canDeleteTasks" @click.stop="deleteActivity(activity._id!)" class="w-6 h-6 flex items-center justify-center text-red-600 bg-white/95 backdrop-blur-sm hover:bg-red-500 hover:text-white rounded-lg shadow-sm border border-red-100 transition-all" title="Eliminar la tarea (queda 60 días en la papelera)"><i class="fas fa-trash-alt text-[7px]"></i></button>
               </div>
             </div>
           </div>
@@ -1551,8 +1579,7 @@
 
               <!-- Floating Actions Pill -->
               <div class="absolute right-1.5 top-1.5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0 z-10" @click.stop>
-                <button @click.stop="extendDeadline(activity._id!)" class="w-6 h-6 flex items-center justify-center text-amber-600 bg-white/95 backdrop-blur-sm hover:bg-amber-500 hover:text-white rounded-lg shadow-sm border border-amber-100 transition-all" title="Extender"><i class="fas fa-calendar-plus text-[7px]"></i></button>
-                <button @click.stop="deleteActivity(activity._id!)" class="w-6 h-6 flex items-center justify-center text-red-600 bg-white/95 backdrop-blur-sm hover:bg-red-500 hover:text-white rounded-lg shadow-sm border border-red-100 transition-all" title="Eliminar"><i class="fas fa-trash-alt text-[7px]"></i></button>
+                <button v-if="canDeleteTasks" @click.stop="deleteActivity(activity._id!)" class="w-6 h-6 flex items-center justify-center text-red-600 bg-white/95 backdrop-blur-sm hover:bg-red-500 hover:text-white rounded-lg shadow-sm border border-red-100 transition-all" title="Eliminar la tarea (queda 60 días en la papelera)"><i class="fas fa-trash-alt text-[7px]"></i></button>
               </div>
             </div>
           </div>
@@ -2622,7 +2649,8 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { activityService, type ActivityData } from '../../services/activityService'
-import { taskApprovalService, describeApprovers, notifyApprovalsChanged } from '../../services/taskApprovalService'
+import { notifyApprovalsChanged, useCanManageTasks } from '../../services/taskApprovalService'
+import { useActivityModalStore } from '../../stores/activityModal'
 import { clientService, type ClientData, type ProjectData } from '../../services/clientService'
 import { teamService } from '../../services/teamService'
 import { useNotifications } from '../../composables/useNotifications'
@@ -2665,6 +2693,9 @@ const authStore = useAuthStore()
 const boardsStore = useBoardsStore()
 const tasksStore = useTasksStore()
 const githubStore = useGitHubStore()
+const activityModalStore = useActivityModalStore()
+// Eliminar tareas: solo líderes de área, administradores o con autoaprobación
+const canDeleteTasks = useCanManageTasks()
 const teamStore = useTeamStore()
 
 // Constants
@@ -2923,9 +2954,10 @@ const filteredActivities = computed(() => {
     })
   }
 
-  // Filtrar por estado
+  // Filtrar por estado (el que se ve en el tablero: una "vencida" con fecha
+  // futura se muestra según su avance, y una sin marcar aún pero ya pasada, como vencida)
   if (selectedStatus.value && selectedStatus.value !== 'all') {
-    filtered = filtered.filter(activity => activity.status === selectedStatus.value)
+    filtered = filtered.filter(activity => visualStatusFor(activity) === selectedStatus.value)
   }
 
   // Filtro por rango de fechas (Mejorado: detecta solapamiento)
@@ -3023,7 +3055,8 @@ const visualStatusFor = (a: any): 'pending' | 'in-progress' | 'completed' | 'ove
 }
 
 // Las recurrentes no avanzan por estados: van en su apartado arriba del tablero.
-const boardActivities = computed(() => filteredActivities.value.filter(a => a.type !== 'recurring'))
+// Las features son bloques amplios (solo Nueva/Terminada): se ven en Lista y Backlog.
+const boardActivities = computed(() => filteredActivities.value.filter(a => a.type !== 'recurring' && a.type !== 'feature'))
 
 const recurringBoardItems = computed(() =>
   filteredActivities.value
@@ -3094,7 +3127,35 @@ function activityAssignees(activity: any): TaskListRow['assignees'] {
 const listProjectFilter = ref('')
 const listFeatureFilter = ref('') // '' = todas, NO_FEATURE = sin feature, o el id de una feature
 const listTypeFilter = ref<'' | 'feature' | 'task' | 'recurring'>('')
+const listTagFilter = ref('')
 const NO_FEATURE = '__none__'
+
+const listTagOptions = computed(() => [
+  { value: '', label: 'Todas las etiquetas' },
+  ...[...new Set(activities.value.flatMap(a => a.tags || []))]
+    .sort((a, b) => a.localeCompare(b, 'es'))
+    .map(tag => ({ value: tag, label: tag }))
+])
+
+// Resumen de la etiqueta elegida (p. ej. un sprint): cuántas tareas hay en
+// cada estado y qué tanto se ha completado.
+const listTagStats = computed(() => {
+  if (!listTagFilter.value) return null
+  const items = listFilteredActivities.value.filter(a => a.type !== 'recurring')
+  const count = (status: string) => items.filter(a => visualStatusFor(a) === status).length
+  const completed = count('completed')
+  const onTime = items.filter(a => visualStatusFor(a) === 'completed' && a.dueDate && a.endDate &&
+    new Date(a.endDate).getTime() <= new Date(a.dueDate).getTime()).length
+  return {
+    total: items.length,
+    pending: count('pending'),
+    inProgress: count('in-progress'),
+    completed,
+    overdue: count('overdue'),
+    progress: items.length ? Math.round((completed / items.length) * 100) : 0,
+    onTime
+  }
+})
 
 const listProjectOptions = computed(() => [
   { value: '', label: 'Todos los proyectos' },
@@ -3120,6 +3181,7 @@ const featureTitles = computed(() => new Map(
 
 const listFilteredActivities = computed(() => filteredActivities.value.filter(a => {
   if (listProjectFilter.value && a.projectId !== listProjectFilter.value) return false
+  if (listTagFilter.value && !(a.tags || []).includes(listTagFilter.value)) return false
   if (listTypeFilter.value === 'feature' && a.type !== 'feature') return false
   if (listTypeFilter.value === 'task' && (a.type === 'feature' || a.type === 'recurring')) return false
   if (listTypeFilter.value === 'recurring' && a.type !== 'recurring') return false
@@ -3141,6 +3203,7 @@ function activityToListRow(activity: ActivityData): TaskListRow {
     description: featureTitle ? `Feature: ${featureTitle}` : activity.description,
     kindLabel: activity.type === 'feature' ? 'Feature' : undefined,
     kindClass: 'bg-violet-50 text-violet-600',
+    tags: activity.tags,
     recurring: activity.type === 'recurring' ? recurringStats(activity.dailyLog as any, authStore.user?._id) : undefined,
     done: visualStatusFor(activity) === 'completed',
     assignees: activityAssignees(activity),
@@ -3455,6 +3518,8 @@ const isPastDueDate = (dueDateIso: string): boolean => {
  */
 const shouldBeOverdue = (activity: any): boolean => {
   if (!activity) return false
+  // Las features son bloques amplios de tiempo: no vencen (solo Nueva/Terminada)
+  if (activity.type === 'feature') return false
   if (!activity.dueDate) return false
   if (isActivityDone(activity)) return false
   return isPastDueDate(activity.dueDate)
@@ -3546,6 +3611,7 @@ const updateOverdueActivities = async () => {
     const overdueActivitiesToUpdate = activities.value.filter((activity) => {
       // Defensas múltiples:
       if (!activity.dueDate) return false              // 1. necesita fecha límite
+      if (activity.type === 'feature') return false    //    las features no vencen
       if (isActivityDone(activity)) return false       // 2. no marcar terminadas (incluye 100%)
       if (activity.status === 'overdue') return false  // 3. ya está vencida
       if (!isPastDueDate(activity.dueDate)) return false // 4. fin del día local + margen aún no pasó
@@ -3675,44 +3741,6 @@ const reactivateActivity = async (activityId: string) => {
   }
 }
 
-const extendDeadline = async (activityId: string) => {
-  try {
-    const activity = activities.value.find(a => a._id === activityId)
-    if (!activity) return
-    
-    // Nueva fecha de vencimiento: 7 días a partir de hoy
-    const newDeadline = new Date()
-    newDeadline.setDate(newDeadline.getDate() + 7)
-
-    // Solo el líder del área amplía directamente; para los demás queda como
-    // solicitud de autorización y la actividad conserva su fecha y estado.
-    const result = await taskApprovalService.requestExtension({
-      entityType: 'activity',
-      entityId: activityId,
-      requestedDueDate: newDeadline.toISOString(),
-      reason: 'Ampliación de 7 días desde el tablero de actividades'
-    })
-
-    if (!result.applied) {
-      toast(`Ampliación enviada a ${describeApprovers(result.request)}`, 'warning')
-      notifyApprovalsChanged()
-      return
-    }
-
-    // Actualizar en el estado local
-    const activityIndex = activities.value.findIndex(a => a._id === activityId)
-    if (activityIndex !== -1) {
-      activities.value[activityIndex].dueDate = result.dueDate
-      if (result.status) activities.value[activityIndex].status = result.status as ActivityData['status']
-    }
-
-    toast(result.autoApproved ? 'Plazo extendido 7 días con autoaprobación' : 'Plazo extendido por 7 días', 'success')
-    if (result.autoApproved) notifyApprovalsChanged()
-  } catch (err) {
-    showError('Error al extender plazo', err instanceof Error ? err.message : 'Error desconocido')
-  }
-}
-
 const getDaysOverdue = (dueDate: string): number => {
   const today = new Date()
   const due = new Date(dueDate)
@@ -3732,13 +3760,10 @@ const deleteActivity = async (activityId: string) => {
   if (result.isConfirmed) {
     try {
       const deletion = await activityService.deleteActivity(activityId)
-      if (!deletion.deleted) {
-        toast(`Eliminación enviada a ${describeApprovers(deletion.approvalRequest)}`, 'warning')
-        notifyApprovalsChanged()
-        return
-      }
       activities.value = activities.value.filter(a => a._id !== activityId)
-      showSuccess(deletion.autoApproved ? 'Actividad eliminada con autoaprobación' : 'Actividad eliminada correctamente')
+      showSuccess(deletion.autoApproved
+        ? 'Actividad eliminada con autoaprobación (queda en la papelera)'
+        : 'Actividad eliminada (se puede recuperar desde la papelera)')
       if (deletion.autoApproved) notifyApprovalsChanged()
     } catch (err) {
       showError('Error al eliminar actividad', err instanceof Error ? err.message : 'Error desconocido')
@@ -3780,7 +3805,9 @@ async function openFromQuery() {
 
 // Reaccionar a cambios de query cuando ya estamos en la página
 watch(() => [route.query.openActivity, route.query.openTask], () => {
-  if (route.query.openActivity || route.query.openTask) {
+  const id = (route.query.openActivity || route.query.openTask) as string | undefined
+  // El modal pone el parámetro al abrirse: si ya se está mostrando, no se reabre
+  if (id && !activityModalStore.shownIds.has(id)) {
     openFromQuery()
   }
 })
@@ -5170,16 +5197,14 @@ const confirmCascadeDelete = async () => {
       }
     }
     
-    // Borrar todos los elementos de la base de datos. Solo el líder del área o
-    // un administrador elimina directamente: lo demás queda como solicitud de
-    // autorización y no se toca (ni su actividad asociada ni su rama).
-    const pendingApprovals: Array<{ title: string; approvers: string }> = []
+    // Borrar todos los elementos (van a la papelera). Solo el líder del área o un
+    // administrador puede: si el backend rechaza uno, no se toca su actividad ni su rama.
     const deletedIds = new Set<string>()
     for (const id of allIds) {
-      const task = tasksStore.tasks.find(t => t._id === id)
-      const deletion = await tasksStore.deleteTask(id)
-      if (!deletion.deleted) {
-        pendingApprovals.push({ title: task?.title || 'Tarea', approvers: describeApprovers(deletion.approvalRequest) })
+      try {
+        await tasksStore.deleteTask(id)
+      } catch (error) {
+        console.warn('No se pudo eliminar la tarea', id, error)
         continue
       }
       deletedIds.add(id)
@@ -5197,10 +5222,8 @@ const confirmCascadeDelete = async () => {
     }
     branchesToDelete = branchesToDelete.filter(b => deletedIds.has(b.taskId))
 
-    if (pendingApprovals.length > 0) {
-      const detail = pendingApprovals.length === 1 ? 'Eliminación' : `${pendingApprovals.length} eliminaciones`
-      toast(`${detail} enviada${pendingApprovals.length === 1 ? '' : 's'} a ${pendingApprovals[0].approvers}`, 'warning')
-      notifyApprovalsChanged()
+    if (deletedIds.size < allIds.length) {
+      showError('Algunas tareas no se eliminaron', 'Solo el líder del área o un administrador puede eliminar tareas')
     }
     if (deletedIds.size === 0) {
       await loadActivities()

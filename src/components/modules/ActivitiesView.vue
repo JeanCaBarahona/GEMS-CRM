@@ -5887,6 +5887,16 @@ const onDrop = async (event: DragEvent, newStatus: string) => {
     return
   }
 
+  // Vencida la pone el sistema al pasar la entrega; no se arrastra a mano.
+  // Y una vencida solo sale de ahí completándola (o si el líder cambia la entrega).
+  const pastDue = shouldBeOverdue(draggedActivity.value)
+  if (newStatus === 'overdue' || (pastDue && newStatus !== 'completed')) {
+    toast(newStatus === 'overdue'
+      ? 'Vencida se asigna sola cuando pasa la fecha de entrega'
+      : 'Está vencida: complétala o pide al líder que cambie la entrega', 'warning')
+    return
+  }
+
   try {
     // Si se pasa a completado, forzar 100%
     if (newStatus === 'completed') {

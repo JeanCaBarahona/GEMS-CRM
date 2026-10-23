@@ -906,10 +906,33 @@ const statusOptions = computed(() => {
   if (form.type === 'feature') {
     return Object.entries(FEATURE_STATUS_LABELS).map(([value, label]) => ({ value, label }))
   }
+  // Vencida no se elige a mano: la pone el sistema cuando pasa la entrega, y
+  // entonces solo queda completarla (o que el líder cambie la entrega).
+  if (isPastDue.value) {
+    return [
+      { value: 'overdue', label: 'Vencida (automático)' },
+      { value: 'completed', label: STATUS_LABELS.completed }
+    ]
+  }
   const base = ['pending', 'in-progress', 'completed']
-  if (form.status && !base.includes(form.status)) base.push(form.status)
+  if (form.status && form.status !== 'overdue' && !base.includes(form.status)) base.push(form.status)
   return base.map(value => ({ value, label: STATUS_LABELS[value] || value }))
 })
+
+// Pasó el día de la entrega (mismo criterio que el tablero: fin de ese día en hora local)
+const isPastDue = computed(() => {
+  if (!form.dueDate || form.type === 'recurring' || form.type === 'feature' || form.status === 'completed') return false
+  const due = new Date(`${form.dueDate}Z`)
+  if (isNaN(due.getTime())) return false
+  const endOfDay = new Date(due.getUTCFullYear(), due.getUTCMonth(), due.getUTCDate(), 23, 59, 59, 999)
+  return Date.now() > endOfDay.getTime()
+})
+
+// Se pone o se quita sola según la fecha de entrega
+watch(isPastDue, (past) => {
+  if (past && form.status !== 'completed') form.status = 'overdue'
+  else if (!past && form.status === 'overdue') form.status = (form.completionPercentage || 0) > 0 ? 'in-progress' : 'pending'
+}, { immediate: true })
 watch(() => form.type, (type) => {
   if (type === 'feature' && !(form.status in FEATURE_STATUS_LABELS)) form.status = 'pending'
 })
@@ -1009,6 +1032,8 @@ const populateForm = () => {
       form.endDate = ''
       form.tags = []
     }
+    // Una vencida que el tablero aún no marcó abre ya como Vencida (sin contar como cambio)
+    if (isPastDue.value && form.status !== 'completed') form.status = 'overdue'
     savedSnapshot.value = JSON.stringify(form)
   } catch (err) {
     console.error('Error in populateForm:', err)
